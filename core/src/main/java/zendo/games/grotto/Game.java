@@ -4,15 +4,15 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.*;
-import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Align;
-import com.badlogic.gdx.utils.Array;
-import zendo.games.grotto.sprites.Content;
-import zendo.games.grotto.sprites.Sprite;
+import zendo.games.grotto.components.Animator;
+import zendo.games.grotto.ecs.World;
+import zendo.games.grotto.utils.Calc;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Game extends ApplicationAdapter {
@@ -21,10 +21,6 @@ public class Game extends ApplicationAdapter {
     private SpriteBatch batch;
     private ShapeRenderer shapes;
 
-    private Sprite sprite;
-    private Animation<TextureRegion> anim;
-    private float stateTime;
-
     private OrthographicCamera worldCamera;
     private OrthographicCamera windowCamera;
 
@@ -32,19 +28,13 @@ public class Game extends ApplicationAdapter {
     private Texture frameBufferTexture;
     private TextureRegion frameBufferRegion;
 
+    private World world;
+
     @Override
     public void create() {
         assets = new Assets();
         batch = assets.batch;
         shapes = assets.shapes;
-
-        sprite = Content.findSprite("blob");
-        stateTime = 0f;
-        var keyframes = new Array<TextureRegion>();
-        for (var keyframe : sprite.getAnimation("idle").frames) {
-            keyframes.add(keyframe.image);
-        }
-        anim = new Animation<>(0.2f, keyframes, Animation.PlayMode.LOOP);
 
         worldCamera = new OrthographicCamera();
         worldCamera.setToOrtho(false, Config.framebuffer_width, Config.framebuffer_height);
@@ -59,13 +49,39 @@ public class Game extends ApplicationAdapter {
         frameBufferTexture.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
         frameBufferRegion = new TextureRegion(frameBufferTexture);
         frameBufferRegion.flip(false, true);
+
+        world = new World();
+
+        spawnTestEntity();
+    }
+
+    private void spawnTestEntity() {
+        var entity = world.addEntity();
+
+        var anim = entity.add(new Animator("blob"), Animator.class);
+        anim.play("idle");
+
+        entity.position.set(
+                (int) (anim.sprite().origin.x + MathUtils.random((1f / 4f) * worldCamera.viewportWidth,  (3f / 4f) * worldCamera.viewportWidth)),
+                (int) (anim.sprite().origin.y + MathUtils.random((1f / 4f) * worldCamera.viewportHeight, (3f / 4f) * worldCamera.viewportHeight))
+        );
     }
 
     public void update(float dt) {
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             Gdx.app.exit();
         }
-        stateTime += dt;
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F)) {
+            var entity = world.firstEntity();
+            if (entity != null) {
+                entity.destroy();
+            } else {
+                spawnTestEntity();
+            }
+        }
+
+        world.update(dt);
     }
 
     @Override
@@ -78,19 +94,12 @@ public class Game extends ApplicationAdapter {
 
         renderWorldIntoFramebuffer();
         renderFramebufferIntoWindow();
-
-        // render hud
-        batch.setProjectionMatrix(windowCamera.combined);
-        batch.begin();
-        {
-            assets.layout.setText(assets.font, "Grotto", Color.WHITE, windowCamera.viewportWidth, Align.center, false);
-            assets.font.draw(batch, assets.layout, 0, (1f / 3f) * windowCamera.viewportHeight + assets.layout.height);
-        }
-        batch.end();
+        renderWindowOverlay();
     }
 
     @Override
     public void dispose() {
+        world.clear();
         assets.dispose();
     }
 
@@ -106,14 +115,11 @@ public class Game extends ApplicationAdapter {
             batch.begin();
             {
                 // world ------------------------
-//                var keyframe = sprite.getAnimation("idle").frames.get(0);
-                var keyframe = anim.getKeyFrame(stateTime);
-                batch.draw(keyframe,
-                           worldCamera.viewportWidth  / 2f - keyframe.getRegionWidth()  / 2f,
-                           worldCamera.viewportHeight / 2f - keyframe.getRegionHeight() / 2f);
+                world.render(batch);
 
                 // in-world ui ------------------
-                // ...
+                assets.layout.setText(assets.font, "Grotto", Color.WHITE, worldCamera.viewportWidth, Align.center, false);
+                assets.font.draw(batch, assets.layout, 0, (1f / 3f) * worldCamera.viewportHeight + assets.layout.height);
             }
             batch.end();
 
@@ -121,6 +127,9 @@ public class Game extends ApplicationAdapter {
             shapes.setAutoShapeType(true);
             shapes.begin();
             {
+                // world ------------------------
+                world.render(shapes);
+
                 // coord axis at origin
                 if (DebugFlags.draw_origin) {
                     shapes.setColor(Color.BLUE);
@@ -154,6 +163,17 @@ public class Game extends ApplicationAdapter {
 
             // hud overlay items --------------------------
             // ...
+        }
+        batch.end();
+    }
+
+    private void renderWindowOverlay() {
+        batch.setProjectionMatrix(windowCamera.combined);
+        batch.begin();
+        {
+            // render hud
+            assets.layout.setText(assets.font, "Grotto", Color.WHITE, windowCamera.viewportWidth, Align.center, false);
+            assets.font.draw(batch, assets.layout, 0, (1f / 4f) * windowCamera.viewportHeight + assets.layout.height);
         }
         batch.end();
     }
