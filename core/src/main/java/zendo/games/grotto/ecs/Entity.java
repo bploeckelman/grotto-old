@@ -45,7 +45,7 @@ public class Entity extends ListNode<Entity> {
         if (world == null) {
             throw new GdxRuntimeException("Entity must be assigned to a World");
         }
-        for (Component component : components) {
+        for (var component : components) {
             if (component.type == Component.Types.id(clazz)) {
                 return clazz.cast(component);
             }

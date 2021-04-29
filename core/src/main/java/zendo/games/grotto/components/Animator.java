@@ -20,32 +20,25 @@ public class Animator extends Component {
     private int frameIndex;
     private float frameCounter;
 
-    public Animator() {
-        reset();
-    }
+    public Animator() {}
 
     public Animator(String spriteName) {
-        reset();
-        sprite = Content.findSprite(spriteName);
-        tint = new Color(1f, 1f, 1f, 1f);
+        this(spriteName, "idle");
     }
 
     public Animator(String spriteName, String animationName) {
-        reset();
-        sprite = Content.findSprite(spriteName);
+        scale = new Vector2(1f, 1f);
         tint = new Color(1f, 1f, 1f, 1f);
+        sprite = Content.findSprite(spriteName);
         play(animationName);
     }
 
     @Override
     public void reset() {
         super.reset();
-        if (scale == null) {
-            scale = new Vector2();
-        }
-        scale.set(1, 1);
         rotation = 0;
         speed = 1;
+        scale = null;
         tint = null;
         sprite = null;
         animationIndex = 0;
@@ -110,8 +103,8 @@ public class Animator extends Component {
     public void update(float dt) {
         if (!inValidState()) return;
 
-        Sprite.Anim anim = sprite.animations.get(animationIndex);
-        Sprite.Frame frame = anim.frames.get(frameIndex);
+        var anim = sprite.animations.get(animationIndex);
+        var frame = anim.frames.get(frameIndex);
 
         // increment frame counter
         frameCounter += speed * dt;
@@ -134,8 +127,8 @@ public class Animator extends Component {
     public void render(SpriteBatch batch) {
         if (!inValidState()) return;
 
-        Sprite.Anim anim = sprite.animations.get(animationIndex);
-        Sprite.Frame frame = anim.frames.get(frameIndex);
+        var anim = sprite.animations.get(animationIndex);
+        var frame = anim.frames.get(frameIndex);
 
         batch.setColor(tint);
         batch.draw(frame.image,

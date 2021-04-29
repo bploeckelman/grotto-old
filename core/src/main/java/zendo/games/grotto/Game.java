@@ -11,8 +11,10 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Align;
 import zendo.games.grotto.components.Animator;
+import zendo.games.grotto.components.Timer;
 import zendo.games.grotto.ecs.World;
 import zendo.games.grotto.utils.Calc;
+import zendo.games.grotto.utils.Time;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Game extends ApplicationAdapter {
@@ -32,6 +34,8 @@ public class Game extends ApplicationAdapter {
 
     @Override
     public void create() {
+        Time.init();
+
         assets = new Assets();
         batch = assets.batch;
         shapes = assets.shapes;
@@ -51,56 +55,88 @@ public class Game extends ApplicationAdapter {
         frameBufferRegion.flip(false, true);
 
         world = new World();
-
         spawnTestEntity();
-    }
-
-    private void spawnTestEntity() {
-        var entity = world.addEntity();
-
-        var anim = entity.add(new Animator("blob"), Animator.class);
-        anim.play("idle");
-
-        entity.position.set(
-                (int) (anim.sprite().origin.x + MathUtils.random((1f / 4f) * worldCamera.viewportWidth,  (3f / 4f) * worldCamera.viewportWidth)),
-                (int) (anim.sprite().origin.y + MathUtils.random((1f / 4f) * worldCamera.viewportHeight, (3f / 4f) * worldCamera.viewportHeight))
-        );
-    }
-
-    public void update(float dt) {
-        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-            Gdx.app.exit();
-        }
-
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F)) {
-            var entity = world.firstEntity();
-            if (entity != null) {
-                entity.destroy();
-            } else {
-                spawnTestEntity();
-            }
-        }
-
-        world.update(dt);
-    }
-
-    @Override
-    public void render() {
-        float dt = Gdx.graphics.getDeltaTime();
-        update(dt);
-
-        Gdx.gl.glClearColor(0.0f, 0.5f, 0.8f, 1f);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
-        renderWorldIntoFramebuffer();
-        renderFramebufferIntoWindow();
-        renderWindowOverlay();
     }
 
     @Override
     public void dispose() {
         world.clear();
         assets.dispose();
+    }
+
+    public void update() {
+        // update global timer
+        Time.delta = Calc.min(1 / 30f, Gdx.graphics.getDeltaTime());
+
+        // process input
+        {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+                Gdx.app.exit();
+            }
+
+            if (Gdx.input.isKeyJustPressed(Input.Keys.F)) {
+                var entity = world.firstEntity();
+                if (entity != null) {
+                    entity.destroy();
+                } else {
+                    spawnTestEntity();
+                }
+            }
+        }
+
+        // handle a pause
+        {
+            if (Time.pause_timer > 0) {
+                Time.pause_timer -= Time.delta;
+                if (Time.pause_timer <= -0.0001f) {
+                    Time.delta = -Time.pause_timer;
+                } else {
+                    // skip updates if we're paused
+                    return;
+                }
+            }
+            Time.millis += Time.delta;
+            Time.previous_elapsed = Time.elapsed_millis();
+        }
+
+        // update systems
+        {
+            assets.tween.update(Time.delta);
+            world.update(Time.delta);
+        }
+    }
+
+    @Override
+    public void render() {
+        update();
+
+        renderWorldIntoFramebuffer();
+        renderFramebufferIntoWindow();
+        renderWindowOverlay();
+    }
+
+    // ------------------------------------------------------------------------
+
+    private void spawnTestEntity() {
+        var entity = world.addEntity();
+
+        var anim = entity.add(new Animator("player", "idle-down"), Animator.class);
+
+        entity.add(new Timer(anim.animation().duration(), self -> {
+            // toggle between animations
+            if (anim.animation().name.equals("idle-down")) {
+                anim.play("attack-down");
+            } else {
+                anim.play("idle-down");
+            }
+            // restart timer
+            self.start(anim.animation().duration());
+        }), Timer.class);
+
+        entity.position.set(
+                (int) (anim.sprite().origin.x + MathUtils.random((1f / 4f) * worldCamera.viewportWidth,  (3f / 4f) * worldCamera.viewportWidth)),
+                (int) (anim.sprite().origin.y + MathUtils.random((1f / 4f) * worldCamera.viewportHeight, (3f / 4f) * worldCamera.viewportHeight))
+        );
     }
 
     // ------------------------------------------------------------------------

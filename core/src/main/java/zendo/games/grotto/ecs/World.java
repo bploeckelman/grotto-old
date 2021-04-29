@@ -110,7 +110,7 @@ public class World {
 
     public Entity addEntity() {
         // create entity instance
-        Entity instance = entityPool.obtain();
+        var instance = entityPool.obtain();
 
         // add to list
         var last = entitiesAlive.isEmpty() ? null : entitiesAlive.get(entitiesAlive.size - 1);
@@ -156,7 +156,7 @@ public class World {
             component.destroyed();
 
             // remove from entity
-            List<Component> list = component.entity.components;
+            var list = component.entity.components;
             for (int i = list.size() - 1; i >= 0; i--) {
                 if (list.get(i) == component) {
                     list.remove(i);
@@ -177,9 +177,9 @@ public class World {
     }
 
     public void clear() {
-        Entity entity = firstEntity();
+        var entity = firstEntity();
         while (entity != null) {
-            Entity next = entity.next();
+            var next = entity.next();
             destroyEntity(entity);
             entity = next;
         }
@@ -191,9 +191,9 @@ public class World {
                 continue;
             }
 
-            Component component = componentsAlive[i].first();
+            var component = componentsAlive[i].first();
             while (component != null) {
-                Component next = component.next();
+                var next = component.next();
                 if (component.active && component.entity.active) {
                     component.update(dt);
                 }
@@ -216,7 +216,7 @@ public class World {
                 continue;
             }
 
-            Component component = componentsAlive[i].first();
+            var component = componentsAlive[i].first();
             while (component != null) {
                 if (component.visible && component.entity.visible) {
                     componentsVisible.add(component);
@@ -229,7 +229,7 @@ public class World {
         componentsVisible.sort(Comparator.comparingInt(Component::depth));
 
         // render them
-        for (Component component : componentsVisible) {
+        for (var component : componentsVisible) {
             component.render(batch);
         }
 
@@ -244,7 +244,7 @@ public class World {
                 continue;
             }
 
-            Component component = componentsAlive[i].first();
+            var component = componentsAlive[i].first();
             while (component != null) {
                 if (component.visible && component.entity.visible) {
                     componentsVisible.add(component);
@@ -257,7 +257,7 @@ public class World {
         componentsVisible.sort(Comparator.comparingInt(Component::depth));
 
         // render them
-        for (Component component : componentsVisible) {
+        for (var component : componentsVisible) {
             component.render(shapes);
         }
 
