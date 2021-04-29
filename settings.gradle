@@ -1,1 +1,5 @@
 include 'lwjgl3', 'core'
+include 'utils'
+include 'aseprite'
+include 'aseprite'
+

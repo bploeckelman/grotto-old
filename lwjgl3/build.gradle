@@ -11,7 +11,7 @@ dependencies {
 	implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
 	implementation "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop"
 	implementation "com.badlogicgames.gdx-controllers:gdx-controllers-desktop:$gdxControllersVersion"
-    // NOTE: this dependency causes the following error
+	// NOTE: this dependency causes the following error
 //	implementation "de.golfgl.gdxcontrollerutils:gdx-controllers-jamepad:$controllerUtilsVersion"
 //	Could not find com.badlogicgames.gdx:gdx-jnigen-loader:2.0.0-SNAPSHOT.
 //			Required by:
@@ -20,10 +20,16 @@ dependencies {
 
 import org.gradle.internal.os.OperatingSystem
 
+task pack_rawsprites(dependsOn: classes, type: JavaExec) {
+	main = 'com.badlogic.gdx.tools.texturepacker.TexturePacker'
+	classpath = sourceSets.main.runtimeClasspath
+	args = ['../sprites/raw/', '../assets/atlas/', 'sprites.atlas']
+}
+
 run {
 	workingDir = rootProject.file('assets').path
 	setIgnoreExitValue(true)
-	
+
 	if (OperatingSystem.current() == OperatingSystem.MAC_OS) {
 		// Required to run LWJGL3 Java apps on MacOS
 		jvmArgs += "-XstartOnFirstThread"

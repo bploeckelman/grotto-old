@@ -1,0 +1,30 @@
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+apply plugin: 'application'
+
+sourceCompatibility = 1.16
+mainClassName = 'zendo.games.aseprite.AsepritePacker'
+eclipse.project.name = appName + '-headless'
+
+run {
+    main = project.mainClassName
+    classpath = sourceSets.main.runtimeClasspath
+    workingDir = "../"
+    setIgnoreExitValue(true)
+}
+
+dependencies {
+    implementation project(":core")
+    implementation "com.badlogicgames.gdx:gdx-backend-headless:$gdxVersion"
+    implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+    implementation "com.badlogicgames.gdx:gdx-tools:$gdxVersion"
+    implementation "com.badlogicgames.gdx:gdx:$gdxVersion"
+}
+
+jar {
+    archiveName "aseprite_packer.jar"
+    from { configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    manifest {
+        attributes 'Main-Class': project.mainClassName
+    }
+}

@@ -14,4 +14,6 @@ dependencies {
 	api "com.rafaskoberg.gdx:typing-label:$typingLabelVersion"
 	api "com.github.tommyettinger:regexodus:$regExodusVersion"
 	api "com.github.tommyettinger:colorful:$colorfulVersion"
+	api "org.mini2Dx:universal-tween-engine:$tweenEngineVersion"
+	api "org.mini2Dx:universal-tween-engine:$tweenEngineVersion:sources"
 }
