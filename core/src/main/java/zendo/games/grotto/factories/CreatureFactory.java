@@ -1,12 +1,13 @@
-package zendo.games.grotto;
+package zendo.games.grotto.factories;
 
-import com.badlogic.gdx.math.MathUtils;
 import zendo.games.grotto.components.Animator;
+import zendo.games.grotto.components.Collider;
 import zendo.games.grotto.components.Player;
 import zendo.games.grotto.components.Timer;
 import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
 import zendo.games.grotto.utils.Point;
+import zendo.games.grotto.utils.RectI;
 
 public class CreatureFactory {
 
@@ -16,6 +17,9 @@ public class CreatureFactory {
             entity.add(new Player(), Player.class);
 
             var anim = entity.add(new Animator("hero", "idle"), Animator.class);
+
+            var bounds = RectI.at(-2, 0, 6, 12);
+            entity.add(Collider.makeRect(bounds), Collider.class);
 
             entity.position.set(
                     (int) (position.x - anim.sprite().origin.x),

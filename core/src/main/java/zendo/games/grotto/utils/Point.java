@@ -2,6 +2,8 @@ package zendo.games.grotto.utils;
 
 public class Point {
 
+    // TODO - make poolable and add a static pool
+
     public static Point zero() {
         return new Point();
     }

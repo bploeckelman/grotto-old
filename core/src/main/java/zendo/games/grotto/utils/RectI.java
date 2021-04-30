@@ -1,6 +1,11 @@
 package zendo.games.grotto.utils;
 
-public class RectI {
+import com.badlogic.gdx.utils.Pool;
+import com.badlogic.gdx.utils.Pools;
+
+public class RectI implements Pool.Poolable {
+
+    public static Pool<RectI> pool = Pools.get(RectI.class);
 
     public int x;
     public int y;
@@ -17,6 +22,10 @@ public class RectI {
         set(x, y, w, h);
     }
 
+    public static RectI zero() {
+        return new RectI(0, 0, 0, 0);
+    }
+
     public static RectI at(RectI other) {
         return new RectI(other);
     }
@@ -25,15 +34,28 @@ public class RectI {
         return new RectI(x, y, w, h);
     }
 
-    public void set(int x, int y, int w, int h) {
+    public RectI set(int x, int y, int w, int h) {
         this.x = x;
         this.y = y;
         this.w = w;
         this.h = h;
+        return this;
     }
 
-    public void set(RectI other) {
-        set(other.x, other.y, other.w, other.h);
+    public RectI set(RectI other) {
+        return set(other.x, other.y, other.w, other.h);
+    }
+
+    public RectI setPosition(int x, int y) {
+        this.x = x;
+        this.y = y;
+        return this;
+    }
+
+    public RectI setSize(int w, int h) {
+        this.w = w;
+        this.h = h;
+        return this;
     }
 
     public boolean overlaps(RectI other) {
@@ -47,5 +69,13 @@ public class RectI {
     public int right()  { return x + w; }
     public int top()    { return y; }
     public int bottom() { return y + h; }
+
+    @Override
+    public void reset() {
+        x = 0;
+        y = 0;
+        w = 0;
+        h = 0;
+    }
 
 }

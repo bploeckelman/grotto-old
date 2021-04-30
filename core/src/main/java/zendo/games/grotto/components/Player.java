@@ -72,7 +72,7 @@ public class Player extends Component {
             var w = animator.frame().image.getRegionWidth();
             var h = animator.frame().image.getRegionHeight();
             shapes.set(ShapeRenderer.ShapeType.Line);
-            shapes.setColor(Color.YELLOW);
+            shapes.setColor(1f, 1f, 0f, 0.75f);
             shapes.rect(x, y, w, h);
             shapes.setColor(Color.WHITE);
         }
@@ -83,7 +83,7 @@ public class Player extends Component {
             var y = entity.position.y;
             var radius = 1;
             shapes.set(ShapeRenderer.ShapeType.Filled);
-            shapes.setColor(Color.MAGENTA);
+            shapes.setColor(1f, 0f, 1f, 0.75f);
             shapes.circle(x, y, radius);
             shapes.setColor(Color.WHITE);
         }

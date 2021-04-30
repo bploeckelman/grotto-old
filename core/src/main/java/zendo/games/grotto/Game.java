@@ -10,10 +10,8 @@ import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Align;
-import zendo.games.grotto.components.Animator;
-import zendo.games.grotto.components.Player;
-import zendo.games.grotto.components.Timer;
 import zendo.games.grotto.ecs.World;
+import zendo.games.grotto.factories.CreatureFactory;
 import zendo.games.grotto.utils.Calc;
 import zendo.games.grotto.utils.Point;
 import zendo.games.grotto.utils.Time;
@@ -34,7 +32,6 @@ public class Game extends ApplicationAdapter {
     private TextureRegion frameBufferRegion;
 
     private World world;
-    private Player player;
 
     @Override
     public void create() {
@@ -65,8 +62,7 @@ public class Game extends ApplicationAdapter {
 
         world = new World();
 
-        var position = Point.at((int) worldCamera.viewportWidth / 2, 0);
-        player = CreatureFactory.player(world, position).get(Player.class);
+        CreatureFactory.player(world, Point.at((int) worldCamera.viewportWidth / 2, 0));
 
         CreatureFactory.stabby(world, Point.at(
                 (int) MathUtils.random((1f / 3f) * worldCamera.viewportWidth,  (2f / 3f) * worldCamera.viewportWidth),
@@ -88,9 +84,9 @@ public class Game extends ApplicationAdapter {
         {
             Input.frame();
 
-            if (Input.pressed(Input.Key.escape)) {
-                Gdx.app.exit();
-            }
+            if (Input.pressed(Input.Key.escape)) Gdx.app.exit();
+            if (Input.pressed(Input.Key.f1)) DebugFlags.draw_entities = !DebugFlags.draw_entities;
+            if (Input.pressed(Input.Key.f2)) DebugFlags.draw_world_origin = !DebugFlags.draw_world_origin;
         }
 
         // handle a pause
@@ -153,7 +149,7 @@ public class Game extends ApplicationAdapter {
                 }
 
                 // coord axis at origin
-                if (DebugFlags.draw_origin) {
+                if (DebugFlags.draw_world_origin) {
                     shapes.setColor(Color.BLUE);
                     shapes.rectLine(0, 0, 10, 0, 1);
                     shapes.setColor(Color.GREEN);
@@ -203,8 +199,8 @@ public class Game extends ApplicationAdapter {
     // ------------------------------------------------------------------------
 
     public static class DebugFlags {
-        public static boolean draw_origin = true;
-        public static boolean draw_entities = true;
+        public static boolean draw_world_origin = false;
+        public static boolean draw_entities = false;
     }
 
 }
