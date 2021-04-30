@@ -2,7 +2,7 @@ package zendo.games.grotto;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
+import com.badlogic.gdx.controllers.Controllers;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -11,14 +11,17 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Align;
 import zendo.games.grotto.components.Animator;
+import zendo.games.grotto.components.Player;
 import zendo.games.grotto.components.Timer;
 import zendo.games.grotto.ecs.World;
 import zendo.games.grotto.utils.Calc;
+import zendo.games.grotto.utils.Point;
 import zendo.games.grotto.utils.Time;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Game extends ApplicationAdapter {
 
+    private Input input;
     private Assets assets;
     private SpriteBatch batch;
     private ShapeRenderer shapes;
@@ -31,10 +34,16 @@ public class Game extends ApplicationAdapter {
     private TextureRegion frameBufferRegion;
 
     private World world;
+    private Player player;
 
     @Override
     public void create() {
         Time.init();
+        Input.init();
+
+        input = new Input();
+        Gdx.input.setInputProcessor(input);
+        Controllers.addListener(input);
 
         assets = new Assets();
         batch = assets.batch;
@@ -55,7 +64,14 @@ public class Game extends ApplicationAdapter {
         frameBufferRegion.flip(false, true);
 
         world = new World();
-        spawnTestEntity();
+
+        var position = Point.at((int) worldCamera.viewportWidth / 2, 0);
+        player = CreatureFactory.player(world, position).get(Player.class);
+
+        CreatureFactory.stabby(world, Point.at(
+                (int) MathUtils.random((1f / 3f) * worldCamera.viewportWidth,  (2f / 3f) * worldCamera.viewportWidth),
+                (int) MathUtils.random((1f / 3f) * worldCamera.viewportHeight, (2f / 3f) * worldCamera.viewportHeight)
+        ));
     }
 
     @Override
@@ -70,17 +86,10 @@ public class Game extends ApplicationAdapter {
 
         // process input
         {
-            if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-                Gdx.app.exit();
-            }
+            Input.frame();
 
-            if (Gdx.input.isKeyJustPressed(Input.Keys.F)) {
-                var entity = world.firstEntity();
-                if (entity != null) {
-                    entity.destroy();
-                } else {
-                    spawnTestEntity();
-                }
+            if (Input.pressed(Input.Key.escape)) {
+                Gdx.app.exit();
             }
         }
 
@@ -117,30 +126,6 @@ public class Game extends ApplicationAdapter {
 
     // ------------------------------------------------------------------------
 
-    private void spawnTestEntity() {
-        var entity = world.addEntity();
-
-        var anim = entity.add(new Animator("player", "idle-down"), Animator.class);
-
-        entity.add(new Timer(anim.animation().duration(), self -> {
-            // toggle between animations
-            if (anim.animation().name.equals("idle-down")) {
-                anim.play("attack-down");
-            } else {
-                anim.play("idle-down");
-            }
-            // restart timer
-            self.start(anim.animation().duration());
-        }), Timer.class);
-
-        entity.position.set(
-                (int) (anim.sprite().origin.x + MathUtils.random((1f / 4f) * worldCamera.viewportWidth,  (3f / 4f) * worldCamera.viewportWidth)),
-                (int) (anim.sprite().origin.y + MathUtils.random((1f / 4f) * worldCamera.viewportHeight, (3f / 4f) * worldCamera.viewportHeight))
-        );
-    }
-
-    // ------------------------------------------------------------------------
-
     private void renderWorldIntoFramebuffer() {
         frameBuffer.begin();
         {
@@ -160,11 +145,12 @@ public class Game extends ApplicationAdapter {
             batch.end();
 
             shapes.setProjectionMatrix(worldCamera.combined);
-            shapes.setAutoShapeType(true);
             shapes.begin();
             {
                 // world ------------------------
-                world.render(shapes);
+                if (DebugFlags.draw_entities) {
+                    world.render(shapes);
+                }
 
                 // coord axis at origin
                 if (DebugFlags.draw_origin) {
@@ -218,6 +204,7 @@ public class Game extends ApplicationAdapter {
 
     public static class DebugFlags {
         public static boolean draw_origin = true;
+        public static boolean draw_entities = true;
     }
 
 }
