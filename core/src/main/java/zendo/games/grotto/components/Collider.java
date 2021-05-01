@@ -20,26 +20,22 @@ public class Collider extends Component {
     public int mask = 0;
     public Point origin;
 
-    private Shape shape = Shape.none;
-    private RectI rect = RectI.zero();
+    private Shape shape;
+    private RectI rect;
 
-    public Collider() {}
+    public Collider() {
+        super();
+        origin = Point.zero();
+        rect = RectI.zero();
+    }
 
     @Override
     public void reset() {
         super.reset();
         mask = 0;
         shape = Shape.none;
-        if (origin == null) {
-            origin = Point.zero();
-        } else {
-            origin.set(0, 0);
-        }
-        if (rect == null) {
-            rect = RectI.zero();
-        } else {
-            rect.set(0, 0, 0, 0);
-        }
+        origin = null;
+        rect = null;
     }
 
     // ------------------------------------------------------------------------
