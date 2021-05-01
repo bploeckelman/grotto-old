@@ -3,8 +3,8 @@
 apply plugin: 'application'
 
 sourceCompatibility = 1.16
-mainClassName = 'zendo.games.aseprite.AsepritePacker'
-eclipse.project.name = appName + '-headless'
+mainClassName = 'zendo.games.grotto.aseprite.AsepritePacker'
+eclipse.project.name = appName + '-aseprite-packer'
 
 run {
     main = project.mainClassName
