@@ -1,9 +1,7 @@
 package zendo.games.grotto.factories;
 
-import zendo.games.grotto.components.Animator;
-import zendo.games.grotto.components.Collider;
-import zendo.games.grotto.components.Player;
-import zendo.games.grotto.components.Timer;
+import com.badlogic.gdx.Gdx;
+import zendo.games.grotto.components.*;
 import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
 import zendo.games.grotto.utils.Point;
@@ -17,9 +15,52 @@ public class CreatureFactory {
             entity.add(new Player(), Player.class);
 
             var anim = entity.add(new Animator("hero", "idle"), Animator.class);
+            anim.depth = 1;
 
             var bounds = RectI.at(-2, 0, 6, 12);
-            entity.add(Collider.makeRect(bounds), Collider.class);
+            var collider = entity.add(Collider.makeRect(bounds), Collider.class);
+            collider.mask = Collider.Mask.player;
+
+            entity.position.set(
+                    (int) (position.x - anim.sprite().origin.x),
+                    (int) (position.y - anim.sprite().origin.y));
+        }
+        return entity;
+    }
+
+    public static Entity slime(World world, Point position) {
+        var entity = world.addEntity();
+        {
+            entity.add(new Enemy(), Enemy.class);
+
+            var anim = entity.add(new Animator("slime", "idle"), Animator.class);
+
+            var bounds = RectI.at(-5, 0, 10, 10);
+            var collider = entity.add(Collider.makeRect(bounds), Collider.class);
+            collider.mask = Collider.Mask.enemy;
+
+            entity.add(new Timer(2f, (self) -> {
+                var name = anim.animation().name;
+                switch (name) {
+                    case "idle" -> {
+                        anim.play("walk");
+                        self.start(anim.duration());
+                    }
+                    case "walk" -> {
+                        anim.play("hit");
+                        self.start(anim.duration());
+                    }
+                    case "hit" -> {
+                        anim.play("death");
+                        self.start(anim.duration());
+                    }
+                    case "death" -> {
+                        anim.play("idle");
+                        self.start(2f);
+                    }
+                }
+                Gdx.app.log("slime", name + " -> " + anim.animation().name);
+            }), Timer.class);
 
             entity.position.set(
                     (int) (position.x - anim.sprite().origin.x),

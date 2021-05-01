@@ -50,6 +50,10 @@ public class Animator extends Component {
         return sprite;
     }
 
+    public float duration() {
+        return (animation() != null) ? animation().duration() : 0f;
+    }
+
     public Sprite.Anim animation() {
         if (sprite != null && animationIndex >= 0 && animationIndex < sprite.animations.size()) {
             return sprite.animations.get(animationIndex);
@@ -78,11 +82,11 @@ public class Animator extends Component {
         tint.set(r, g, b, a);
     }
 
-    public void play(String animation) {
-        play(animation, false);
+    public Animator play(String animation) {
+        return play(animation, false);
     }
 
-    public void play(String animation, boolean restart) {
+    public Animator play(String animation, boolean restart) {
         if (sprite == null) {
             throw new GdxRuntimeException("No Sprite assigned to Animator");
         }
@@ -97,6 +101,7 @@ public class Animator extends Component {
                 break;
             }
         }
+        return this;
     }
 
     @Override

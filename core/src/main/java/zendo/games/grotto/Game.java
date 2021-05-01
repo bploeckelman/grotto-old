@@ -65,6 +65,8 @@ public class Game extends ApplicationAdapter {
 
         CreatureFactory.player(world, Point.at((int) worldCamera.viewportWidth / 2, 0));
 
+        CreatureFactory.slime(world, Point.at((int) worldCamera.viewportWidth / 2 + 32, 0));
+
         CreatureFactory.stabby(world, Point.at(
                 (int) MathUtils.random((1f / 3f) * worldCamera.viewportWidth,  (2f / 3f) * worldCamera.viewportWidth),
                 (int) MathUtils.random((1f / 3f) * worldCamera.viewportHeight, (2f / 3f) * worldCamera.viewportHeight)
