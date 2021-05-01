@@ -83,19 +83,6 @@ public class Player extends Component {
     public void render(ShapeRenderer shapes) {
         var shapeType = shapes.getCurrentType();
 
-        // animator image bounds
-        var animator = get(Animator.class);
-        if (animator != null) {
-            var x = entity.position.x - animator.sprite().origin.x;
-            var y = entity.position.y - animator.sprite().origin.y;
-            var w = animator.frame().image.getRegionWidth();
-            var h = animator.frame().image.getRegionHeight();
-            shapes.set(ShapeRenderer.ShapeType.Line);
-            shapes.setColor(1f, 1f, 0f, 0.75f);
-            shapes.rect(x, y, w, h);
-            shapes.setColor(Color.WHITE);
-        }
-
         // entity position
         {
             var x = entity.position.x;

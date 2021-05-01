@@ -2,6 +2,7 @@ package zendo.games.grotto.components;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import zendo.games.grotto.ecs.Component;
@@ -147,6 +148,23 @@ public class Animator extends Component {
                    rotation
         );
         batch.setColor(1f, 1f, 1f, 1f);
+    }
+
+    @Override
+    public void render(ShapeRenderer shapes) {
+        var shapeType = shapes.getCurrentType();
+
+        // image bounds
+        var x = entity.position.x - sprite().origin.x;
+        var y = entity.position.y - sprite().origin.y;
+        var w = frame().image.getRegionWidth();
+        var h = frame().image.getRegionHeight();
+        shapes.set(ShapeRenderer.ShapeType.Line);
+        shapes.setColor(1f, 1f, 0f, 0.75f);
+        shapes.rect(x, y, w, h);
+        shapes.setColor(Color.WHITE);
+
+        shapes.set(shapeType);
     }
 
     private boolean inValidState() {
