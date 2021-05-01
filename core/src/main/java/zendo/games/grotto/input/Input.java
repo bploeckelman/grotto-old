@@ -552,6 +552,7 @@ public class Input extends InputAdapter implements ControllerListener {
             state.isConnected = true;
             state.uuid = controller.getUniqueId();
             state.name = controller.getName();
+            Gdx.app.log(tag, "Controller connected: " + state.name + "(" + state.uuid + ")");
         }
     }
 
@@ -559,7 +560,9 @@ public class Input extends InputAdapter implements ControllerListener {
     public void disconnected(Controller controller) {
         int index = findControllerIndex(controller);
         if (index >= 0 && index < max_controllers) {
-            nextState.controllers[index].clear();
+            var state = nextState.controllers[index];
+            Gdx.app.log(tag, "Controller disconnected: " + state.name + "(" + state.uuid + ")");
+            state.clear();
         }
     }
 

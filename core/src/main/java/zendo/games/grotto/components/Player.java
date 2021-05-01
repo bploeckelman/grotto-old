@@ -3,8 +3,9 @@ package zendo.games.grotto.components;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import zendo.games.grotto.Config;
-import zendo.games.grotto.input.Input;
 import zendo.games.grotto.ecs.Component;
+import zendo.games.grotto.input.Input;
+import zendo.games.grotto.input.VirtualStick;
 import zendo.games.grotto.utils.Calc;
 import zendo.games.grotto.utils.Time;
 
@@ -13,11 +14,21 @@ public class Player extends Component {
     private float speed = 80;
     private int facing = 1;
 
-    public Player() {}
+    private VirtualStick stick;
+
+    public Player() {
+        super();
+        stick = new VirtualStick()
+                .addButtons(0, Input.Button.left, Input.Button.right, Input.Button.up, Input.Button.down)
+                .addKeys(Input.Key.left, Input.Key.right, Input.Key.up, Input.Key.down)
+                .addKeys(Input.Key.a, Input.Key.d, Input.Key.w, Input.Key.s)
+                .pressBuffer(0.15f);
+    }
 
     @Override
     public void reset() {
         super.reset();
+        stick = null;
     }
 
     @Override
@@ -26,11 +37,19 @@ public class Player extends Component {
         var input = 0;
         {
             var sign = 0;
-            if      (Input.down(Input.Key.a) || Input.down(Input.Key.left))  sign = -1;
-            else if (Input.down(Input.Key.d) || Input.down(Input.Key.right)) sign = 1;
+
+            stick.update();
+            if (stick.pressed()) {
+                stick.clearPressBuffer();
+                var move = stick.value();
+                if      (move.x < 0) sign = -1;
+                else if (move.x > 0) sign = 1;
+            }
+
             var velocity = (int) (sign * speed * dt);
             entity.position.x += velocity;
             entity.position.x = Calc.clampInt(entity.position.x, 0, Config.framebuffer_width);
+
             input = sign;
         }
 
