@@ -1,4 +1,4 @@
-package zendo.games.grotto;
+package zendo.games.grotto.input;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputAdapter;

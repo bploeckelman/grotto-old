@@ -3,7 +3,7 @@ package zendo.games.grotto.components;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import zendo.games.grotto.Config;
-import zendo.games.grotto.Input;
+import zendo.games.grotto.input.Input;
 import zendo.games.grotto.ecs.Component;
 import zendo.games.grotto.utils.Calc;
 import zendo.games.grotto.utils.Time;
