@@ -10,6 +10,7 @@ import com.badlogic.gdx.utils.Pools;
 import java.util.Comparator;
 import java.util.List;
 
+@SuppressWarnings("unchecked")
 public class World {
 
     static final int max_component_types = 256;
