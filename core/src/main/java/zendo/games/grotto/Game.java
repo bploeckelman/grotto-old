@@ -12,9 +12,11 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Align;
 import zendo.games.grotto.ecs.World;
 import zendo.games.grotto.factories.CreatureFactory;
+import zendo.games.grotto.factories.WorldFactory;
 import zendo.games.grotto.input.Input;
 import zendo.games.grotto.utils.Calc;
 import zendo.games.grotto.utils.Point;
+import zendo.games.grotto.utils.RectI;
 import zendo.games.grotto.utils.Time;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
@@ -63,9 +65,13 @@ public class Game extends ApplicationAdapter {
 
         world = new World();
 
-        CreatureFactory.player(world, Point.at((int) worldCamera.viewportWidth / 2, 0));
+        WorldFactory.boundary(world, RectI.at(0, 0, (int) worldCamera.viewportWidth, 2));
+        WorldFactory.boundary(world, RectI.at(0, 0, 2, (int) worldCamera.viewportHeight));
+        WorldFactory.boundary(world, RectI.at(160, 0, 2, (int) worldCamera.viewportHeight));
 
-        CreatureFactory.slime(world, Point.at((int) worldCamera.viewportWidth / 2 + 32, 0));
+        CreatureFactory.player(world, Point.at((int) worldCamera.viewportWidth / 2, 10));
+
+        CreatureFactory.slime(world, Point.at((int) worldCamera.viewportWidth / 2 + 32, 100));
 
         CreatureFactory.stabby(world, Point.at(
                 (int) MathUtils.random((1f / 3f) * worldCamera.viewportWidth,  (2f / 3f) * worldCamera.viewportWidth),

@@ -1,9 +1,9 @@
 package zendo.games.grotto.factories;
 
-import com.badlogic.gdx.Gdx;
 import zendo.games.grotto.components.*;
 import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
+import zendo.games.grotto.utils.Calc;
 import zendo.games.grotto.utils.Point;
 import zendo.games.grotto.utils.RectI;
 
@@ -20,6 +20,9 @@ public class CreatureFactory {
             var bounds = RectI.at(-2, 0, 6, 12);
             var collider = entity.add(Collider.makeRect(bounds), Collider.class);
             collider.mask = Collider.Mask.player;
+
+            var mover = entity.add(new Mover(), Mover.class);
+            mover.collider = collider;
 
             entity.position.set(
                     (int) (position.x - anim.sprite().origin.x),
@@ -39,27 +42,31 @@ public class CreatureFactory {
             var collider = entity.add(Collider.makeRect(bounds), Collider.class);
             collider.mask = Collider.Mask.enemy;
 
+            var mover = entity.add(new Mover(), Mover.class);
+            mover.collider = collider;
+            mover.gravity = -300;
+            mover.friction = 400;
+            mover.onHitY = (self) -> {
+                anim.play("idle");
+                self.stopY();
+            };
+
             entity.add(new Timer(2f, (self) -> {
-                var name = anim.animation().name;
-                switch (name) {
-                    case "idle" -> {
-                        anim.play("walk");
-                        self.start(anim.duration());
-                    }
-                    case "walk" -> {
-                        anim.play("hit");
-                        self.start(anim.duration());
-                    }
-                    case "hit" -> {
-                        anim.play("death");
-                        self.start(anim.duration());
-                    }
-                    case "death" -> {
-                        anim.play("idle");
-                        self.start(2f);
+                if (!mover.onGround()) {
+                    self.start(0.05f);
+                } else {
+                    anim.play("walk");
+                    self.start(anim.duration());
+                    mover.speed.y = 110;
+
+                    var player = self.world().first(Player.class);
+                    if (player != null) {
+                        var dir = Calc.sign(player.entity().position.x - self.entity().position.x);
+                        if (dir == 0) dir = 1;
+                        anim.scale.set(dir, 1);
+                        mover.speed.x = dir * 80;
                     }
                 }
-                Gdx.app.log("slime", name + " -> " + anim.animation().name);
             }), Timer.class);
 
             entity.position.set(
