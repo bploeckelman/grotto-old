@@ -140,11 +140,10 @@ public class Player extends Component {
             {
                 if (onGround && !canJump) {
                     canJump = jumpButton.released();
-                    jumpButton.clearReleaseBuffer();
                 }
 
                 if (canJump && jumpButton.pressed()) {
-//                    jumpButton.clearPressBuffer();
+                    jumpButton.clearPressBuffer();
 
                     // squoosh on jump
                     anim.scale.set(facing * 0.65f, 1.4f);
@@ -161,7 +160,7 @@ public class Player extends Component {
 
             mover.speed.y = jump_impulse;
 
-            if (!jumpButton.pressed()) {
+            if (!jumpButton.down()) {
                 jumpTimer = 0f;
             }
         }
@@ -170,7 +169,7 @@ public class Player extends Component {
         if (!onGround) {
             // make gravity more 'hovery' when in the air
             var grav = gravity;
-            if (Calc.abs(mover.speed.y) < 20 && jumpButton.pressed()) {
+            if (Calc.abs(mover.speed.y) < 20 && jumpButton.down()) {
                 grav *= 0.4f;
             }
 
