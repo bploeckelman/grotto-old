@@ -129,8 +129,8 @@ public class Collider extends Component {
                 a.rect.w, a.rect.h
         );
         var rectB = RectI.pool.obtain().set(
-                b.entity.position.x + b.origin.x + b.rect.x + offset.x,
-                b.entity.position.y + b.origin.y + b.rect.y + offset.y,
+                b.entity.position.x + b.origin.x + b.rect.x,
+                b.entity.position.y + b.origin.y + b.rect.y,
                 b.rect.w, b.rect.h
         );
         var overlap = rectA.overlaps(rectB);
