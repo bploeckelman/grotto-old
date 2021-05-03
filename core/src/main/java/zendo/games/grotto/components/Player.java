@@ -186,6 +186,7 @@ public class Player extends Component {
                     // the rect for this collider is updated during attack state based on what frame is active
 
                     attackEffectAnim = attackEntity.add(new Animator("hero", "attack-effect"), Animator.class);
+                    attackEffectAnim.mode = Animator.LoopMode.none;
                     attackEffectAnim.depth = 2;
                 }
 
@@ -213,17 +214,22 @@ public class Player extends Component {
                 attackCollider.rect(-8, 8, 3, 4);
             }
 
-            // flip collider if facing left
+            // update animation and collider position/orientation based on facing direction
             var collider = get(Collider.class);
             if (attackEntity != null) {
-                var animW = attackEffectAnim.frame().image.getRegionWidth();
                 if (facing >= 0) {
+                    // update attack effect position
                     attackEntity.position.x = entity.position.x + collider.rect().right() + 8;
+                    attackEntity.position.y = entity.position.y;
+                    // make sure animation points in the right direction
                     if (attackEffectAnim.scale.x != 1) {
                         attackEffectAnim.scale.x = 1;
                     }
                 } else if (facing < 0) {
+                    // update attack effect position
                     attackEntity.position.x = entity.position.x - collider.rect().left() - 12;
+                    attackEntity.position.y = entity.position.y;
+                    // make sure animation points in the left direction
                     if (attackEffectAnim.scale.x != -1) {
                         attackEffectAnim.scale.x = -1;
                     }
@@ -235,8 +241,7 @@ public class Player extends Component {
             }
 
             // end the attack
-            var duration = 0.38f;
-            if (attackTimer >= duration) {
+            if (attackTimer >= attackEffectAnim.duration()) {
                 if (attackEntity != null) {
                     attackEntity.destroy();
                     attackEntity = null;

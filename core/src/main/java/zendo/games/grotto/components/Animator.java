@@ -8,10 +8,14 @@ import com.badlogic.gdx.utils.GdxRuntimeException;
 import zendo.games.grotto.ecs.Component;
 import zendo.games.grotto.sprites.Content;
 import zendo.games.grotto.sprites.Sprite;
+import zendo.games.grotto.utils.Calc;
 
 public class Animator extends Component {
 
+    public enum LoopMode { none, loop }
+
     public Vector2 scale;
+    public LoopMode mode;
     public float rotation;
     public float speed;
 
@@ -24,19 +28,20 @@ public class Animator extends Component {
     public Animator() {}
 
     public Animator(String spriteName) {
-        this(spriteName, "idle");
-    }
-
-    public Animator(String spriteName, String animationName) {
         scale = new Vector2(1f, 1f);
         tint = new Color(1f, 1f, 1f, 1f);
         sprite = Content.findSprite(spriteName);
+    }
+
+    public Animator(String spriteName, String animationName) {
+        this(spriteName);
         play(animationName);
     }
 
     @Override
     public void reset() {
         super.reset();
+        mode = LoopMode.loop;
         rotation = 0;
         speed = 1;
         scale = null;
@@ -120,11 +125,15 @@ public class Animator extends Component {
             // reset frame counter
             frameCounter -= frame.duration;
 
-            // TODO: add play modes, pingpong, reversed, etc...
-            // increment frame, move back if we're at the end
+            // increment frame, adjust based on loop mode
             frameIndex++;
-            if (frameIndex >= anim.frames.size()) {
-                frameIndex = 0;
+            switch (mode) {
+                case none -> frameIndex = Calc.clampInt(frameIndex, 0, animation().frames.size() - 1);
+                case loop -> {
+                    if (frameIndex >= anim.frames.size()) {
+                        frameIndex = 0;
+                    }
+                }
             }
         }
     }
