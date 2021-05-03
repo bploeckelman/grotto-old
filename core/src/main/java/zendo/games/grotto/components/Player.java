@@ -2,17 +2,18 @@ package zendo.games.grotto.components;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import zendo.games.grotto.Config;
 import zendo.games.grotto.ecs.Component;
+import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.input.Input;
 import zendo.games.grotto.input.VirtualButton;
 import zendo.games.grotto.input.VirtualStick;
 import zendo.games.grotto.utils.Calc;
+import zendo.games.grotto.utils.RectI;
 import zendo.games.grotto.utils.Time;
 
 public class Player extends Component {
 
-    private enum State { normal }
+    private enum State { normal, attack }
 
     private static final float gravity = -400;
     private static final float friction = 800;
@@ -23,11 +24,16 @@ public class Player extends Component {
 
     private int facing = 1;
     private float jumpTimer;
+    private float attackTimer;
     private boolean onGround;
     private boolean canJump;
     private State state;
     private VirtualStick stick;
     private VirtualButton jumpButton;
+    private VirtualButton attackButton;
+    private Entity attackEntity;
+    private Collider attackCollider;
+    private Animator attackEffectAnim;
 
     public Player() {
         super();
@@ -40,6 +46,11 @@ public class Player extends Component {
                 .addButton(0, Input.Button.a)
                 .addKey(Input.Key.space)
                 .pressBuffer(0.15f);
+        attackButton = new VirtualButton()
+                .addButton(0, Input.Button.x)
+                .addKey(Input.Key.control_left)
+                .addKey(Input.Key.f)
+                .pressBuffer(0.15f);
     }
 
     @Override
@@ -51,6 +62,10 @@ public class Player extends Component {
         state = State.normal;
         stick = null;
         jumpButton = null;
+        attackButton = null;
+        attackEntity = null;
+        attackCollider = null;
+        attackEffectAnim = null;
     }
 
     @Override
@@ -67,6 +82,7 @@ public class Player extends Component {
         var moveDir = 0;
         {
             jumpButton.update();
+            attackButton.update();
 
             var sign = 0;
             stick.update();
@@ -95,6 +111,7 @@ public class Player extends Component {
         }
 
         // state handling
+        // ----------------------------------------------------------
         if (state == State.normal) {
             // stopped
             if (onGround) {
@@ -152,7 +169,86 @@ public class Player extends Component {
                     canJump = false;
                 }
             }
+
+            // attack trigger
+            if (attackButton.pressed()) {
+                attackButton.clearPressBuffer();
+                state = State.attack;
+                attackTimer = 0;
+
+                if (attackEntity == null) {
+                    attackEntity = world().addEntity();
+                    attackEntity.position.set(entity.position);
+                    // entity position gets updated during attack state based of facing
+
+                    attackCollider = attackEntity.add(Collider.makeRect(new RectI()), Collider.class);
+                    attackCollider.mask = Collider.Mask.player_attack;
+                    // the rect for this collider is updated during attack state based on what frame is active
+
+                    attackEffectAnim = attackEntity.add(new Animator("hero", "attack-effect"), Animator.class);
+                    attackEffectAnim.depth = 2;
+                }
+
+                if (onGround) {
+                    mover.stopX();
+                }
+            }
         }
+        // ----------------------------------------------------------
+        else if (state == State.attack) {
+            anim.play("attack");
+            attackEffectAnim.play("attack-effect");
+            attackTimer += dt;
+
+            // setup collider based on what frame is currently activated in the attack animation
+            // assumes right facing, if left facing it gets flips after
+
+            if (attackTimer < 0.1f) {
+                attackCollider.rect(-6, 1, 12, 9);
+            } else if (attackTimer < 0.2f) {
+                attackCollider.rect(-8, 3, 15, 7);
+            } else if (attackTimer < 0.3f) {
+                attackCollider.rect(-8, 8, 5, 4);
+            } else if (attackTimer < 0.4f) {
+                attackCollider.rect(-8, 8, 3, 4);
+            }
+
+            // flip collider if facing left
+            var collider = get(Collider.class);
+            if (attackEntity != null) {
+                var animW = attackEffectAnim.frame().image.getRegionWidth();
+                if (facing >= 0) {
+                    attackEntity.position.x = entity.position.x + collider.rect().right() + 8;
+                    if (attackEffectAnim.scale.x != 1) {
+                        attackEffectAnim.scale.x = 1;
+                    }
+                } else if (facing < 0) {
+                    attackEntity.position.x = entity.position.x - collider.rect().left() - 12;
+                    if (attackEffectAnim.scale.x != -1) {
+                        attackEffectAnim.scale.x = -1;
+                    }
+                    // mirror the collider horizontally
+                    var rect = attackCollider.rect();
+                    rect.x = -(rect.x + rect.w);
+                    attackCollider.rect(rect);
+                }
+            }
+
+            // end the attack
+            var duration = 0.38f;
+            if (attackTimer >= duration) {
+                if (attackEntity != null) {
+                    attackEntity.destroy();
+                    attackEntity = null;
+                    attackCollider = null;
+                    attackEffectAnim = null;
+                }
+
+                anim.play("idle");
+                state = State.normal;
+            }
+        }
+        // ----------------------------------------------------------
 
         // variable duration jumping
         if (jumpTimer > 0) {

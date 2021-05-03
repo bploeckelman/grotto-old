@@ -29,6 +29,10 @@ public class Point {
         this.y = y;
     }
 
+    public void set(Point other) {
+        set(other.x, other.y);
+    }
+
     public boolean is(int x, int y) {
         return (this.x == x && this.y == y);
     }

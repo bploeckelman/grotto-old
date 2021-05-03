@@ -13,6 +13,7 @@ public class Collider extends Component {
         public static final int solid  = 1 << 0;
         public static final int player = 1 << 1;
         public static final int enemy  = 1 << 2;
+        public static final int player_attack = 1 << 3;
     }
 
     public enum Shape { none, rect }
