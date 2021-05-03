@@ -38,7 +38,7 @@ public class CreatureFactory {
 
             var anim = entity.add(new Animator("slime", "idle"), Animator.class);
 
-            var bounds = RectI.at(-5, 0, 10, 10);
+            var bounds = RectI.at(-6, 0, 13, 12);
             var collider = entity.add(Collider.makeRect(bounds), Collider.class);
             collider.mask = Collider.Mask.enemy;
 
@@ -49,6 +49,18 @@ public class CreatureFactory {
             mover.onHitY = (self) -> {
                 anim.play("idle");
                 self.stopY();
+            };
+
+            var hurtable = entity.add(new Hurtable(), Hurtable.class);
+            hurtable.hurtBy = Collider.Mask.player_attack;
+            hurtable.collider = collider;
+            hurtable.onHurt = (self) -> {
+                var player = self.world().first(Player.class);
+                if (player != null) {
+                    var sign = Calc.sign(self.entity().position.x - player.entity().position.x);
+                    mover.speed.x = sign * 120;
+                    mover.speed.y = 20;
+                }
             };
 
             entity.add(new Timer(2f, (self) -> {

@@ -189,21 +189,25 @@ public class Player extends Component {
                     attackEffectAnim.mode = Animator.LoopMode.none;
                     attackEffectAnim.depth = 2;
                 }
-
-                if (onGround) {
-                    mover.stopX();
-                }
             }
         }
         // ----------------------------------------------------------
         else if (state == State.attack) {
-            anim.play("attack");
-            attackEffectAnim.play("attack-effect");
             attackTimer += dt;
+
+            // play the attack animation if we're not moving
+            anim.play((moveDir == 0) ? "attack" : "run");
+
+            // trigger the slash animation
+            attackEffectAnim.play("attack-effect");
+
+            // apply friction
+            if (moveDir == 0 && onGround) {
+                mover.speed.x = Calc.approach(mover.speed.x, 0, friction * dt);
+            }
 
             // setup collider based on what frame is currently activated in the attack animation
             // assumes right facing, if left facing it gets flips after
-
             if (attackTimer < 0.1f) {
                 attackCollider.rect(-6, 1, 12, 9);
             } else if (attackTimer < 0.2f) {
