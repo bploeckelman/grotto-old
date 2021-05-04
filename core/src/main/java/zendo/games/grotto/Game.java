@@ -95,7 +95,8 @@ public class Game extends ApplicationAdapter {
 
             if (Input.pressed(Input.Key.escape)) Gdx.app.exit();
             if (Input.pressed(Input.Key.f1)) DebugFlags.draw_entities = !DebugFlags.draw_entities;
-            if (Input.pressed(Input.Key.f2)) DebugFlags.draw_world_origin = !DebugFlags.draw_world_origin;
+            if (Input.pressed(Input.Key.f2)) DebugFlags.draw_anim_bounds = !DebugFlags.draw_anim_bounds;
+            if (Input.pressed(Input.Key.f3)) DebugFlags.draw_world_origin = !DebugFlags.draw_world_origin;
         }
 
         // handle a pause
@@ -210,6 +211,7 @@ public class Game extends ApplicationAdapter {
     public static class DebugFlags {
         public static boolean draw_world_origin = false;
         public static boolean draw_entities = false;
+        public static boolean draw_anim_bounds = false;
     }
 
 }
