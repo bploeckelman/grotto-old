@@ -72,7 +72,7 @@ public class Game extends ApplicationAdapter {
 
         CreatureFactory.stabby(world, Point.at(
                 (int) MathUtils.random((1f / 3f) * worldCamera.viewportWidth,  (2f / 3f) * worldCamera.viewportWidth),
-                (int) MathUtils.random((1f / 3f) * worldCamera.viewportHeight, (2f / 3f) * worldCamera.viewportHeight)
+                (int) MathUtils.random((2f / 3f) * worldCamera.viewportHeight, (3f / 4f) * worldCamera.viewportHeight)
         ));
     }
 
@@ -148,7 +148,7 @@ public class Game extends ApplicationAdapter {
 
                 // in-world ui ------------------
                 assets.layout.setText(assets.font, "Grotto", Color.WHITE, worldCamera.viewportWidth, Align.center, false);
-                assets.font.draw(batch, assets.layout, 0, (1f / 3f) * worldCamera.viewportHeight + assets.layout.height);
+                assets.font.draw(batch, assets.layout, 0, (3f / 4f) * worldCamera.viewportHeight + assets.layout.height);
             }
             batch.end();
 
@@ -203,7 +203,7 @@ public class Game extends ApplicationAdapter {
         {
             // render hud
             assets.layout.setText(assets.font, "Grotto", Color.WHITE, windowCamera.viewportWidth, Align.center, false);
-            assets.font.draw(batch, assets.layout, 0, (1f / 4f) * windowCamera.viewportHeight + assets.layout.height);
+            assets.font.draw(batch, assets.layout, 0, (2f / 3f) * windowCamera.viewportHeight + assets.layout.height);
         }
         batch.end();
     }
