@@ -13,10 +13,13 @@ import zendo.games.grotto.utils.Time;
 
 public class Player extends Component {
 
-    private enum State { normal, attack }
+    private enum State { normal, attack, hurt }
 
     private static final float gravity = -400;
     private static final float friction = 800;
+    private static final float hurt_friction = 200;
+    private static final float hurt_duration = 0.5f;
+    private static final float invincible_duration = 1.5f;
     private static final float jump_time = 0.18f;
     private static final float jump_impulse = 130;
     private static final float ground_accel = 500;
@@ -25,6 +28,8 @@ public class Player extends Component {
     private int facing = 1;
     private float jumpTimer;
     private float attackTimer;
+    private float hurtTimer;
+    private float invincibleTimer;
     private boolean onGround;
     private boolean canJump;
     private State state;
@@ -60,6 +65,9 @@ public class Player extends Component {
         onGround = false;
         canJump = false;
         jumpTimer = 0;
+        attackTimer = 0;
+        hurtTimer = 0;
+        invincibleTimer = 0;
         state = State.normal;
         stick = null;
         jumpButton = null;
@@ -259,6 +267,18 @@ public class Player extends Component {
             }
         }
         // ----------------------------------------------------------
+        else if (state == State.hurt) {
+            anim.mode = Animator.LoopMode.none;
+            anim.play("hurt");
+
+            hurtTimer -= dt;
+            if (hurtTimer <= 0) {
+                state = State.normal;
+                anim.mode = Animator.LoopMode.loop;
+            }
+
+            mover.speed.x = Calc.approach(mover.speed.x, 0, hurt_friction * dt);
+        }
 
         // variable duration jumping
         if (jumpTimer > 0) {
@@ -280,6 +300,45 @@ public class Player extends Component {
             }
 
             mover.speed.y += grav * dt;
+        }
+
+        // invincibility timer & flicker
+        if (state != State.hurt && invincibleTimer > 0) {
+            if (Time.on_interval(0.05f)) {
+                anim.visible = !anim.visible;
+            }
+
+            invincibleTimer -= dt;
+            if (invincibleTimer <= 0) {
+                anim.visible = true;
+            }
+        }
+
+        // hurt check
+        if (invincibleTimer <= 0) {
+            var collider = get(Collider.class);
+            var hitbox = collider.first(Collider.Mask.enemy);
+            if (hitbox != null) {
+                // kill an attack in progress
+                if (attackEntity != null) {
+                    attackEntity.destroy();
+                    attackEntity = null;
+                    attackCollider = null;
+                    attackEffectAnim = null;
+                }
+
+                // bounce back
+                mover.speed.set(-facing * 100, 80);
+
+                // todo - lose health
+
+                // initialize timers
+                hurtTimer = hurt_duration;
+                invincibleTimer = invincible_duration;
+
+                Time.pause_for(0.1f);
+                state = State.hurt;
+            }
         }
     }
 

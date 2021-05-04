@@ -15,6 +15,7 @@ public class Animator extends Component {
     public enum LoopMode { none, loop }
 
     public Vector2 scale;
+    // TODO - loop mode should be set on a per animation basis, not for entire animator
     public LoopMode mode;
     public float rotation;
     public float speed;

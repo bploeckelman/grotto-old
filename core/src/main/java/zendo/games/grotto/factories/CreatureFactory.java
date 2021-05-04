@@ -57,6 +57,10 @@ public class CreatureFactory {
             hurtable.onHurt = (self) -> {
                 var player = self.world().first(Player.class);
                 if (player != null) {
+                    anim.mode = Animator.LoopMode.none;
+                    anim.play("hurt");
+                    entity.add(new Timer(anim.duration(), (timer) -> anim.mode = Animator.LoopMode.loop), Timer.class);
+
                     var sign = Calc.sign(self.entity().position.x - player.entity().position.x);
                     mover.speed.x = sign * 120;
                     mover.speed.y = 20;
@@ -69,6 +73,7 @@ public class CreatureFactory {
                 } else {
                     anim.play("walk");
                     self.start(anim.duration());
+
                     mover.speed.y = 110;
 
                     var player = self.world().first(Player.class);

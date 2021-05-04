@@ -42,16 +42,17 @@ public class Hurtable extends Component {
 
         stunTimer -= dt;
 
-        if (flickerTimer > 0) {
-            if (Time.on_interval(0.05f)) {
-                entity.visible = !entity.visible;
-            }
-
-            flickerTimer -= dt;
-            if (flickerTimer <= 0) {
-                entity.visible = true;
-            }
-        }
+        // note - not sure about having a flicker
+//        if (flickerTimer > 0) {
+//            if (Time.on_interval(0.05f)) {
+//                entity.visible = !entity.visible;
+//            }
+//
+//            flickerTimer -= dt;
+//            if (flickerTimer <= 0) {
+//                entity.visible = true;
+//            }
+//        }
     }
 
 }

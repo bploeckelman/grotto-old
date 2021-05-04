@@ -79,20 +79,44 @@ public class Collider extends Component {
 
     // ------------------------------------------------------------------------
 
+    public Collider first(int mask) {
+        return first(mask, Point.zero());
+    }
+
+    public Collider first(int mask, Point offset) {
+        if (world() != null) {
+            var other = world().first(Collider.class);
+            while (other != null) {
+                var isDifferent = (other != this);
+                var isMasked = ((other.mask & mask) == mask);
+                var isOverlap = overlaps(other, offset);
+                if (isDifferent && isMasked && isOverlap) {
+                    return other;
+                }
+                other = (Collider) other.next;
+            }
+        }
+        return null;
+    }
+
+    // ------------------------------------------------------------------------
+
     public boolean check(int mask) {
         return check(mask, Point.zero());
     }
 
     public boolean check(int mask, Point offset) {
-        var other = world().first(Collider.class);
-        while (other != null) {
-            var isDifferent = (other != this);
-            var isMasked = ((other.mask & mask) == mask);
-            var isOverlap = overlaps(other, offset);
-            if (isDifferent && isMasked && isOverlap) {
-                return true;
+        if (world() != null) {
+            var other = world().first(Collider.class);
+            while (other != null) {
+                var isDifferent = (other != this);
+                var isMasked = ((other.mask & mask) == mask);
+                var isOverlap = overlaps(other, offset);
+                if (isDifferent && isMasked && isOverlap) {
+                    return true;
+                }
+                other = (Collider) other.next;
             }
-            other = (Collider) other.next;
         }
         return false;
     }
