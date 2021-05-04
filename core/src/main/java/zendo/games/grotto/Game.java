@@ -97,6 +97,11 @@ public class Game extends ApplicationAdapter {
             if (Input.pressed(Input.Key.f1)) DebugFlags.draw_entities = !DebugFlags.draw_entities;
             if (Input.pressed(Input.Key.f2)) DebugFlags.draw_anim_bounds = !DebugFlags.draw_anim_bounds;
             if (Input.pressed(Input.Key.f3)) DebugFlags.draw_world_origin = !DebugFlags.draw_world_origin;
+
+            if (Input.pressed(Input.Key.f6)) DebugFlags.frame_stepping_enabled = !DebugFlags.frame_stepping_enabled;
+            if (DebugFlags.frame_stepping_enabled && !Input.pressed(Input.Key.f7)) {
+                return;
+            }
         }
 
         // handle a pause
@@ -212,6 +217,7 @@ public class Game extends ApplicationAdapter {
         public static boolean draw_world_origin = false;
         public static boolean draw_entities = false;
         public static boolean draw_anim_bounds = false;
+        public static boolean frame_stepping_enabled = false;
     }
 
 }
