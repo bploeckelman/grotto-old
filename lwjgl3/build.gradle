@@ -16,6 +16,7 @@ dependencies {
 //	Could not find com.badlogicgames.gdx:gdx-jnigen-loader:2.0.0-SNAPSHOT.
 //			Required by:
 //			project :lwjgl3 > de.golfgl.gdxcontrollerutils:gdx-controllers-jamepad:2.2.1 > com.github.MrStahlfelge:Jamepad:2.0.12.1
+	api "com.badlogicgames.gdx:gdx-tools:$gdxVersion"
 }
 
 import org.gradle.internal.os.OperatingSystem

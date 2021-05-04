@@ -16,7 +16,6 @@ import zendo.games.grotto.factories.WorldFactory;
 import zendo.games.grotto.input.Input;
 import zendo.games.grotto.utils.Calc;
 import zendo.games.grotto.utils.Point;
-import zendo.games.grotto.utils.RectI;
 import zendo.games.grotto.utils.Time;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
@@ -65,11 +64,9 @@ public class Game extends ApplicationAdapter {
 
         world = new World();
 
-        WorldFactory.boundary(world, RectI.at(0, 0, (int) worldCamera.viewportWidth, 2));
-        WorldFactory.boundary(world, RectI.at(0, 0, 2, (int) worldCamera.viewportHeight));
-        WorldFactory.boundary(world, RectI.at(160, 0, 2, (int) worldCamera.viewportHeight));
+        WorldFactory.tilemap(assets, world);
 
-        CreatureFactory.player(world, Point.at((int) worldCamera.viewportWidth / 2, 10));
+        CreatureFactory.player(world, Point.at((int) worldCamera.viewportWidth / 2, 100));
 
         CreatureFactory.slime(world, Point.at((int) worldCamera.viewportWidth / 2 + 32, 100));
 

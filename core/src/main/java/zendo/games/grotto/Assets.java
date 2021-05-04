@@ -7,10 +7,7 @@ import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.GlyphLayout;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
@@ -29,6 +26,8 @@ public class Assets extends Content implements Disposable {
     public ShapeRenderer shapes;
 
     public Texture pixel;
+    public TextureAtlas atlas;
+    public TextureRegion[][] tilesetRegions;
 
     public Assets() {
         tween = new TweenManager();
@@ -64,6 +63,11 @@ public class Assets extends Content implements Disposable {
 
         pixel = new Texture("images/pixel.png");
 
+        // load raw sprites from an atlas (see gradle lwjgl3:pack_rawsprites)
+        atlas = new TextureAtlas("atlas/sprites.atlas");
+
+        tilesetRegions = atlas.findRegion("tileset").split(16, 16);
+
         // load aseprite sprites from an atlas and json definitions
         TextureAtlas aseAtlas = new TextureAtlas("atlas/aseprites.atlas");
         FileHandle spritesDir = Gdx.files.internal("sprites");
@@ -79,6 +83,7 @@ public class Assets extends Content implements Disposable {
         font.dispose();
         batch.dispose();
         shapes.dispose();
+        atlas.dispose();
     }
 
 }
