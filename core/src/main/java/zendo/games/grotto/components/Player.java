@@ -51,6 +51,7 @@ public class Player extends Component {
                 .addKey(Input.Key.control_left)
                 .addKey(Input.Key.f)
                 .pressBuffer(0.15f);
+        canJump = true;
     }
 
     @Override
