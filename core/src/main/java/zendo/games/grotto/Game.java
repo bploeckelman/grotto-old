@@ -38,6 +38,7 @@ public class Game extends ApplicationAdapter {
     private World world;
     private Entity player;
     private Entity slime;
+    private Entity goblin;
 
     @Override
     public void create() {
@@ -73,6 +74,7 @@ public class Game extends ApplicationAdapter {
         player = CreatureFactory.player(world, Point.at((int) worldCamera.viewportWidth / 2, 100));
 
         slime = CreatureFactory.slime(world, Point.at((int) worldCamera.viewportWidth / 2 + 32, 100));
+        goblin = CreatureFactory.goblin(world, Point.at((int) worldCamera.viewportWidth / 4 + 32, 120));
 
         CreatureFactory.stabby(world, Point.at(
                 (int) MathUtils.random((1f / 3f) * worldCamera.viewportWidth,  (2f / 3f) * worldCamera.viewportWidth),
@@ -80,7 +82,9 @@ public class Game extends ApplicationAdapter {
         ));
 
         var camController = world.addEntity().add(new CameraController(worldCamera), CameraController.class);
-        camController.setTarget(player, true);
+        // todo - lock to level bounds, disable for now
+        camController.active = false;
+//        camController.setTarget(player, true);
     }
 
     @Override
@@ -114,6 +118,8 @@ public class Game extends ApplicationAdapter {
                     if (camController.entity == player) {
                         camController.entity = slime;
                     } else if (camController.entity == slime) {
+                        camController.entity = goblin;
+                    } else if (camController.entity == goblin) {
                         camController.entity = player;
                     }
                 }

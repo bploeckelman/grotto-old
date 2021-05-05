@@ -74,14 +74,86 @@ public class CreatureFactory {
                     anim.play("walk");
                     self.start(anim.duration());
 
-                    mover.speed.y = 110;
+                    mover.speed.y = 120;
 
                     var player = self.world().first(Player.class);
                     if (player != null) {
                         var dir = Calc.sign(player.entity().position.x - self.entity().position.x);
                         if (dir == 0) dir = 1;
                         anim.scale.set(dir, 1);
-                        mover.speed.x = dir * 80;
+                        mover.speed.x = dir * 50;
+                    }
+                }
+            }), Timer.class);
+
+            entity.position.set(
+                    (int) (position.x - anim.sprite().origin.x),
+                    (int) (position.y - anim.sprite().origin.y));
+        }
+        return entity;
+    }
+
+    public static Entity goblin(World world, Point position) {
+        var entity = world.addEntity();
+        {
+            entity.add(new Enemy(), Enemy.class);
+
+            var anim = entity.add(new Animator("goblin", "idle"), Animator.class);
+
+            var bounds = RectI.at(-4, 0, 12, 12);
+            var collider = entity.add(Collider.makeRect(bounds), Collider.class);
+            collider.mask = Collider.Mask.enemy;
+
+            var mover = entity.add(new Mover(), Mover.class);
+            mover.collider = collider;
+            mover.gravity = -300;
+            mover.friction = 300;
+            mover.onHitY = (self) -> {
+                anim.play("idle");
+                self.stopY();
+            };
+
+            var hurtable = entity.add(new Hurtable(), Hurtable.class);
+            hurtable.hurtBy = Collider.Mask.player_attack;
+            hurtable.collider = collider;
+            hurtable.onHurt = (self) -> {
+                var player = self.world().first(Player.class);
+                if (player != null) {
+                    anim.mode = Animator.LoopMode.none;
+                    anim.play("hurt");
+                    entity.add(new Timer(anim.duration(), (timer) -> anim.mode = Animator.LoopMode.loop), Timer.class);
+
+                    var sign = Calc.sign(self.entity().position.x - player.entity().position.x);
+                    mover.speed.x = sign * 180;
+                    mover.speed.y = 80;
+                }
+            };
+
+            entity.add(new Timer(2f, (self) -> {
+                if (!mover.onGround()) {
+                    self.start(0.05f);
+                } else {
+                    var player = self.world().first(Player.class);
+                    if (player != null) {
+                        // get distance to player
+                        var dist = player.entity().position.x - self.entity().position.x;
+
+                        // set facing direction
+                        var dir = Calc.sign(dist);
+                        if (dir == 0) dir = 1;
+                        anim.scale.set(dir, 1);
+
+                        // if we're close enough; lunge attack, otherwise just move
+                        var close = Calc.abs(dist) < 50;
+                        if (close) {
+                            anim.play("attack");
+                            self.start(anim.duration());
+                            mover.speed.x = dir * 140;
+                        } else {
+                            anim.play("run");
+                            self.start(anim.duration());
+                            mover.speed.x = dir * 80;
+                        }
                     }
                 }
             }), Timer.class);
