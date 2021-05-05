@@ -145,6 +145,12 @@ public class Game extends ApplicationAdapter {
         {
             assets.tween.update(Time.delta);
             world.update(Time.delta);
+
+            // respawn if both enemies are dead
+            if (slime.world == null && goblin.world == null) {
+                slime  = CreatureFactory.slime(world, Point.at((int) worldCamera.viewportWidth  / 2 + 32, 100));
+                goblin = CreatureFactory.goblin(world, Point.at((int) worldCamera.viewportWidth / 4 + 32, 120));
+            }
         }
     }
 

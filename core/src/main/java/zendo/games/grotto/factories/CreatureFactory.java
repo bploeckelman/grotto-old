@@ -51,33 +51,17 @@ public class CreatureFactory {
                 self.stopY();
             };
 
-            var hurtable = entity.add(new Hurtable(), Hurtable.class);
-            hurtable.hurtBy = Collider.Mask.player_attack;
-            hurtable.collider = collider;
-            hurtable.onHurt = (self) -> {
-                var player = self.world().first(Player.class);
-                if (player != null) {
-                    anim.mode = Animator.LoopMode.none;
-                    anim.play("hurt");
-                    entity.add(new Timer(anim.duration(), (timer) -> anim.mode = Animator.LoopMode.loop), Timer.class);
-
-                    var sign = Calc.sign(self.entity().position.x - player.entity().position.x);
-                    mover.speed.x = sign * 120;
-                    mover.speed.y = 20;
-                }
-            };
-
-            entity.add(new Timer(2f, (self) -> {
+            Timer moveTimer = entity.add(new Timer(2f, (self) -> {
                 if (!mover.onGround()) {
                     self.start(0.05f);
                 } else {
-                    anim.play("walk");
-                    self.start(anim.duration());
-
-                    mover.speed.y = 120;
-
                     var player = self.world().first(Player.class);
                     if (player != null) {
+                        anim.play("walk");
+                        self.start(anim.duration());
+
+                        mover.speed.y = 120;
+
                         var dir = Calc.sign(player.entity().position.x - self.entity().position.x);
                         if (dir == 0) dir = 1;
                         anim.scale.set(dir, 1);
@@ -85,6 +69,45 @@ public class CreatureFactory {
                     }
                 }
             }), Timer.class);
+
+            var hurtable = entity.add(new Hurtable(), Hurtable.class);
+            hurtable.hurtBy = Collider.Mask.player_attack;
+            hurtable.collider = collider;
+            hurtable.onHurt = new Hurtable.OnHurt() {
+                int health = 3;
+                @Override
+                public void hurt(Hurtable self) {
+                    var player = self.world().first(Player.class);
+                    if (player != null) {
+                        health -= 1;
+
+                        if (health > 0) {
+                            anim.mode = Animator.LoopMode.none;
+                            anim.play("hurt");
+                            entity.add(new Timer(anim.duration(), (timer) -> anim.mode = Animator.LoopMode.loop), Timer.class);
+
+                            var sign = Calc.sign(self.entity().position.x - player.entity().position.x);
+                            mover.speed.x = sign * 120;
+                            mover.speed.y = 20;
+                        } else {
+                            anim.mode = Animator.LoopMode.none;
+                            anim.play("hurt");
+
+                            // self destruct after playing death animation
+                            entity.add(new Timer(anim.duration(), (timer) -> {
+                                anim.play("death");
+                                entity.add(new Timer(anim.duration(), (timer1) -> entity.destroy()), Timer.class);
+                            }), Timer.class);
+
+                            // disable some components that would interfere with the death animation
+                            // todo - if hurt/death animations were a spawned effect rather than attached to this entity this wouldn't be a problem
+                            hurtable.collider = null;
+                            moveTimer.destroy();
+                            mover.stop();
+                        }
+                    }
+                }
+            };
 
             entity.position.set(
                     (int) (position.x - anim.sprite().origin.x),
@@ -113,23 +136,7 @@ public class CreatureFactory {
                 self.stopY();
             };
 
-            var hurtable = entity.add(new Hurtable(), Hurtable.class);
-            hurtable.hurtBy = Collider.Mask.player_attack;
-            hurtable.collider = collider;
-            hurtable.onHurt = (self) -> {
-                var player = self.world().first(Player.class);
-                if (player != null) {
-                    anim.mode = Animator.LoopMode.none;
-                    anim.play("hurt");
-                    entity.add(new Timer(anim.duration(), (timer) -> anim.mode = Animator.LoopMode.loop), Timer.class);
-
-                    var sign = Calc.sign(self.entity().position.x - player.entity().position.x);
-                    mover.speed.x = sign * 180;
-                    mover.speed.y = 80;
-                }
-            };
-
-            entity.add(new Timer(2f, (self) -> {
+            var moveTimer = entity.add(new Timer(2f, (self) -> {
                 if (!mover.onGround()) {
                     self.start(0.05f);
                 } else {
@@ -157,6 +164,45 @@ public class CreatureFactory {
                     }
                 }
             }), Timer.class);
+
+            var hurtable = entity.add(new Hurtable(), Hurtable.class);
+            hurtable.hurtBy = Collider.Mask.player_attack;
+            hurtable.collider = collider;
+            hurtable.onHurt = new Hurtable.OnHurt() {
+                int health = 5;
+                @Override
+                public void hurt(Hurtable self) {
+                    health--;
+
+                    if (health > 0) {
+                        var player = self.world().first(Player.class);
+                        if (player != null) {
+                            anim.mode = Animator.LoopMode.none;
+                            anim.play("hurt");
+                            entity.add(new Timer(anim.duration(), (timer) -> anim.mode = Animator.LoopMode.loop), Timer.class);
+
+                            var sign = Calc.sign(self.entity().position.x - player.entity().position.x);
+                            mover.speed.x = sign * 150;
+                            mover.speed.y = 80;
+                        }
+                    } else {
+                        anim.mode = Animator.LoopMode.none;
+                        anim.play("hurt");
+
+                        // self destruct after playing death animation
+                        entity.add(new Timer(anim.duration(), (timer) -> {
+                            anim.play("death");
+                            entity.add(new Timer(anim.duration(), (timer1) -> entity.destroy()), Timer.class);
+                        }), Timer.class);
+
+                        // disable some components that would interfere with the death animation
+                        // todo - if hurt/death animations were a spawned effect rather than attached to this entity this wouldn't be a problem
+                        hurtable.collider = null;
+                        moveTimer.destroy();
+                        mover.stop();
+                    }
+                }
+            };
 
             entity.position.set(
                     (int) (position.x - anim.sprite().origin.x),
