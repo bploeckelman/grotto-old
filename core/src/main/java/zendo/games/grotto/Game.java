@@ -10,6 +10,8 @@ import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Align;
+import zendo.games.grotto.components.CameraController;
+import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
 import zendo.games.grotto.factories.CreatureFactory;
 import zendo.games.grotto.factories.WorldFactory;
@@ -34,6 +36,8 @@ public class Game extends ApplicationAdapter {
     private TextureRegion frameBufferRegion;
 
     private World world;
+    private Entity player;
+    private Entity slime;
 
     @Override
     public void create() {
@@ -66,14 +70,17 @@ public class Game extends ApplicationAdapter {
 
         WorldFactory.tilemap(assets, world);
 
-        CreatureFactory.player(world, Point.at((int) worldCamera.viewportWidth / 2, 100));
+        player = CreatureFactory.player(world, Point.at((int) worldCamera.viewportWidth / 2, 100));
 
-        CreatureFactory.slime(world, Point.at((int) worldCamera.viewportWidth / 2 + 32, 100));
+        slime = CreatureFactory.slime(world, Point.at((int) worldCamera.viewportWidth / 2 + 32, 100));
 
         CreatureFactory.stabby(world, Point.at(
                 (int) MathUtils.random((1f / 3f) * worldCamera.viewportWidth,  (2f / 3f) * worldCamera.viewportWidth),
                 (int) MathUtils.random((2f / 3f) * worldCamera.viewportHeight, (3f / 4f) * worldCamera.viewportHeight)
         ));
+
+        var camController = world.addEntity().add(new CameraController(worldCamera), CameraController.class);
+        camController.setTarget(player, true);
     }
 
     @Override
@@ -98,6 +105,18 @@ public class Game extends ApplicationAdapter {
             if (Input.pressed(Input.Key.f6)) DebugFlags.frame_stepping_enabled = !DebugFlags.frame_stepping_enabled;
             if (DebugFlags.frame_stepping_enabled && !Input.pressed(Input.Key.f7)) {
                 return;
+            }
+
+            // test switching camera controller target entity
+            if (Input.pressed(0, Input.Button.y)) {
+                var camController = world.first(CameraController.class);
+                if (camController.mode() == CameraController.TargetMode.entity) {
+                    if (camController.entity == player) {
+                        camController.entity = slime;
+                    } else if (camController.entity == slime) {
+                        camController.entity = player;
+                    }
+                }
             }
         }
 
