@@ -13,6 +13,7 @@ import com.badlogic.gdx.utils.Align;
 import zendo.games.grotto.components.CameraController;
 import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
+import zendo.games.grotto.editor.Level;
 import zendo.games.grotto.factories.CreatureFactory;
 import zendo.games.grotto.factories.WorldFactory;
 import zendo.games.grotto.input.Input;
@@ -39,6 +40,8 @@ public class Game extends ApplicationAdapter {
     private Entity player;
     private Entity slime;
     private Entity goblin;
+
+    private Level level;
 
     @Override
     public void create() {
@@ -69,7 +72,8 @@ public class Game extends ApplicationAdapter {
 
         world = new World();
 
-        WorldFactory.tilemap(assets, world);
+//        WorldFactory.tilemap(assets, world);
+        level = new Level(world, assets, "levels/test.json");
 
         player = CreatureFactory.player(world, Point.at((int) worldCamera.viewportWidth / 2, 100));
 

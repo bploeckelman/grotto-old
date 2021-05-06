@@ -66,6 +66,13 @@ public class Tilemap extends Component {
         }
     }
 
+    public TextureRegion getCell(int x, int y) {
+        if (x < 0 || y < 0 || x >= cols || y >= rows) {
+            throw new GdxRuntimeException("Tilemap indices out of bounds");
+        }
+        return grid[x + y * cols];
+    }
+
     @Override
     public void render(SpriteBatch batch) {
         for (int x = 0; x < cols; x++) {
