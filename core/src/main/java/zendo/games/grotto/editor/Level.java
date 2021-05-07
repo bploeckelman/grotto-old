@@ -25,7 +25,7 @@ public class Level {
         public Point[] tilemapCellTextures;
     }
 
-    private Entity entity;
+    public Entity entity;
 
     public Level(World world, Assets assets, String filename) {
         load(world, assets, filename);

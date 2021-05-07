@@ -5,6 +5,7 @@ import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.controllers.Controller;
 import com.badlogic.gdx.controllers.ControllerListener;
 import com.badlogic.gdx.controllers.Controllers;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Array;
 import zendo.games.grotto.utils.Point;
 import zendo.games.grotto.utils.Time;
@@ -52,7 +53,7 @@ public class Input extends InputAdapter implements ControllerListener {
 
         Point wheel = Point.zero();
 
-        // todo - position
+        Vector2 position = new Vector2();
 
         public void set(MouseState other) {
             for (int i = 0; i < max_mouse_buttons; i++) {
@@ -62,6 +63,7 @@ public class Input extends InputAdapter implements ControllerListener {
                 this.timestamp[i] = other.timestamp[i];
             }
             this.wheel.set(other.wheel.x, other.wheel.y);
+            this.position.set(other.position);
         }
     }
 
@@ -451,6 +453,7 @@ public class Input extends InputAdapter implements ControllerListener {
                 nextState.mouse.released[i] = false;
             }
             nextState.mouse.wheel.set(0, 0);
+            nextState.mouse.position.set(Gdx.input.getX(), Gdx.input.getY());
 
             for (int i = 0; i < max_controllers; i++) {
                 ControllerState controller = nextState.controllers[i];
@@ -524,10 +527,11 @@ public class Input extends InputAdapter implements ControllerListener {
 //        return super.touchDragged(screenX, screenY, pointer);
 //    }
 
-//    @Override
-//    public boolean mouseMoved(int screenX, int screenY) {
-//        return super.mouseMoved(screenX, screenY);
-//    }
+    @Override
+    public boolean mouseMoved(int screenX, int screenY) {
+        nextState.mouse.position.set(screenX, screenY);
+        return true;
+    }
 
     @Override
     public boolean scrolled(float amountX, float amountY) {
@@ -640,6 +644,10 @@ public class Input extends InputAdapter implements ControllerListener {
 
     public static Point mouseWheel() {
         return currState.mouse.wheel;
+    }
+
+    public static Vector2 mouse() {
+        return currState.mouse.position;
     }
 
     // ----------------------------------------------------

@@ -8,14 +8,14 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Align;
 import zendo.games.grotto.components.CameraController;
+import zendo.games.grotto.components.Enemy;
 import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
 import zendo.games.grotto.editor.Level;
 import zendo.games.grotto.factories.CreatureFactory;
-import zendo.games.grotto.factories.WorldFactory;
 import zendo.games.grotto.input.Input;
 import zendo.games.grotto.utils.Calc;
 import zendo.games.grotto.utils.Point;
@@ -42,6 +42,10 @@ public class Game extends ApplicationAdapter {
     private Entity goblin;
 
     private Level level;
+    private Mode mode;
+    private enum Mode {play, edit}
+    private Vector3 worldMouse;
+    private Point lastMousePressed;
 
     @Override
     public void create() {
@@ -72,7 +76,6 @@ public class Game extends ApplicationAdapter {
 
         world = new World();
 
-//        WorldFactory.tilemap(assets, world);
         level = new Level(world, assets, "levels/test.json");
 
         player = CreatureFactory.player(world, Point.at((int) worldCamera.viewportWidth / 2, 100));
@@ -80,15 +83,14 @@ public class Game extends ApplicationAdapter {
         slime = CreatureFactory.slime(world, Point.at((int) worldCamera.viewportWidth / 2 + 32, 100));
         goblin = CreatureFactory.goblin(world, Point.at((int) worldCamera.viewportWidth / 4 + 32, 120));
 
-        CreatureFactory.stabby(world, Point.at(
-                (int) MathUtils.random((1f / 3f) * worldCamera.viewportWidth,  (2f / 3f) * worldCamera.viewportWidth),
-                (int) MathUtils.random((2f / 3f) * worldCamera.viewportHeight, (3f / 4f) * worldCamera.viewportHeight)
-        ));
-
         var camController = world.addEntity().add(new CameraController(worldCamera), CameraController.class);
         // todo - lock to level bounds, disable for now
         camController.active = false;
 //        camController.setTarget(player, true);
+
+        mode = Mode.play;
+        worldMouse = new Vector3();
+        lastMousePressed = Point.zero();
     }
 
     @Override
@@ -101,9 +103,87 @@ public class Game extends ApplicationAdapter {
         // update global timer
         Time.delta = Calc.min(1 / 30f, Gdx.graphics.getDeltaTime());
 
+        worldCamera.unproject(worldMouse.set(Input.mouse().x, Input.mouse().y, 0));
+
+        // update based on mode
+        switch (mode) {
+            case play -> updatePlayMode(Time.delta);
+            case edit -> updateEditMode(Time.delta);
+        }
+    }
+
+    private void toggleMode() {
+        if      (mode == Mode.play) mode = Mode.edit;
+        else if (mode == Mode.edit) mode = Mode.play;
+
+        if (player != null) {
+            player.active = !player.active;
+        }
+        var enemy = world.first(Enemy.class);
+        while (enemy != null) {
+            enemy.entity().active = !enemy.entity().active;
+            enemy = (Enemy) enemy.next;
+        }
+    }
+
+    static class LevelEdit {
+        boolean mousePressed = false;
+        Point lastPress = Point.zero();
+        Point mouseDelta = Point.zero();
+        Point startPos = Point.zero();
+    }
+    private LevelEdit edit = new LevelEdit();
+
+    private void updateEditMode(float dt) {
         // process input
         {
             Input.frame();
+
+            if (Input.pressed(Input.Key.tab)) {
+                toggleMode();
+            }
+
+            if (Input.pressed(Input.Key.escape)) {
+                Gdx.app.exit();
+            }
+
+            if (Input.pressed(Input.MouseButton.left)) {
+                edit.mousePressed = true;
+                edit.lastPress.set((int) worldMouse.x, (int) worldMouse.y);
+                edit.startPos.set(level.entity.position);
+            }
+            if (Input.released(Input.MouseButton.left)) {
+                edit.mousePressed = false;
+                edit.lastPress.set(0, 0);
+            }
+
+            if (edit.mousePressed) {
+                edit.mouseDelta.set((int) worldMouse.x - edit.lastPress.x, (int) worldMouse.y - edit.lastPress.y);
+                level.entity.position.set(edit.startPos.x + edit.mouseDelta.x, edit.startPos.y + edit.mouseDelta.y);
+            }
+        }
+
+        // update timer
+        {
+            Time.millis += Time.delta;
+            Time.previous_elapsed = Time.elapsed_millis();
+        }
+
+        // update systems
+        {
+            assets.tween.update(Time.delta);
+            world.update(Time.delta);
+        }
+    }
+
+    private void updatePlayMode(float dt) {
+        // process input
+        {
+            Input.frame();
+
+            if (Input.pressed(Input.Key.tab)) {
+                toggleMode();
+            }
 
             if (Input.pressed(Input.Key.escape)) Gdx.app.exit();
             if (Input.pressed(Input.Key.f1)) DebugFlags.draw_entities = !DebugFlags.draw_entities;
@@ -152,7 +232,7 @@ public class Game extends ApplicationAdapter {
 
             // respawn if both enemies are dead
             if (slime.world == null && goblin.world == null) {
-                slime  = CreatureFactory.slime(world, Point.at((int) worldCamera.viewportWidth  / 2 + 32, 100));
+                slime = CreatureFactory.slime(world, Point.at((int) worldCamera.viewportWidth / 2 + 32, 100));
                 goblin = CreatureFactory.goblin(world, Point.at((int) worldCamera.viewportWidth / 4 + 32, 120));
             }
         }
@@ -233,12 +313,33 @@ public class Game extends ApplicationAdapter {
     }
 
     private void renderWindowOverlay() {
+        // render hud
         batch.setProjectionMatrix(windowCamera.combined);
         batch.begin();
         {
-            // render hud
-            assets.layout.setText(assets.font, "Grotto", Color.WHITE, windowCamera.viewportWidth, Align.center, false);
-            assets.font.draw(batch, assets.layout, 0, (2f / 3f) * windowCamera.viewportHeight + assets.layout.height);
+            var margin = 10;
+            var lineSpace = 2;
+
+            // current mode
+            var color = (mode == Mode.play) ? Color.LIME : Color.GOLDENROD;
+            var modeStr = mode.toString().toUpperCase();
+            assets.layout.setText(assets.font, modeStr, color, windowCamera.viewportWidth, Align.left, false);
+            assets.font.draw(batch, assets.layout, margin, windowCamera.viewportHeight - margin);
+            var modeHeight = assets.layout.height;
+
+            // mouse pos
+            if (mode == Mode.edit) {
+                color = Color.WHITE;
+                var mouseStr = String.format("SCREEN (%.0f,%.0f)", Input.mouse().x, Input.mouse().y);
+                assets.layout.setText(assets.font, mouseStr, color, windowCamera.viewportWidth, Align.left, false);
+                assets.font.draw(batch, assets.layout, margin, windowCamera.viewportHeight - margin - modeHeight - lineSpace);
+                var screenMouseHeight = assets.layout.height;
+
+                color = Color.WHITE;
+                var worldMouseStr = String.format("WORLD (%.0f,%.0f)", worldMouse.x, worldMouse.y);
+                assets.layout.setText(assets.font, worldMouseStr, color, windowCamera.viewportWidth, Align.left, false);
+                assets.font.draw(batch, assets.layout, margin, windowCamera.viewportHeight - margin - modeHeight - lineSpace - screenMouseHeight - lineSpace);
+            }
         }
         batch.end();
     }
