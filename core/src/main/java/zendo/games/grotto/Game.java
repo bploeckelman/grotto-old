@@ -119,6 +119,13 @@ public class Game extends ApplicationAdapter {
 
         DebugFlags.draw_world_origin = (mode == Mode.edit);
 
+        if (mode == Mode.edit) {
+            edit.lastZoom = worldCamera.zoom;
+        } else {
+            worldCamera.zoom = edit.lastZoom;
+            worldCamera.update();
+        }
+
         if (player != null) {
             player.active = !player.active;
         }
@@ -135,6 +142,7 @@ public class Game extends ApplicationAdapter {
         Point lastPress = Point.zero();
         Point mouseDelta = Point.zero();
         Point startPos = Point.zero();
+        float lastZoom = 0;
     }
     private LevelEdit edit = new LevelEdit();
 
@@ -151,10 +159,16 @@ public class Game extends ApplicationAdapter {
                 Gdx.app.exit();
             }
 
+            if (Input.mouseWheel().y != 0) {
+                var speed = 2f;
+                worldCamera.zoom += Input.mouseWheel().y * speed * dt;
+                worldCamera.update();
+            }
+
             if (Input.pressed(Input.MouseButton.left)) {
                 edit.leftMousePressed = true;
-                edit.lastPress.set((int) worldMouse.x, (int) worldMouse.y);
-                edit.startPos.set(level.entity.position);
+                edit.lastPress.set((int) Input.mouse().x, (int) Input.mouse().y);
+                edit.startPos.set((int) worldCamera.position.x, (int) worldCamera.position.y);
             }
             if (Input.released(Input.MouseButton.left)) {
                 edit.leftMousePressed = false;
@@ -163,8 +177,8 @@ public class Game extends ApplicationAdapter {
 
             if (Input.pressed(Input.MouseButton.right)) {
                 edit.rightMousePressed = true;
-                edit.lastPress.set((int) Input.mouse().x, (int) Input.mouse().y);
-                edit.startPos.set((int) worldCamera.position.x, (int) worldCamera.position.y);
+                edit.lastPress.set((int) worldMouse.x, (int) worldMouse.y);
+                edit.startPos.set(level.entity.position);
             }
             if (Input.released(Input.MouseButton.right)) {
                 edit.rightMousePressed = false;
@@ -172,13 +186,13 @@ public class Game extends ApplicationAdapter {
             }
 
             if (edit.leftMousePressed) {
-                edit.mouseDelta.set((int) worldMouse.x - edit.lastPress.x, (int) worldMouse.y - edit.lastPress.y);
-                level.entity.position.set(edit.startPos.x + edit.mouseDelta.x, edit.startPos.y + edit.mouseDelta.y);
-            }
-            else if (edit.rightMousePressed) {
                 edit.mouseDelta.set((int) Input.mouse().x - edit.lastPress.x, (int) Input.mouse().y - edit.lastPress.y);
                 worldCamera.translate(-edit.mouseDelta.x * dt, edit.mouseDelta.y * dt, 0);
                 worldCamera.update();
+            }
+            else if (edit.rightMousePressed) {
+                edit.mouseDelta.set((int) worldMouse.x - edit.lastPress.x, (int) worldMouse.y - edit.lastPress.y);
+                level.entity.position.set(edit.startPos.x + edit.mouseDelta.x, edit.startPos.y + edit.mouseDelta.y);
             }
         }
 
@@ -336,28 +350,41 @@ public class Game extends ApplicationAdapter {
         batch.setProjectionMatrix(windowCamera.combined);
         batch.begin();
         {
-            var margin = 10;
-            var lineSpace = 2;
+            var panelWidth = 200;
 
-            // current mode
-            var color = (mode == Mode.play) ? Color.LIME : Color.GOLDENROD;
-            var modeStr = mode.toString().toUpperCase();
-            assets.layout.setText(assets.font, modeStr, color, windowCamera.viewportWidth, Align.left, false);
-            assets.font.draw(batch, assets.layout, margin, windowCamera.viewportHeight - margin);
-            var modeHeight = assets.layout.height;
+            // draw control panel
+            if (mode == Mode.edit) {
+                batch.setColor(0.2f, 0.2f, 0.2f, 0.6f);
+                batch.draw(assets.pixel, 0, 0, panelWidth, windowCamera.viewportHeight);
+                batch.setColor(Color.WHITE);
+            }
+
+            var margin = 10;
 
             // mouse pos
             if (mode == Mode.edit) {
-                color = Color.WHITE;
-                var mouseStr = String.format("SCREEN (%.0f,%.0f)", Input.mouse().x, Input.mouse().y);
-                assets.layout.setText(assets.font, mouseStr, color, windowCamera.viewportWidth, Align.left, false);
-                assets.font.draw(batch, assets.layout, margin, windowCamera.viewportHeight - margin - modeHeight - lineSpace);
-                var screenMouseHeight = assets.layout.height;
+                var color = Color.WHITE;
 
-                color = Color.WHITE;
-                var worldMouseStr = String.format("WORLD (%.0f,%.0f)", worldMouse.x, worldMouse.y);
-                assets.layout.setText(assets.font, worldMouseStr, color, windowCamera.viewportWidth, Align.left, false);
-                assets.font.draw(batch, assets.layout, margin, windowCamera.viewportHeight - margin - modeHeight - lineSpace - screenMouseHeight - lineSpace);
+                var mouseStr = String.format("SCREEN:\n\n(%4.0f,%3.0f)", Input.mouse().x, Input.mouse().y);
+                assets.font.getData().setScale(0.9f);
+                {
+                    assets.layout.setText(assets.font, mouseStr, color, panelWidth, Align.left, false);
+                    assets.font.draw(batch, assets.layout, margin, windowCamera.viewportHeight - margin);
+                }
+                var screenMouseHeight = assets.layout.height;
+                assets.font.getData().setScale(1f);
+
+                var worldMouseStr = String.format("WORLD:\n\n(%3.0f,%3.0f)", worldMouse.x, worldMouse.y);
+                assets.layout.setText(assets.font, worldMouseStr, color, panelWidth, Align.left, false);
+                assets.font.draw(batch, assets.layout, margin, windowCamera.viewportHeight - margin - screenMouseHeight - margin);
+            }
+
+            // current mode
+            {
+                var color = (mode == Mode.play) ? Color.LIME : Color.GOLDENROD;
+                var modeStr = mode.toString().toUpperCase();
+                assets.layout.setText(assets.font, modeStr, color, windowCamera.viewportWidth, Align.center, false);
+                assets.font.draw(batch, assets.layout, margin, windowCamera.viewportHeight - margin);
             }
         }
         batch.end();
