@@ -6,6 +6,7 @@ import com.badlogic.gdx.controllers.Controllers;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.g3d.utils.DefaultTextureBinder;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
@@ -116,6 +117,8 @@ public class Game extends ApplicationAdapter {
         if      (mode == Mode.play) mode = Mode.edit;
         else if (mode == Mode.edit) mode = Mode.play;
 
+        DebugFlags.draw_world_origin = (mode == Mode.edit);
+
         if (player != null) {
             player.active = !player.active;
         }
@@ -127,7 +130,8 @@ public class Game extends ApplicationAdapter {
     }
 
     static class LevelEdit {
-        boolean mousePressed = false;
+        boolean leftMousePressed = false;
+        boolean rightMousePressed = false;
         Point lastPress = Point.zero();
         Point mouseDelta = Point.zero();
         Point startPos = Point.zero();
@@ -148,18 +152,33 @@ public class Game extends ApplicationAdapter {
             }
 
             if (Input.pressed(Input.MouseButton.left)) {
-                edit.mousePressed = true;
+                edit.leftMousePressed = true;
                 edit.lastPress.set((int) worldMouse.x, (int) worldMouse.y);
                 edit.startPos.set(level.entity.position);
             }
             if (Input.released(Input.MouseButton.left)) {
-                edit.mousePressed = false;
+                edit.leftMousePressed = false;
                 edit.lastPress.set(0, 0);
             }
 
-            if (edit.mousePressed) {
+            if (Input.pressed(Input.MouseButton.right)) {
+                edit.rightMousePressed = true;
+                edit.lastPress.set((int) Input.mouse().x, (int) Input.mouse().y);
+                edit.startPos.set((int) worldCamera.position.x, (int) worldCamera.position.y);
+            }
+            if (Input.released(Input.MouseButton.right)) {
+                edit.rightMousePressed = false;
+                edit.lastPress.set(0, 0);
+            }
+
+            if (edit.leftMousePressed) {
                 edit.mouseDelta.set((int) worldMouse.x - edit.lastPress.x, (int) worldMouse.y - edit.lastPress.y);
                 level.entity.position.set(edit.startPos.x + edit.mouseDelta.x, edit.startPos.y + edit.mouseDelta.y);
+            }
+            else if (edit.rightMousePressed) {
+                edit.mouseDelta.set((int) Input.mouse().x - edit.lastPress.x, (int) Input.mouse().y - edit.lastPress.y);
+                worldCamera.translate(-edit.mouseDelta.x * dt, edit.mouseDelta.y * dt, 0);
+                worldCamera.update();
             }
         }
 
