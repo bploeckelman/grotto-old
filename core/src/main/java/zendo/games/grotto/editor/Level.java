@@ -32,6 +32,7 @@ public class Level {
 
     public Level(World world, Assets assets, String filename) {
         load(world, assets, filename);
+//        createAndSaveTestFile(world, assets, filename);
     }
 
     public void load(World world, Assets assets, String filename) {
@@ -82,8 +83,8 @@ public class Level {
         this.entity = world.addEntity();
         {
             var tileSize = 16;
-            var cols = Config.framebuffer_width / tileSize;
-            var rows = Config.framebuffer_height / tileSize + 1;
+            var cols = (Config.framebuffer_width + (Config.framebuffer_width / 2)) / tileSize;
+            var rows = (Config.framebuffer_height + (Config.framebuffer_height / 3)) / tileSize + 1;
 
             var ul = assets.tilesetRegions[0][3];
             var u = assets.tilesetRegions[0][4];
@@ -114,6 +115,13 @@ public class Level {
             tilemap.setCell(cols - 1, rows - 2, ur);
             tilemap.setCell(cols - 1, 0, dr);
 
+            // platforms
+            tilemap.setCells(10, 2, 5, 1, d);
+            tilemap.setCells(15, 4, 5, 1, d);
+            tilemap.setCells(20, 6, 5, 1, d);
+            tilemap.setCells(15, 8, 5, 1, d);
+            tilemap.setCells(10, 10, 5, 1, d);
+
             var collider = entity.add(Collider.makeGrid(tileSize, cols, rows), Collider.class);
             collider.mask = Collider.Mask.solid;
             collider.setCells(0, 0, cols, 1, true);
@@ -121,6 +129,12 @@ public class Level {
             collider.setCells(0, rows - 2, cols, 1, true);
             collider.setCells(0, 0, 1, rows - 1, true);
             collider.setCells(cols - 1, 0, 1, rows - 1, true);
+
+            collider.setCells(10, 2, 5, 1, true);
+            collider.setCells(15, 4, 5, 1, true);
+            collider.setCells(20, 6, 5, 1, true);
+            collider.setCells(15, 8, 5, 1, true);
+            collider.setCells(10, 10, 5, 1, true);
 
             // --------------------------------------------
 
@@ -156,8 +170,11 @@ public class Level {
 
             var json = new Json();
             var descJson = json.toJson(desc, Level.Desc.class);
-            var outFile = Gdx.files.local("levels/test.json");
+            var outFile = Gdx.files.local(filename);
             outFile.writeString(descJson, false);
+
+            pixelWidth  = desc.tileSize * desc.cols;
+            pixelHeight = desc.tileSize * desc.rows;
         }
     }
 
