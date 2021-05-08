@@ -2,6 +2,7 @@ package zendo.games.grotto;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.controllers.Controllers;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -47,6 +48,7 @@ public class Game extends ApplicationAdapter {
     private enum Mode {play, edit}
     private Vector3 worldMouse;
     private Editor editor;
+    private InputMultiplexer inputMux;
 
     @Override
     public void create() {
@@ -54,7 +56,9 @@ public class Game extends ApplicationAdapter {
         Input.init();
 
         input = new Input();
-        Gdx.input.setInputProcessor(input);
+        inputMux = new InputMultiplexer();
+        inputMux.addProcessor(input);
+        Gdx.input.setInputProcessor(inputMux);
         Controllers.addListener(input);
 
         assets = new Assets();
@@ -124,6 +128,8 @@ public class Game extends ApplicationAdapter {
 
             var camController = world.first(CameraController.class);
             camController.active = false;
+
+            inputMux.addProcessor(0, editor.getStage());
         } else {
             worldCamera.zoom = editor.lastZoom;
             worldCamera.update();
@@ -131,6 +137,8 @@ public class Game extends ApplicationAdapter {
             var camController = world.first(CameraController.class);
             camController.active = true;
             camController.setTarget(player, true);
+
+            inputMux.removeProcessor(editor.getStage());
         }
 
         if (player != null) {
@@ -231,6 +239,10 @@ public class Game extends ApplicationAdapter {
                 // in-world ui ------------------
                 assets.layout.setText(assets.font, "Grotto", Color.WHITE, worldCamera.viewportWidth, Align.center, false);
                 assets.font.draw(batch, assets.layout, 0, (3f / 4f) * worldCamera.viewportHeight + assets.layout.height);
+
+                if (mode == Mode.edit) {
+                    editor.renderWorld(batch);
+                }
             }
             batch.end();
 
