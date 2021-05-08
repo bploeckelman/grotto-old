@@ -14,6 +14,7 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Disposable;
+import com.kotcrab.vis.ui.VisUI;
 import zendo.games.grotto.sprites.Content;
 import zendo.games.grotto.utils.accessors.*;
 
@@ -74,10 +75,13 @@ public class Assets extends Content implements Disposable {
         for (FileHandle fileHandle : spritesDir.list(".json")) {
             sprites.add(Content.loadSprite(fileHandle.path(), aseAtlas));
         }
+
+        VisUI.load();
     }
 
     @Override
     public void dispose() {
+        VisUI.dispose();
         Content.unload();
         pixel.dispose();
         font.dispose();

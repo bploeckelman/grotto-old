@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.kotcrab.vis.ui.widget.VisWindow;
 import zendo.games.grotto.Assets;
 import zendo.games.grotto.Game;
 import zendo.games.grotto.input.Input;
@@ -13,6 +14,8 @@ import zendo.games.grotto.utils.Point;
 import zendo.games.grotto.utils.Time;
 
 public class Editor {
+
+    private static final boolean DRAW_EXTRAS = false;
 
     private final Game game;
     private final Assets assets;
@@ -37,6 +40,17 @@ public class Editor {
         this.mouseDelta = Point.zero();
         this.startPos = Point.zero();
         this.lastZoom = 0;
+
+        initializeWidgets();
+    }
+
+    private void initializeWidgets() {
+        var camera = game.getWindowCamera();
+
+        var window = new VisWindow("Editor");
+        window.setSize(200, camera.viewportHeight);
+
+        stage.addActor(window);
     }
 
     public void update(float dt) {
@@ -113,6 +127,8 @@ public class Editor {
     }
 
     public void render(SpriteBatch batch) {
+        if (!DRAW_EXTRAS) return;
+
         var margin = 10;
         var panelWidth = 200;
         var worldMouse = game.getWorldMouse();
