@@ -27,6 +27,9 @@ public class Level {
 
     public Entity entity;
 
+    public int pixelWidth;
+    public int pixelHeight;
+
     public Level(World world, Assets assets, String filename) {
         load(world, assets, filename);
     }
@@ -70,6 +73,9 @@ public class Level {
             }
         }
         entity.position.set(desc.position);
+
+        pixelWidth  = desc.tileSize * desc.cols;
+        pixelHeight = desc.tileSize * desc.rows;
     }
 
     public void createAndSaveTestFile(World world, Assets assets, String filename) {

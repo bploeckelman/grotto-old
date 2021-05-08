@@ -85,6 +85,7 @@ public class Game extends ApplicationAdapter {
 
         var camController = world.addEntity().add(new CameraController(worldCamera), CameraController.class);
         camController.setTarget(player, true);
+        camController.level = level;
         // todo - lock to level bounds
 
         mode = Mode.play;

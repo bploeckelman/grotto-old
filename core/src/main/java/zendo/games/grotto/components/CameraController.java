@@ -1,9 +1,11 @@
 package zendo.games.grotto.components;
 
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import zendo.games.grotto.ecs.Component;
 import zendo.games.grotto.ecs.Entity;
+import zendo.games.grotto.editor.Level;
 import zendo.games.grotto.utils.Calc;
 import zendo.games.grotto.utils.Point;
 
@@ -14,6 +16,7 @@ public class CameraController extends Component {
     public OrthographicCamera camera;
     public Point point;
     public Entity entity;
+    public Level level;
 
     private TargetMode mode;
     private Vector3 target;
@@ -34,6 +37,7 @@ public class CameraController extends Component {
         this.point = null;
         this.mode = null;
         this.target = null;
+        this.level = null;
     }
 
     public void setTarget(Entity entity) {
@@ -77,9 +81,19 @@ public class CameraController extends Component {
             default     -> targetPoint = Point.zero();
         }
 
+        // update target
         var speed = 50f;
         target.x = Calc.approach(target.x, targetPoint.x, speed * dt);
         target.y = Calc.approach(target.y, targetPoint.y, speed * dt);
+
+        // keep in bounds
+        if (level != null) {
+            var cameraHorzEdge = (int) (camera.viewportWidth  / 2f);
+            var cameraVertEdge = (int) (camera.viewportHeight / 2f);
+            target.x = MathUtils.clamp(target.x, cameraHorzEdge, level.pixelWidth  - cameraHorzEdge);
+            target.y = MathUtils.clamp(target.y, cameraVertEdge, level.pixelHeight - cameraVertEdge);
+        }
+
         camera.position.set((int) target.x, (int) target.y, 0);
         camera.update();
     }
