@@ -6,7 +6,6 @@ import com.badlogic.gdx.controllers.Controllers;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.graphics.g3d.utils.DefaultTextureBinder;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
@@ -15,6 +14,7 @@ import zendo.games.grotto.components.CameraController;
 import zendo.games.grotto.components.Enemy;
 import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
+import zendo.games.grotto.editor.Editor;
 import zendo.games.grotto.editor.Level;
 import zendo.games.grotto.factories.CreatureFactory;
 import zendo.games.grotto.input.Input;
@@ -46,6 +46,7 @@ public class Game extends ApplicationAdapter {
     private Mode mode;
     private enum Mode {play, edit}
     private Vector3 worldMouse;
+    private Editor editor;
 
     @Override
     public void create() {
@@ -89,6 +90,8 @@ public class Game extends ApplicationAdapter {
 
         mode = Mode.play;
         worldMouse = new Vector3();
+
+        editor = new Editor(this, assets);
     }
 
     @Override
@@ -106,23 +109,23 @@ public class Game extends ApplicationAdapter {
         // update based on mode
         switch (mode) {
             case play -> updatePlayMode(Time.delta);
-            case edit -> updateEditMode(Time.delta);
+            case edit -> editor.update(Time.delta);
         }
     }
 
-    private void toggleMode() {
+    public void toggleMode() {
         if      (mode == Mode.play) mode = Mode.edit;
         else if (mode == Mode.edit) mode = Mode.play;
 
         DebugFlags.draw_world_origin = (mode == Mode.edit);
 
         if (mode == Mode.edit) {
-            edit.lastZoom = worldCamera.zoom;
+            editor.lastZoom = worldCamera.zoom;
 
             var camController = world.first(CameraController.class);
             camController.active = false;
         } else {
-            worldCamera.zoom = edit.lastZoom;
+            worldCamera.zoom = editor.lastZoom;
             worldCamera.update();
 
             var camController = world.first(CameraController.class);
@@ -137,79 +140,6 @@ public class Game extends ApplicationAdapter {
         while (enemy != null) {
             enemy.entity().active = !enemy.entity().active;
             enemy = (Enemy) enemy.next;
-        }
-    }
-
-    static class LevelEdit {
-        boolean leftMousePressed = false;
-        boolean rightMousePressed = false;
-        Point lastPress = Point.zero();
-        Point mouseDelta = Point.zero();
-        Point startPos = Point.zero();
-        float lastZoom = 0;
-    }
-    private LevelEdit edit = new LevelEdit();
-
-    private void updateEditMode(float dt) {
-        // process input
-        {
-            Input.frame();
-
-            if (Input.pressed(Input.Key.tab)) {
-                toggleMode();
-            }
-
-            if (Input.pressed(Input.Key.escape)) {
-                Gdx.app.exit();
-            }
-
-            if (Input.mouseWheel().y != 0) {
-                var speed = 2f;
-                worldCamera.zoom += Input.mouseWheel().y * speed * dt;
-                worldCamera.update();
-            }
-
-            if (Input.pressed(Input.MouseButton.left)) {
-                edit.leftMousePressed = true;
-                edit.lastPress.set((int) Input.mouse().x, (int) Input.mouse().y);
-                edit.startPos.set((int) worldCamera.position.x, (int) worldCamera.position.y);
-            }
-            if (Input.released(Input.MouseButton.left)) {
-                edit.leftMousePressed = false;
-                edit.lastPress.set(0, 0);
-            }
-
-            if (Input.pressed(Input.MouseButton.right)) {
-                edit.rightMousePressed = true;
-                edit.lastPress.set((int) worldMouse.x, (int) worldMouse.y);
-                edit.startPos.set(level.entity.position);
-            }
-            if (Input.released(Input.MouseButton.right)) {
-                edit.rightMousePressed = false;
-                edit.lastPress.set(0, 0);
-            }
-
-            if (edit.leftMousePressed) {
-                edit.mouseDelta.set((int) Input.mouse().x - edit.lastPress.x, (int) Input.mouse().y - edit.lastPress.y);
-                worldCamera.translate(-edit.mouseDelta.x * dt, edit.mouseDelta.y * dt, 0);
-                worldCamera.update();
-            }
-            else if (edit.rightMousePressed) {
-                edit.mouseDelta.set((int) worldMouse.x - edit.lastPress.x, (int) worldMouse.y - edit.lastPress.y);
-                level.entity.position.set(edit.startPos.x + edit.mouseDelta.x, edit.startPos.y + edit.mouseDelta.y);
-            }
-        }
-
-        // update timer
-        {
-            Time.millis += Time.delta;
-            Time.previous_elapsed = Time.elapsed_millis();
-        }
-
-        // update systems
-        {
-            assets.tween.update(Time.delta);
-            world.update(Time.delta);
         }
     }
 
@@ -350,48 +280,50 @@ public class Game extends ApplicationAdapter {
     }
 
     private void renderWindowOverlay() {
+        if (mode == Mode.edit) {
+            editor.renderStage();
+        }
+
         // render hud
         batch.setProjectionMatrix(windowCamera.combined);
         batch.begin();
         {
-            var panelWidth = 200;
-
-            // draw control panel
             if (mode == Mode.edit) {
-                batch.setColor(0.2f, 0.2f, 0.2f, 0.6f);
-                batch.draw(assets.pixel, 0, 0, panelWidth, windowCamera.viewportHeight);
-                batch.setColor(Color.WHITE);
-            }
-
-            var margin = 10;
-
-            // mouse pos
-            if (mode == Mode.edit) {
-                var color = Color.WHITE;
-
-                var mouseStr = String.format("SCREEN:\n\n(%4.0f,%3.0f)", Input.mouse().x, Input.mouse().y);
-                assets.font.getData().setScale(0.9f);
-                {
-                    assets.layout.setText(assets.font, mouseStr, color, panelWidth, Align.left, false);
-                    assets.font.draw(batch, assets.layout, margin, windowCamera.viewportHeight - margin);
-                }
-                var screenMouseHeight = assets.layout.height;
-                assets.font.getData().setScale(1f);
-
-                var worldMouseStr = String.format("WORLD:\n\n(%3.0f,%3.0f)", worldMouse.x, worldMouse.y);
-                assets.layout.setText(assets.font, worldMouseStr, color, panelWidth, Align.left, false);
-                assets.font.draw(batch, assets.layout, margin, windowCamera.viewportHeight - margin - screenMouseHeight - margin);
+                editor.render(batch);
             }
 
             // current mode
             {
+                var margin = 10;
                 var color = (mode == Mode.play) ? Color.LIME : Color.GOLDENROD;
                 var modeStr = mode.toString().toUpperCase();
                 assets.layout.setText(assets.font, modeStr, color, windowCamera.viewportWidth, Align.center, false);
-                assets.font.draw(batch, assets.layout, margin, windowCamera.viewportHeight - margin);
+                assets.font.draw(batch, assets.layout, 0, windowCamera.viewportHeight - margin);
             }
         }
         batch.end();
+    }
+
+    // ------------------------------------------------------------------------
+
+    public OrthographicCamera getWorldCamera() {
+        return worldCamera;
+    }
+
+    public OrthographicCamera getWindowCamera() {
+        return windowCamera;
+    }
+
+    public Level getLevel() {
+        return level;
+    }
+
+    public Vector3 getWorldMouse() {
+        return worldMouse;
+    }
+
+    public World getWorld() {
+        return world;
     }
 
     // ------------------------------------------------------------------------
