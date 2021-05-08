@@ -254,6 +254,10 @@ public class Game extends ApplicationAdapter {
                     world.render(shapes);
                 }
 
+                if (mode == Mode.edit) {
+                    editor.renderGrid(shapes);
+                }
+
                 // coord axis at origin
                 if (DebugFlags.draw_world_origin) {
                     shapes.setColor(Color.BLUE);

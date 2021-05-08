@@ -3,6 +3,7 @@ package zendo.games.grotto.editor;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
@@ -237,6 +238,18 @@ public class Editor {
             var zoomStr = String.format("ZOOM:\n\n(%2.2f)", worldCamera.zoom);
             assets.layout.setText(assets.font, zoomStr, color, panelWidth, Align.left, false);
             assets.font.draw(batch, assets.layout, margin, windowCamera.viewportHeight - margin - screenMouseHeight - margin - worldMouseHeight - margin);
+        }
+    }
+
+    public void renderGrid(ShapeRenderer shapes) {
+        var tileSize = 16;
+        for (int x = 0; x < 100; x++) {
+            for (int y = 0; y < 100; y++) {
+                shapes.line((x + 0) * tileSize, (y + 0) * tileSize, (x + 0) * tileSize, (y + 1) * tileSize);
+                shapes.line((x + 0) * tileSize, (y + 1) * tileSize, (x + 1) * tileSize, (y + 1) * tileSize);
+                shapes.line((x + 1) * tileSize, (y + 1) * tileSize, (x + 1) * tileSize, (y + 0) * tileSize);
+                shapes.line((x + 1) * tileSize, (y + 0) * tileSize, (x + 0) * tileSize, (y + 0) * tileSize);
+            }
         }
     }
 
