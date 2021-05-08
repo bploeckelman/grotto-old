@@ -46,7 +46,6 @@ public class Game extends ApplicationAdapter {
     private Mode mode;
     private enum Mode {play, edit}
     private Vector3 worldMouse;
-    private Point lastMousePressed;
 
     @Override
     public void create() {
@@ -85,13 +84,11 @@ public class Game extends ApplicationAdapter {
         goblin = CreatureFactory.goblin(world, Point.at((int) worldCamera.viewportWidth / 4 + 32, 120));
 
         var camController = world.addEntity().add(new CameraController(worldCamera), CameraController.class);
-        // todo - lock to level bounds, disable for now
-        camController.active = false;
-//        camController.setTarget(player, true);
+        camController.setTarget(player, true);
+        // todo - lock to level bounds
 
         mode = Mode.play;
         worldMouse = new Vector3();
-        lastMousePressed = Point.zero();
     }
 
     @Override
@@ -121,9 +118,16 @@ public class Game extends ApplicationAdapter {
 
         if (mode == Mode.edit) {
             edit.lastZoom = worldCamera.zoom;
+
+            var camController = world.first(CameraController.class);
+            camController.active = false;
         } else {
             worldCamera.zoom = edit.lastZoom;
             worldCamera.update();
+
+            var camController = world.first(CameraController.class);
+            camController.active = true;
+            camController.setTarget(player, true);
         }
 
         if (player != null) {
