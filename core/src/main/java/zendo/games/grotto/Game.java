@@ -126,8 +126,7 @@ public class Game extends ApplicationAdapter {
         if (mode == Mode.edit) {
             editor.lastZoom = worldCamera.zoom;
 
-            var camController = world.first(CameraController.class);
-            camController.active = false;
+            world.first(CameraController.class).active = false;
 
             inputMux.addProcessor(0, editor.getStage());
         } else {

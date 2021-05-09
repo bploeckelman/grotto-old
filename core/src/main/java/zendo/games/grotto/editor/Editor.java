@@ -17,6 +17,8 @@ import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisWindow;
 import zendo.games.grotto.Assets;
 import zendo.games.grotto.Game;
+import zendo.games.grotto.components.Collider;
+import zendo.games.grotto.components.Tilemap;
 import zendo.games.grotto.input.Input;
 import zendo.games.grotto.utils.Calc;
 import zendo.games.grotto.utils.Point;
@@ -143,6 +145,7 @@ public class Editor {
                 worldCamera.update();
             }
 
+            // left mouse --------------------------------
             if (Input.pressed(Input.MouseButton.left)) {
                 leftMousePressed = true;
                 lastPress.set((int) Input.mouse().x, (int) Input.mouse().y);
@@ -153,10 +156,16 @@ public class Editor {
                 lastPress.set(0, 0);
             }
 
+            // right mouse -------------------------------
             if (Input.pressed(Input.MouseButton.right)) {
                 rightMousePressed = true;
                 lastPress.set((int) worldMouse.x, (int) worldMouse.y);
                 startPos.set(level.entity.position);
+
+                // deselect currently selected tile
+                if (selectedTileCoord != null) {
+                    selectedTileCoord = null;
+                }
             }
             if (Input.released(Input.MouseButton.right)) {
                 rightMousePressed = false;
@@ -165,8 +174,28 @@ public class Editor {
 
             if (leftMousePressed) {
                 mouseDelta.set((int) Input.mouse().x - lastPress.x, (int) Input.mouse().y - lastPress.y);
-                worldCamera.translate((int) (-mouseDelta.x * dt), (int) (mouseDelta.y * dt), 0);
-                worldCamera.update();
+                if (selectedTileCoord == null) {
+                    // TODO - switch to middle mouse
+                    // move camera
+                    worldCamera.translate((int) (-mouseDelta.x * dt), (int) (mouseDelta.y * dt), 0);
+                    worldCamera.update();
+                } else {
+                    // paint tile onto map
+                    var tilemap = level.entity.get(Tilemap.class);
+                    var collider = level.entity.get(Collider.class);
+
+                    // TODO - take level position into account
+                    var tiles = assets.tilesetRegions;
+                    var tileSize = tilemap.tileSize();
+                    var tileX = (int) Calc.floor(worldMouse.x / tileSize);
+                    var tileY = (int) Calc.floor(worldMouse.y / tileSize);
+
+                    if (tileX >= 0 && tileY >= 0 && tileX < tilemap.cols() && tileY < tilemap.rows()) {
+                        tilemap.setCell(tileX, tileY, tiles[selectedTileCoord.y][selectedTileCoord.x]);
+                        // TODO - set collision layer separate from tilemap
+                        collider.setCell(tileX, tileY, true);
+                    }
+                }
             }
             else if (rightMousePressed) {
                 // TODO - should probably move this a tile at a time by default, allowing pixel movement with a modifier key
