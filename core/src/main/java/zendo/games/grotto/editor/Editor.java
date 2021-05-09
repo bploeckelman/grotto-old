@@ -34,6 +34,7 @@ public class Editor {
 
     private boolean leftMousePressed;
     private boolean rightMousePressed;
+    private boolean middleMousePressed;
     private Point lastPress;
     private Point mouseDelta;
     private Point startPos;
@@ -50,6 +51,7 @@ public class Editor {
 
         this.leftMousePressed = false;
         this.rightMousePressed = false;
+        this.middleMousePressed = false;
         this.lastPress = Point.zero();
         this.mouseDelta = Point.zero();
         this.startPos = Point.zero();
@@ -172,23 +174,28 @@ public class Editor {
                 lastPress.set(0, 0);
             }
 
+            // middle mouse ------------------------------
+            if (Input.pressed(Input.MouseButton.middle)) {
+                middleMousePressed = true;
+                lastPress.set((int) Input.mouse().x, (int) Input.mouse().y);
+                startPos.set((int) worldCamera.position.x, (int) worldCamera.position.y);
+            }
+            if (Input.released(Input.MouseButton.middle)) {
+                middleMousePressed = false;
+                lastPress.set(0, 0);
+            }
+
             if (leftMousePressed) {
                 mouseDelta.set((int) Input.mouse().x - lastPress.x, (int) Input.mouse().y - lastPress.y);
-                if (selectedTileCoord == null) {
-                    // TODO - switch to middle mouse
-                    // move camera
-                    worldCamera.translate((int) (-mouseDelta.x * dt), (int) (mouseDelta.y * dt), 0);
-                    worldCamera.update();
-                } else {
+                if (selectedTileCoord != null) {
                     // paint tile onto map
                     var tilemap = level.entity.get(Tilemap.class);
                     var collider = level.entity.get(Collider.class);
 
-                    // TODO - take level position into account
                     var tiles = assets.tilesetRegions;
                     var tileSize = tilemap.tileSize();
-                    var tileX = (int) Calc.floor(worldMouse.x / tileSize);
-                    var tileY = (int) Calc.floor(worldMouse.y / tileSize);
+                    var tileX = (int) Calc.floor((worldMouse.x - level.entity.position.x)  / tileSize);
+                    var tileY = (int) Calc.floor((worldMouse.y - level.entity.position.y)  / tileSize);
 
                     if (tileX >= 0 && tileY >= 0 && tileX < tilemap.cols() && tileY < tilemap.rows()) {
                         tilemap.setCell(tileX, tileY, tiles[selectedTileCoord.y][selectedTileCoord.x]);
@@ -201,6 +208,12 @@ public class Editor {
                 // TODO - should probably move this a tile at a time by default, allowing pixel movement with a modifier key
                 mouseDelta.set((int) worldMouse.x - lastPress.x, (int) worldMouse.y - lastPress.y);
                 level.entity.position.set(startPos.x + mouseDelta.x, startPos.y + mouseDelta.y);
+            }
+            else if (middleMousePressed) {
+                // move camera
+                mouseDelta.set((int) Input.mouse().x - lastPress.x, (int) Input.mouse().y - lastPress.y);
+                worldCamera.translate((int) (-mouseDelta.x * dt), (int) (mouseDelta.y * dt), 0);
+                worldCamera.update();
             }
         }
 
@@ -223,9 +236,10 @@ public class Editor {
     }
 
     public void renderWorld(SpriteBatch batch) {
-        var worldMouse = game.getWorldMouse();
         if (selectedTileCoord != null) {
-            var tileSize = 16;
+            var level = game.getLevel();
+            var worldMouse = game.getWorldMouse();
+            var tileSize = level.entity.get(Tilemap.class).tileSize();
             var tileX = tileSize * Calc.floor(worldMouse.x / tileSize);
             var tileY = tileSize * Calc.floor(worldMouse.y / tileSize);
             batch.draw(assets.tilesetRegions[selectedTileCoord.y][selectedTileCoord.x],
@@ -271,15 +285,18 @@ public class Editor {
     }
 
     public void renderGrid(ShapeRenderer shapes) {
-        var tileSize = 16;
-        for (int x = 0; x < 100; x++) {
-            for (int y = 0; y < 100; y++) {
-                shapes.line((x + 0) * tileSize, (y + 0) * tileSize, (x + 0) * tileSize, (y + 1) * tileSize);
-                shapes.line((x + 0) * tileSize, (y + 1) * tileSize, (x + 1) * tileSize, (y + 1) * tileSize);
-                shapes.line((x + 1) * tileSize, (y + 1) * tileSize, (x + 1) * tileSize, (y + 0) * tileSize);
-                shapes.line((x + 1) * tileSize, (y + 0) * tileSize, (x + 0) * tileSize, (y + 0) * tileSize);
+        var level = game.getLevel();
+        var tilemap = level.entity.get(Tilemap.class);
+        var tileSize = tilemap.tileSize();
+        var rows = tilemap.rows();
+        var cols = tilemap.cols();
+        shapes.setColor(0.1f, 0.1f, 0.1f, 0.2f);
+        for (int x = 0; x < cols; x++) {
+            for (int y = 0; y < rows; y++) {
+                shapes.rect(level.entity.position.x + x * tileSize, level.entity.position.y + y * tileSize, tileSize, tileSize);
             }
         }
+        shapes.setColor(Color.WHITE);
     }
 
 }
