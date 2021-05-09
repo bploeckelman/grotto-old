@@ -4,17 +4,16 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.kotcrab.vis.ui.widget.VisImageButton;
-import com.kotcrab.vis.ui.widget.VisScrollPane;
-import com.kotcrab.vis.ui.widget.VisTable;
-import com.kotcrab.vis.ui.widget.VisWindow;
+import com.kotcrab.vis.ui.widget.*;
 import zendo.games.grotto.Assets;
 import zendo.games.grotto.Game;
 import zendo.games.grotto.components.Collider;
@@ -40,7 +39,6 @@ public class Editor {
     private Point startPos;
 
     private Point selectedTileCoord;
-    private Array<VisImageButton> tilesetButtons;
 
     public float lastZoom;
 
@@ -58,7 +56,6 @@ public class Editor {
         this.lastZoom = 0;
 
         this.selectedTileCoord = null;
-        this.tilesetButtons = new Array<>();
 
         initializeWidgets();
     }
@@ -68,21 +65,36 @@ public class Editor {
     }
 
     private void initializeWidgets() {
+        var level = game.getLevel();
         var camera = game.getWindowCamera();
 
+        var width = 250;
         var window = new VisWindow("Editor");
-        window.setSize(220, camera.viewportHeight);
+        window.setSize(width, camera.viewportHeight);
         window.defaults().pad(1f);
 
+        // save / load buttons
+        var save = new VisTextButton("save");
+        save.setSize(width, 20);
+        save.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                level.save("levels/test.json", assets);
+            }
+        });
+        window.row();
+        window.add(save).growX();
+
+        // scroll pane
+        // TODO - scroll pane steals mouse wheel once it gets focus once, so wheel no longer works for zoom after that
         var scrollTable = new VisTable();
         var scrollPane = new VisScrollPane(scrollTable);
         scrollPane.setFlickScroll(false);
         scrollPane.setFadeScrollBars(false);
-        // TODO - scroll pane steals mouse wheel once it gets focus once, so wheel no longer works for zoom after that
+        window.row();
         window.add(scrollPane).growX();
 
-        // test tileset consists of a bunch of 3x3 sections
-        // so layout the buttons in the tool panel that way
+        // tileset buttons in scroll pane
         var tiles = assets.tilesetRegions;
         var cols = 12;
         var sections = 8;
@@ -91,6 +103,8 @@ public class Editor {
         var section = 0;
         var done = false;
         do {
+            // test tileset consists of a bunch of 3x3 sections
+            // so layout the buttons in the tool panel that way
             for (int y = 0; y < 3; y++) {
                 scrollTable.row();
 
@@ -106,7 +120,6 @@ public class Editor {
                     button.addListener(new ClickListener() {
                         @Override
                         public void clicked(InputEvent event, float x, float y) {
-                            Gdx.app.log("clicked", String.format("(%d,%d): %s", ix, iy, drawable.getRegion().toString()));
                             selectedTileCoord = Point.at(ix, iy);
                         }
                     });
@@ -187,8 +200,8 @@ public class Editor {
 
             if (leftMousePressed) {
                 mouseDelta.set((int) Input.mouse().x - lastPress.x, (int) Input.mouse().y - lastPress.y);
+                // paint tile onto map
                 if (selectedTileCoord != null) {
-                    // paint tile onto map
                     var tilemap = level.entity.get(Tilemap.class);
                     var collider = level.entity.get(Collider.class);
 
@@ -205,15 +218,35 @@ public class Editor {
                 }
             }
             else if (rightMousePressed) {
-                // TODO - should probably move this a tile at a time by default, allowing pixel movement with a modifier key
-                mouseDelta.set((int) worldMouse.x - lastPress.x, (int) worldMouse.y - lastPress.y);
-                level.entity.position.set(startPos.x + mouseDelta.x, startPos.y + mouseDelta.y);
+                mouseDelta.set((int) Input.mouse().x - lastPress.x, (int) Input.mouse().y - lastPress.y);
+                // erase tiles
+                if (selectedTileCoord == null) {
+                    var tilemap = level.entity.get(Tilemap.class);
+                    var collider = level.entity.get(Collider.class);
+
+                    var tileSize = tilemap.tileSize();
+                    var tileX = (int) Calc.floor((worldMouse.x - level.entity.position.x)  / tileSize);
+                    var tileY = (int) Calc.floor((worldMouse.y - level.entity.position.y)  / tileSize);
+
+                    if (tileX >= 0 && tileY >= 0 && tileX < tilemap.cols() && tileY < tilemap.rows()) {
+                        tilemap.setCell(tileX, tileY, null);
+                        // TODO - set collision layer separate from tilemap
+                        collider.setCell(tileX, tileY, false);
+                    }
+                }
             }
             else if (middleMousePressed) {
-                // move camera
-                mouseDelta.set((int) Input.mouse().x - lastPress.x, (int) Input.mouse().y - lastPress.y);
-                worldCamera.translate((int) (-mouseDelta.x * dt), (int) (mouseDelta.y * dt), 0);
-                worldCamera.update();
+                if (Input.down(Input.Key.shift_left)) {
+                    // move level
+                    // TODO - should probably move this a tile at a time by default, allowing pixel movement with a modifier key
+                    mouseDelta.set((int) worldMouse.x - lastPress.x, (int) worldMouse.y - lastPress.y);
+                    level.entity.position.set(startPos.x + mouseDelta.x, startPos.y + mouseDelta.y);
+                } else {
+                    // move camera
+                    mouseDelta.set((int) Input.mouse().x - lastPress.x, (int) Input.mouse().y - lastPress.y);
+                    worldCamera.translate((int) (-mouseDelta.x * dt), (int) (mouseDelta.y * dt), 0);
+                    worldCamera.update();
+                }
             }
         }
 

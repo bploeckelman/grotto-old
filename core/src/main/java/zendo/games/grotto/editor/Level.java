@@ -2,6 +2,7 @@ package zendo.games.grotto.editor;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.badlogic.gdx.utils.Json;
 import zendo.games.grotto.Assets;
 import zendo.games.grotto.Config;
@@ -41,7 +42,7 @@ public class Level {
 
         // setup tileset
         var tileset = assets.atlas.findRegion(desc.tileset);
-        var regions = tileset.split(desc.tileSize, desc.tileSize);
+        var regions = assets.tilesetRegions;//tileset.split(desc.tileSize, desc.tileSize);
 
         // initialize a map between texture region array indices and the texture region they point to in the tileset
         var pointRegionMap = new HashMap<Point, TextureRegion>();
@@ -176,6 +177,73 @@ public class Level {
             pixelWidth  = desc.tileSize * desc.cols;
             pixelHeight = desc.tileSize * desc.rows;
         }
+    }
+
+    public void save(String filename, Assets assets) {
+        if (entity == null) {
+            throw new GdxRuntimeException("Can't save level, no level entity");
+        }
+        var tilemap = entity.get(Tilemap.class);
+        if (tilemap == null) {
+            throw new GdxRuntimeException("Can't save level, entity missing tilemap component");
+        }
+        var collider = entity.get(Collider.class);
+        if (collider == null) {
+            throw new GdxRuntimeException("Can't save level, entity missing collider component");
+        }
+        if (collider.grid() == null) {
+            throw new GdxRuntimeException("Can't save level, entity collider component is not a grid");
+        }
+
+        {
+            // build the descriptor for json output from the current entity state
+            var desc = new Desc();
+            desc.position = entity.position;
+            desc.tileSize = tilemap.tileSize();
+            desc.cols = tilemap.cols();
+            desc.rows = tilemap.rows();
+            desc.tileset = "tileset";                                                  // TODO
+            desc.colliderCells = new int[desc.cols * desc.rows];
+            desc.tilemapCellTextures = new Point[desc.cols * desc.rows];
+
+            // populate desc arrays with data from entity components
+            for (int x = 0; x < desc.cols; x++) {
+                for (int y = 0; y < desc.rows; y++) {
+                    var collision = collider.getCell(x, y);
+                    desc.colliderCells[x + y * desc.cols] = collision ? 1 : 0;
+
+                    var tile = tilemap.getCell(x, y);
+                    if (tile != null) {
+                        desc.tilemapCellTextures[x + y * desc.cols] = findTilesetIndex(tile, assets);
+                    }
+                }
+            }
+
+            // write the output file
+            var json = new Json();
+            var descJson = json.toJson(desc, Level.Desc.class);
+            var outFile = Gdx.files.local(filename);
+            outFile.writeString(descJson, false);
+
+            Gdx.app.log("level", "saved level: " + filename);
+        }
+    }
+
+    private Point findTilesetIndex(TextureRegion tile, Assets assets) {
+        var index = Point.zero();
+        var tiles = assets.tilesetRegions;
+        var rows = tiles.length;
+        var cols = tiles[0].length;
+        for (int x = 0; x < cols; x++) {
+            for (int y = 0; y < rows; y++) {
+                if (tile == tiles[y][x]) {
+                    index.set(x, y);
+                    return index;
+                }
+            }
+        }
+        Gdx.app.log("findTilesetIndex", "failed to find tile");
+        return index;
     }
 
 }
