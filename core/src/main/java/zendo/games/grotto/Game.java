@@ -11,13 +11,11 @@ import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Align;
-import com.badlogic.gdx.utils.Json;
 import zendo.games.grotto.components.CameraController;
 import zendo.games.grotto.components.Enemy;
 import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
 import zendo.games.grotto.editor.Editor;
-import zendo.games.grotto.editor.Ldtk;
 import zendo.games.grotto.editor.Level;
 import zendo.games.grotto.factories.CreatureFactory;
 import zendo.games.grotto.input.Input;
@@ -83,7 +81,8 @@ public class Game extends ApplicationAdapter {
 
         world = new World();
 
-        level = new Level(world, assets, "levels/test.json");
+//        level = new Level(world, assets, "levels/test.json");
+        level = new Level(world, assets, "levels/ldtk-test.ldtk");
 
         player = CreatureFactory.player(world, Point.at((int) worldCamera.viewportWidth / 2, 100));
 
@@ -98,16 +97,6 @@ public class Game extends ApplicationAdapter {
         worldMouse = new Vector3();
 
         editor = new Editor(this, assets);
-
-
-
-        var testLdtk = true;
-        if (testLdtk) {
-            var json = new Json();
-            json.setIgnoreUnknownFields(true);
-            var ldtk = json.fromJson(Ldtk.class, Gdx.files.internal("levels/ldtk-test.ldtk"));
-            Gdx.app.log("ldtk", "loaded");
-        }
     }
 
     @Override

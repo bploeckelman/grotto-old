@@ -37,8 +37,23 @@ public class Level {
     }
 
     public void load(World world, Assets assets, String filename) {
-        // load the map descriptor from the specified json file
-        var desc = (new Json()).fromJson(Level.Desc.class, Gdx.files.local(filename));
+        var json = new Json();
+        Level.Desc desc = null;
+        if (filename.endsWith(".json")) {
+            // load the map descriptor directly from the specified json file
+            desc = json.fromJson(Level.Desc.class, Gdx.files.local(filename));
+        } else if (filename.endsWith(".ldtk")) {
+            // load ldtk file
+            json.setIgnoreUnknownFields(true);
+            var ldtk = json.fromJson(Ldtk.class, Gdx.files.internal(filename));
+
+            // load the map descriptor from the ldtk file data
+            desc = loadDescFromLdtk(ldtk);
+        }
+
+        if (desc == null) {
+            throw new GdxRuntimeException("Unable to load level file: '" + filename + "'");
+        }
 
         // setup tileset
         var tileset = assets.atlas.findRegion(desc.tileset);
@@ -244,6 +259,64 @@ public class Level {
         }
         Gdx.app.log("findTilesetIndex", "failed to find tile");
         return index;
+    }
+
+    private Level.Desc loadDescFromLdtk(Ldtk ldtk) {
+        var desc = new Level.Desc();
+        {
+            var level = ldtk.levels.get(0);
+            var tileset = ldtk.defs.tilesets.get(0);
+            var tilesetName = tileset.relPath.substring(tileset.relPath.lastIndexOf("/") + 1, tileset.relPath.lastIndexOf(".png"));
+
+            // find required layers
+            Ldtk.LayerInstance tileLayer = null;
+            Ldtk.LayerInstance collisionLayer = null;
+            for (var layer : level.layerInstances) {
+                if (layer.__type.equals("Tiles") && layer.__identifier.equals("Tiles")) {
+                    tileLayer = layer;
+                } else if (layer.__type.equals("IntGrid") && layer.__identifier.equals("Collision")) {
+                    collisionLayer = layer;
+                }
+            }
+            if (tileLayer == null) {
+                throw new GdxRuntimeException("Failed to load ldtk file, no 'Tiles' layer found");
+            }
+            if (collisionLayer == null) {
+                throw new GdxRuntimeException("Failed to load ldtk file, no IntGrid 'Collision' layer found");
+            }
+
+            desc.position = Point.zero();
+            desc.tileSize = tileset.tileGridSize;
+            desc.cols = tileLayer.__cWid;
+            desc.rows = tileLayer.__cHei;
+            desc.tileset = tilesetName;
+            desc.colliderCells = new int[desc.cols * desc.rows];
+            desc.tilemapCellTextures = new Point[desc.cols * desc.rows];
+
+            for (int x = 0; x < desc.cols; x++) {
+                for (int y = 0; y < desc.rows; y++) {
+                    // note: ldtk files are stored with origin = top left so we have to flip y
+                    int flipY = (desc.rows - 1) - y;
+                    var collisionValue = collisionLayer.intGridCsv[x + flipY * desc.cols];
+
+                    var value = collisionValue;
+                    desc.colliderCells[x + y * desc.cols] = value;
+                }
+            }
+
+            for (var gridTileEntry : tileLayer.gridTiles) {
+                var px = gridTileEntry.px;
+                var tile = Point.at(px[0] / tileset.tileGridSize, px[1] / tileset.tileGridSize);
+                // note: ldtk files are stored with origin = top left so we have to flip y
+                tile.y = (desc.rows - 1) - tile.y;
+
+                var src = gridTileEntry.src;
+                var textureIndex = Point.at(src[0] / tileset.tileGridSize, src[1] / tileset.tileGridSize);
+
+                desc.tilemapCellTextures[tile.x + tile.y * desc.cols] = textureIndex;
+            }
+        }
+        return desc;
     }
 
 }

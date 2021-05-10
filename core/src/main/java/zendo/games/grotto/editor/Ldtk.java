@@ -16,7 +16,7 @@ public class Ldtk {
     public List<Level> levels;
 
     // --------------------------------------------------------------
-    // NOTE: don't need defs section since components are included elsewhere for convenience as double underscore prefixed fields
+    // NOTE: don't need most def entries since components are included elsewhere for convenience as double underscore prefixed fields
 
     public static class Defs {
         public List<Layer> layers;
@@ -30,7 +30,25 @@ public class Ldtk {
 
     public static class Entity {}
 
-    public static class Tileset {}
+    // TODO:
+    //   need to decide how to load tileset images,
+    //   for now, relPath points to tileset image in <root>/sprites/raw
+    //   then parses end of relPath to figure out which atlas region to pull from
+    //   and uses tileGridSize to TextureRegion.split the region and lookup tile ids out of those
+    //   (ignores spacing/padding for now)
+    public static class Tileset {
+        public int __cWid;
+        public int __cHei;
+        public String identifier;
+        public String relPath;
+        public int uid;
+        public int pxWid;
+        public int pxHei;
+        public int tileGridSize;
+        public int spacing;
+        public int padding;
+        // ignore other fields
+    }
 
     public static class LdtkEnum {}
 
@@ -57,6 +75,7 @@ public class Ldtk {
         public int pxOffsetX; // optional offset that could happen when resizing levels
         public int pxOffsetY; // optional offset that could happen when resizing levels
         public long seed;
+        public int[] intGridCsv;
         public List<IntGridEntry> intGrid; // only populated if layer is an IntGrid
         public List<AutoTileEntry> autoTiles; // only populated if layer is an Auto-layer
         public List<GridTileEntry> gridTiles; // only populated if layer is a TileLayer
@@ -72,16 +91,14 @@ public class Ldtk {
         public int[] px;     // pixel coords of tile in the layer: [x,y] (apply optional layer offsets if appropriate)
         public int[] src;    // pixel coordinates of the tile in the tileset: [x,y]
         public int f;        // 'flip bits'; 0=none, 1=horiz, 2=vert, 3=both
-        public int t;        // ??? tile index maybe? undocumented?
-        public int[] d;      // ??? no idea... undocumented?
+        public int t;        // index of tile region in tileset
     }
 
     public static class GridTileEntry {
         public int[] px;     // pixel coords of tile in the layer: [x,y] (apply optional layer offsets if appropriate)
         public int[] src;    // pixel coordinates of the tile in the tileset: [x,y]
         public int f;        // 'flip bits'; 0=none, 1=horiz, 2=vert, 3=both
-        public int t;        // ??? tile index maybe? undocumented?
-        public int[] d;      // ??? no idea... undocumented?
+        public int t;        // index of tile region in tileset
     }
 
     public static class EntityInstance {
