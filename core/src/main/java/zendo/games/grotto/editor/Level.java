@@ -36,7 +36,13 @@ public class Level {
 //        createAndSaveTestFile(world, assets, filename);
     }
 
+// TODO: load all levels in an ldtk world at the same time and smoothly shift camera between them on transition
+
     public void load(World world, Assets assets, String filename) {
+        load(world, assets, filename, 0);
+    }
+
+    public void load(World world, Assets assets, String filename, int levelNum) {
         var json = new Json();
         Level.Desc desc = null;
         if (filename.endsWith(".json")) {
@@ -48,7 +54,7 @@ public class Level {
             var ldtk = json.fromJson(Ldtk.class, Gdx.files.internal(filename));
 
             // load the map descriptor from the ldtk file data
-            desc = loadDescFromLdtk(ldtk);
+            desc = loadDescFromLdtk(ldtk, levelNum);
         }
 
         if (desc == null) {
@@ -57,7 +63,7 @@ public class Level {
 
         // setup tileset
         var tileset = assets.atlas.findRegion(desc.tileset);
-        var regions = assets.tilesetRegions;//tileset.split(desc.tileSize, desc.tileSize);
+        var regions = assets.tilesetRegions;
 
         // initialize a map between texture region array indices and the texture region they point to in the tileset
         var pointRegionMap = new HashMap<Point, TextureRegion>();
@@ -261,10 +267,15 @@ public class Level {
         return index;
     }
 
-    private Level.Desc loadDescFromLdtk(Ldtk ldtk) {
+    private Level.Desc loadDescFromLdtk(Ldtk ldtk, int levelNum) {
         var desc = new Level.Desc();
         {
-            var level = ldtk.levels.get(0);
+            // todo - store which level in the ldtk world to load
+            if (levelNum < 0 || levelNum > ldtk.levels.size()) {
+                throw new GdxRuntimeException("Failed to load ldtk file, no level " + levelNum + " in ldtk world");
+            }
+
+            var level = ldtk.levels.get(levelNum);
             var tileset = ldtk.defs.tilesets.get(0);
             var tilesetName = tileset.relPath.substring(tileset.relPath.lastIndexOf("/") + 1, tileset.relPath.lastIndexOf(".png"));
 
@@ -285,7 +296,7 @@ public class Level {
                 throw new GdxRuntimeException("Failed to load ldtk file, no IntGrid 'Collision' layer found");
             }
 
-            desc.position = Point.zero();
+            desc.position = Point.at(level.worldX, -(level.worldY + level.pxHei));
             desc.tileSize = tileset.tileGridSize;
             desc.cols = tileLayer.__cWid;
             desc.rows = tileLayer.__cHei;

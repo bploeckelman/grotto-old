@@ -61,6 +61,8 @@ public class Ldtk {
         public int uid;
         public int pxWid;
         public int pxHei;
+        public int worldX;
+        public int worldY;
         public List<LayerInstance> layerInstances;
     }
 

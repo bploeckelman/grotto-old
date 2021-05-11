@@ -113,7 +113,7 @@ public class Game extends ApplicationAdapter {
 
         if (Input.pressed(Input.Key.l)) {
             level.entity.destroy();
-            level = new Level(world, assets, "levels/ldtk-test.ldtk");
+            level.load(world, assets, "levels/ldtk-test.ldtk", 1);
             world.first(CameraController.class).level = level;
         }
 
