@@ -175,7 +175,7 @@ public class Editor {
             if (Input.pressed(Input.MouseButton.right)) {
                 rightMousePressed = true;
                 lastPress.set((int) worldMouse.x, (int) worldMouse.y);
-                startPos.set(level.entity.position);
+                startPos.set(level.entity().position);
 
                 // deselect currently selected tile
                 if (selectedTileCoord != null) {
@@ -202,13 +202,13 @@ public class Editor {
                 mouseDelta.set((int) Input.mouse().x - lastPress.x, (int) Input.mouse().y - lastPress.y);
                 // paint tile onto map
                 if (selectedTileCoord != null) {
-                    var tilemap = level.entity.get(Tilemap.class);
-                    var collider = level.entity.get(Collider.class);
+                    var tilemap = level.entity().get(Tilemap.class);
+                    var collider = level.entity().get(Collider.class);
 
                     var tiles = assets.tilesetRegions;
                     var tileSize = tilemap.tileSize();
-                    var tileX = (int) Calc.floor((worldMouse.x - level.entity.position.x)  / tileSize);
-                    var tileY = (int) Calc.floor((worldMouse.y - level.entity.position.y)  / tileSize);
+                    var tileX = (int) Calc.floor((worldMouse.x - level.entity().position.x)  / tileSize);
+                    var tileY = (int) Calc.floor((worldMouse.y - level.entity().position.y)  / tileSize);
 
                     if (tileX >= 0 && tileY >= 0 && tileX < tilemap.cols() && tileY < tilemap.rows()) {
                         tilemap.setCell(tileX, tileY, tiles[selectedTileCoord.y][selectedTileCoord.x]);
@@ -221,12 +221,12 @@ public class Editor {
                 mouseDelta.set((int) Input.mouse().x - lastPress.x, (int) Input.mouse().y - lastPress.y);
                 // erase tiles
                 if (selectedTileCoord == null) {
-                    var tilemap = level.entity.get(Tilemap.class);
-                    var collider = level.entity.get(Collider.class);
+                    var tilemap = level.entity().get(Tilemap.class);
+                    var collider = level.entity().get(Collider.class);
 
                     var tileSize = tilemap.tileSize();
-                    var tileX = (int) Calc.floor((worldMouse.x - level.entity.position.x)  / tileSize);
-                    var tileY = (int) Calc.floor((worldMouse.y - level.entity.position.y)  / tileSize);
+                    var tileX = (int) Calc.floor((worldMouse.x - level.entity().position.x)  / tileSize);
+                    var tileY = (int) Calc.floor((worldMouse.y - level.entity().position.y)  / tileSize);
 
                     if (tileX >= 0 && tileY >= 0 && tileX < tilemap.cols() && tileY < tilemap.rows()) {
                         tilemap.setCell(tileX, tileY, null);
@@ -240,7 +240,7 @@ public class Editor {
                     // move level
                     // TODO - should probably move this a tile at a time by default, allowing pixel movement with a modifier key
                     mouseDelta.set((int) worldMouse.x - lastPress.x, (int) worldMouse.y - lastPress.y);
-                    level.entity.position.set(startPos.x + mouseDelta.x, startPos.y + mouseDelta.y);
+                    level.entity().position.set(startPos.x + mouseDelta.x, startPos.y + mouseDelta.y);
                 } else {
                     // move camera
                     mouseDelta.set((int) Input.mouse().x - lastPress.x, (int) Input.mouse().y - lastPress.y);
@@ -272,7 +272,7 @@ public class Editor {
         if (selectedTileCoord != null) {
             var level = game.getLevel();
             var worldMouse = game.getWorldMouse();
-            var tileSize = level.entity.get(Tilemap.class).tileSize();
+            var tileSize = level.entity().get(Tilemap.class).tileSize();
             var tileX = tileSize * Calc.floor(worldMouse.x / tileSize);
             var tileY = tileSize * Calc.floor(worldMouse.y / tileSize);
             batch.draw(assets.tilesetRegions[selectedTileCoord.y][selectedTileCoord.x],
@@ -319,14 +319,14 @@ public class Editor {
 
     public void renderGrid(ShapeRenderer shapes) {
         var level = game.getLevel();
-        var tilemap = level.entity.get(Tilemap.class);
+        var tilemap = level.entity().get(Tilemap.class);
         var tileSize = tilemap.tileSize();
         var rows = tilemap.rows();
         var cols = tilemap.cols();
         shapes.setColor(0.1f, 0.1f, 0.1f, 0.2f);
         for (int x = 0; x < cols; x++) {
             for (int y = 0; y < rows; y++) {
-                shapes.rect(level.entity.position.x + x * tileSize, level.entity.position.y + y * tileSize, tileSize, tileSize);
+                shapes.rect(level.entity().position.x + x * tileSize, level.entity().position.y + y * tileSize, tileSize, tileSize);
             }
         }
         shapes.setColor(Color.WHITE);

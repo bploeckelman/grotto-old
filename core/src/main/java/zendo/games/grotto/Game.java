@@ -112,8 +112,8 @@ public class Game extends ApplicationAdapter {
         worldCamera.unproject(worldMouse.set(Input.mouse().x, Input.mouse().y, 0));
 
         if (Input.pressed(Input.Key.l)) {
-            level.entity.destroy();
-            level.load(world, assets, "levels/ldtk-test.ldtk", 1);
+            level.entity().destroy();
+            level.load(world, assets, "levels/ldtk-test.ldtk");
             world.first(CameraController.class).level = level;
         }
 

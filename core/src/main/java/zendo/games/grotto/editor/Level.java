@@ -12,7 +12,9 @@ import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
 import zendo.games.grotto.utils.Point;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class Level {
 
@@ -26,12 +28,17 @@ public class Level {
         public Point[] tilemapCellTextures;
     }
 
-    public Entity entity;
+    public List<Entity> entities;
 
     public int pixelWidth;
     public int pixelHeight;
 
+    public Entity entity() {
+        return entities.get(0);
+    }
+
     public Level(World world, Assets assets, String filename) {
+        entities = new ArrayList<>();
         load(world, assets, filename);
 //        createAndSaveTestFile(world, assets, filename);
     }
@@ -39,28 +46,39 @@ public class Level {
 // TODO: load all levels in an ldtk world at the same time and smoothly shift camera between them on transition
 
     public void load(World world, Assets assets, String filename) {
-        load(world, assets, filename, 0);
-    }
-
-    public void load(World world, Assets assets, String filename, int levelNum) {
         var json = new Json();
-        Level.Desc desc = null;
         if (filename.endsWith(".json")) {
             // load the map descriptor directly from the specified json file
-            desc = json.fromJson(Level.Desc.class, Gdx.files.local(filename));
+            var desc = json.fromJson(Level.Desc.class, Gdx.files.local(filename));
+            if (desc == null) {
+                throw new GdxRuntimeException("Unable to load level file: '" + filename + "'");
+            }
+            var entity = createFromDesc(desc, assets, world);
+            entities.add(entity);
+
+            pixelWidth  = desc.tileSize * desc.cols;
+            pixelHeight = desc.tileSize * desc.rows;
         } else if (filename.endsWith(".ldtk")) {
             // load ldtk file
             json.setIgnoreUnknownFields(true);
             var ldtk = json.fromJson(Ldtk.class, Gdx.files.internal(filename));
 
             // load the map descriptor from the ldtk file data
-            desc = loadDescFromLdtk(ldtk, levelNum);
-        }
+            // TODO - load multiple descs
+            var desc = loadDescFromLdtk(ldtk);
+            if (desc == null) {
+                throw new GdxRuntimeException("Unable to load level file: '" + filename + "'");
+            }
+            var entity = createFromDesc(desc, assets, world);
+            entities.add(entity);
 
-        if (desc == null) {
-            throw new GdxRuntimeException("Unable to load level file: '" + filename + "'");
+            // TODO - set pix w/h from 'current' level
+            pixelWidth  = desc.tileSize * desc.cols;
+            pixelHeight = desc.tileSize * desc.rows;
         }
+    }
 
+    public Entity createFromDesc(Desc desc, Assets assets, World world) {
         // setup tileset
         var tileset = assets.atlas.findRegion(desc.tileset);
         var regions = assets.tilesetRegions;
@@ -77,7 +95,7 @@ public class Level {
         }
 
         // create the room entity and initialize it
-        entity = world.addEntity();
+        var entity = world.addEntity();
         {
             // create components
             var tilemap = entity.add(new Tilemap(desc.tileSize, desc.cols, desc.rows), Tilemap.class);
@@ -97,12 +115,11 @@ public class Level {
         }
         entity.position.set(desc.position);
 
-        pixelWidth  = desc.tileSize * desc.cols;
-        pixelHeight = desc.tileSize * desc.rows;
+        return entity;
     }
 
     public void createAndSaveTestFile(World world, Assets assets, String filename) {
-        this.entity = world.addEntity();
+        var entity = world.addEntity();
         {
             var tileSize = 16;
             var cols = (Config.framebuffer_width + (Config.framebuffer_width / 2)) / tileSize;
@@ -198,17 +215,18 @@ public class Level {
             pixelWidth  = desc.tileSize * desc.cols;
             pixelHeight = desc.tileSize * desc.rows;
         }
+        entities.add(entity);
     }
 
     public void save(String filename, Assets assets) {
-        if (entity == null) {
+        if (entity() == null) {
             throw new GdxRuntimeException("Can't save level, no level entity");
         }
-        var tilemap = entity.get(Tilemap.class);
+        var tilemap = entity().get(Tilemap.class);
         if (tilemap == null) {
             throw new GdxRuntimeException("Can't save level, entity missing tilemap component");
         }
-        var collider = entity.get(Collider.class);
+        var collider = entity().get(Collider.class);
         if (collider == null) {
             throw new GdxRuntimeException("Can't save level, entity missing collider component");
         }
@@ -219,7 +237,7 @@ public class Level {
         {
             // build the descriptor for json output from the current entity state
             var desc = new Desc();
-            desc.position = entity.position;
+            desc.position = entity().position;
             desc.tileSize = tilemap.tileSize();
             desc.cols = tilemap.cols();
             desc.rows = tilemap.rows();
@@ -267,13 +285,14 @@ public class Level {
         return index;
     }
 
-    private Level.Desc loadDescFromLdtk(Ldtk ldtk, int levelNum) {
+    private Level.Desc loadDescFromLdtk(Ldtk ldtk) {
         var desc = new Level.Desc();
         {
-            // todo - store which level in the ldtk world to load
-            if (levelNum < 0 || levelNum > ldtk.levels.size()) {
-                throw new GdxRuntimeException("Failed to load ldtk file, no level " + levelNum + " in ldtk world");
-            }
+            // TODO - load all levels into descs
+            var levelNum = 0;
+//            if (levelNum < 0 || levelNum > ldtk.levels.size()) {
+//                throw new GdxRuntimeException("Failed to load ldtk file, no level " + levelNum + " in ldtk world");
+//            }
 
             var level = ldtk.levels.get(levelNum);
             var tileset = ldtk.defs.tilesets.get(0);
