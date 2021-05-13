@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.badlogic.gdx.utils.Json;
+import org.w3c.dom.css.Rect;
 import zendo.games.grotto.Assets;
 import zendo.games.grotto.Config;
 import zendo.games.grotto.components.Collider;
@@ -14,6 +15,7 @@ import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
 import zendo.games.grotto.factories.CreatureFactory;
 import zendo.games.grotto.utils.Point;
+import zendo.games.grotto.utils.RectI;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,6 +46,23 @@ public class Level {
 
     public Entity entity() {
         return entities.get(0);
+    }
+
+    public Entity room(int x, int y) {
+        Entity room = null;
+        var bounds = RectI.pool.obtain();
+        for (var entity : entities) {
+            var tilemap = entity.get(Tilemap.class);
+            bounds.set(entity.position.x, entity.position.y,
+                    tilemap.cols() * tilemap.tileSize(),
+                    tilemap.rows() * tilemap.tileSize());
+            if (bounds.contains(x, y)) {
+                room = entity;
+                break;
+            }
+        }
+        RectI.pool.free(bounds);
+        return room;
     }
 
     public Entity spawnPlayer(World world) {
