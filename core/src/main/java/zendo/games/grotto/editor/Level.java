@@ -7,9 +7,11 @@ import com.badlogic.gdx.utils.Json;
 import zendo.games.grotto.Assets;
 import zendo.games.grotto.Config;
 import zendo.games.grotto.components.Collider;
+import zendo.games.grotto.components.Player;
 import zendo.games.grotto.components.Tilemap;
 import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
+import zendo.games.grotto.factories.CreatureFactory;
 import zendo.games.grotto.utils.Point;
 
 import java.util.ArrayList;
@@ -28,7 +30,13 @@ public class Level {
         public Point[] tilemapCellTextures;
     }
 
+    static class Spawner {
+        public String type;
+        public Point pos;
+    }
+
     public List<Entity> entities;
+    public List<Spawner> spawners;
 
     public int pixelWidth;
     public int pixelHeight;
@@ -37,8 +45,27 @@ public class Level {
         return entities.get(0);
     }
 
+    public Entity spawnPlayer(World world) {
+        // clear existing player
+        var p = world.first(Player.class);
+        if (p != null) {
+            p.entity().destroy();
+        }
+
+        // spawn new player
+        Entity player = null;
+        for (var spawner : spawners) {
+            if (spawner.type.equals("player")) {
+                player = CreatureFactory.player(world, spawner.pos);
+            }
+        }
+        return player;
+    }
+
     public Level(World world, Assets assets, String filename) {
         entities = new ArrayList<>();
+        spawners = new ArrayList<>();
+
         load(world, assets, filename);
 //        createAndSaveTestFile(world, assets, filename);
     }
@@ -47,6 +74,8 @@ public class Level {
         for (var entity : entities) {
             entity.destroy();
         }
+        entities.clear();
+        spawners.clear();
     }
 
     public void load(World world, Assets assets, String filename) {
@@ -70,6 +99,7 @@ public class Level {
             // load the level descriptors from the ldtk file data
             var descs = loadDescsFromLdtk(ldtk);
             for (var desc : descs) {
+                // load a room entity based on the level descriptor
                 var entity = createFromDesc(desc, assets, world);
                 entities.add(entity);
             }
@@ -302,11 +332,14 @@ public class Level {
                 // find required layers
                 Ldtk.LayerInstance tileLayer = null;
                 Ldtk.LayerInstance collisionLayer = null;
+                Ldtk.LayerInstance entityLayer = null;
                 for (var layer : level.layerInstances) {
                     if (layer.__type.equals("Tiles") && layer.__identifier.equals("Tiles")) {
                         tileLayer = layer;
                     } else if (layer.__type.equals("IntGrid") && layer.__identifier.equals("Collision")) {
                         collisionLayer = layer;
+                    } else if (layer.__type.equals("Entities") && layer.__identifier.equals("Entities")) {
+                        entityLayer = layer;
                     }
                 }
                 if (tileLayer == null) {
@@ -324,6 +357,31 @@ public class Level {
                 desc.colliderCells = new int[desc.cols * desc.rows];
                 desc.tilemapCellTextures = new Point[desc.cols * desc.rows];
 
+                // setup spawners
+                for (var entity : entityLayer.entityInstances) {
+                    if ("Spawner".equals(entity.__identifier)) {
+                        // extract 'Type' field to figure out what to spawn
+                        for (var field : entity.fieldInstances) {
+                            if ("Type".equals(field.__identifier)) {
+                                var type = field.__value;
+                                switch (type) {
+                                    case "player" -> {
+                                        var x = desc.position.x + entity.px[0];
+                                        var y = desc.position.y + entity.px[1];
+                                        var flipY = ((desc.rows - 1) * desc.tileSize) - y;
+
+                                        var spawner = new Spawner();
+                                        spawner.type = type;
+                                        spawner.pos = Point.at(x, flipY);
+                                        spawners.add(spawner);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // setup collision layer
                 for (int x = 0; x < desc.cols; x++) {
                     for (int y = 0; y < desc.rows; y++) {
                         // note: ldtk files are stored with origin = top left so we have to flip y
@@ -335,6 +393,7 @@ public class Level {
                     }
                 }
 
+                // setup tilemap layer
                 for (var gridTileEntry : tileLayer.gridTiles) {
                     var px = gridTileEntry.px;
                     var tile = Point.at(px[0] / tileset.tileGridSize, px[1] / tileset.tileGridSize);

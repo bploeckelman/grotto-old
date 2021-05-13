@@ -81,10 +81,9 @@ public class Game extends ApplicationAdapter {
 
         world = new World();
 
-//        level = new Level(world, assets, "levels/test.json");
         level = new Level(world, assets, "levels/ldtk-test.ldtk");
 
-        player = CreatureFactory.player(world, Point.at((int) worldCamera.viewportWidth / 2, 100));
+        player = level.spawnPlayer(world);
 
         slime = CreatureFactory.slime(world, Point.at((int) worldCamera.viewportWidth / 2 + 32, 100));
         goblin = CreatureFactory.goblin(world, Point.at((int) worldCamera.viewportWidth / 4 + 32, 120));
@@ -115,6 +114,7 @@ public class Game extends ApplicationAdapter {
             level.clear();
             level.load(world, assets, "levels/ldtk-test.ldtk");
             world.first(CameraController.class).level = level;
+            player = level.spawnPlayer(world);
         }
 
         // update based on mode

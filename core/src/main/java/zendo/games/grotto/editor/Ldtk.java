@@ -105,18 +105,19 @@ public class Ldtk {
 
     public static class EntityInstance {
         public String __identifier;
-        public int __cx;
-        public int __cy;
+        public float[] __pivot;
+        public int[] __grid;
+        public int[] px;
         public int defUid;
-        public int x;
-        public int y;
+        public int width;
+        public int height;
         public List<FieldInstance> fieldInstances;
     }
 
     public static class FieldInstance {
         public String __identifier;
         // NOTE: this could be a plain value (int, float bool, string) or an array of plain values, not sure how to handle that
-        public List<String> __value;
+        public String __value;
         public String __type;
         public int defUid;
     }
