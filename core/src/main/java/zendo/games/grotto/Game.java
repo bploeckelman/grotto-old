@@ -23,6 +23,8 @@ import zendo.games.grotto.utils.Calc;
 import zendo.games.grotto.utils.Point;
 import zendo.games.grotto.utils.Time;
 
+import java.util.List;
+
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Game extends ApplicationAdapter {
 
@@ -40,8 +42,7 @@ public class Game extends ApplicationAdapter {
 
     private World world;
     private Entity player;
-    private Entity slime;
-    private Entity goblin;
+    private List<Enemy> enemies;
 
     private Level level;
     private Mode mode;
@@ -80,13 +81,9 @@ public class Game extends ApplicationAdapter {
         frameBufferRegion.flip(false, true);
 
         world = new World();
-
         level = new Level(world, assets, "levels/ldtk-test.ldtk");
-
         player = level.spawnPlayer(world);
-
-        slime = CreatureFactory.slime(world, Point.at((int) worldCamera.viewportWidth / 2 + 32, 100));
-        goblin = CreatureFactory.goblin(world, Point.at((int) worldCamera.viewportWidth / 4 + 32, 120));
+        enemies = level.spawnEnemies(world);
 
         var camController = world.addEntity().add(new CameraController(worldCamera), CameraController.class);
         camController.setTarget(player, true);
@@ -110,11 +107,26 @@ public class Game extends ApplicationAdapter {
 
         worldCamera.unproject(worldMouse.set(Input.mouse().x, Input.mouse().y, 0));
 
-        if (Input.pressed(Input.Key.l)) {
+        // trigger a reload in current room
+        if (Input.pressed(Input.Key.r)) {
+            // clear and reload level
             level.clear();
             level.load(world, assets, "levels/ldtk-test.ldtk");
+
+            // wire up camera controller
             world.first(CameraController.class).level = level;
+
+            // respawn player
             player = level.spawnPlayer(world);
+
+            // destroy and respawn enemies
+            enemies.forEach(enemy -> {
+                if (enemy.entity() != null) {
+                    enemy.entity().destroy();
+                }
+            });
+            enemies.clear();
+            enemies = level.spawnEnemies(world);
         }
 
         // update based on mode
@@ -175,20 +187,6 @@ public class Game extends ApplicationAdapter {
             if (DebugFlags.frame_stepping_enabled && !Input.pressed(Input.Key.f7)) {
                 return;
             }
-
-            // test switching camera controller target entity
-            if (Input.pressed(0, Input.Button.y)) {
-                var camController = world.first(CameraController.class);
-                if (camController.mode() == CameraController.TargetMode.entity) {
-                    if (camController.entity == player) {
-                        camController.entity = slime;
-                    } else if (camController.entity == slime) {
-                        camController.entity = goblin;
-                    } else if (camController.entity == goblin) {
-                        camController.entity = player;
-                    }
-                }
-            }
         }
 
         // handle a pause
@@ -210,12 +208,6 @@ public class Game extends ApplicationAdapter {
         {
             assets.tween.update(Time.delta);
             world.update(Time.delta);
-
-            // respawn if both enemies are dead
-            if (slime.world == null && goblin.world == null) {
-                slime = CreatureFactory.slime(world, Point.at((int) worldCamera.viewportWidth / 2 + 32, 100));
-                goblin = CreatureFactory.goblin(world, Point.at((int) worldCamera.viewportWidth / 4 + 32, 120));
-            }
         }
     }
 

@@ -7,6 +7,7 @@ import com.badlogic.gdx.utils.Json;
 import zendo.games.grotto.Assets;
 import zendo.games.grotto.Config;
 import zendo.games.grotto.components.Collider;
+import zendo.games.grotto.components.Enemy;
 import zendo.games.grotto.components.Player;
 import zendo.games.grotto.components.Tilemap;
 import zendo.games.grotto.ecs.Entity;
@@ -35,7 +36,7 @@ public class Level {
         public Point pos;
     }
 
-    public List<Entity> entities;
+    public List<Entity> entities; // these are rooms
     public List<Spawner> spawners;
 
     public int pixelWidth;
@@ -55,11 +56,24 @@ public class Level {
         // spawn new player
         Entity player = null;
         for (var spawner : spawners) {
+            // todo - only spawn from current room's player spawner
             if (spawner.type.equals("player")) {
                 player = CreatureFactory.player(world, spawner.pos);
+                break;
             }
         }
         return player;
+    }
+
+    public List<Enemy> spawnEnemies(World world) {
+        var enemies = new ArrayList<Enemy>();
+        for (var spawner : spawners) {
+            switch (spawner.type) {
+                case "slime"  -> enemies.add(CreatureFactory.slime(world, spawner.pos).get(Enemy.class));
+                case "goblin" -> enemies.add(CreatureFactory.goblin(world, spawner.pos).get(Enemy.class));
+            }
+        }
+        return enemies;
     }
 
     public Level(World world, Assets assets, String filename) {
@@ -67,7 +81,6 @@ public class Level {
         spawners = new ArrayList<>();
 
         load(world, assets, filename);
-//        createAndSaveTestFile(world, assets, filename);
     }
 
     public void clear() {
@@ -348,6 +361,9 @@ public class Level {
                 if (collisionLayer == null) {
                     throw new GdxRuntimeException("Failed to load ldtk file, no IntGrid 'Collision' layer found");
                 }
+                if (entityLayer == null) {
+                    throw new GdxRuntimeException("Failed to load ldtk file, no 'Entities' layer found");
+                }
 
                 desc.position = Point.at(level.worldX, -(level.worldY + level.pxHei));
                 desc.tileSize = tileset.tileGridSize;
@@ -364,18 +380,13 @@ public class Level {
                         for (var field : entity.fieldInstances) {
                             if ("Type".equals(field.__identifier)) {
                                 var type = field.__value;
-                                switch (type) {
-                                    case "player" -> {
-                                        var x = desc.position.x + entity.px[0];
-                                        var y = desc.position.y + entity.px[1];
-                                        var flipY = ((desc.rows - 1) * desc.tileSize) - y;
-
-                                        var spawner = new Spawner();
-                                        spawner.type = type;
-                                        spawner.pos = Point.at(x, flipY);
-                                        spawners.add(spawner);
-                                    }
-                                }
+                                var x = desc.position.x + entity.px[0] + desc.tileSize / 2;
+                                var y = desc.position.y + entity.px[1];
+                                var flipY = ((desc.rows - 1) * desc.tileSize) - y + desc.tileSize / 2;
+                                var spawner = new Spawner();
+                                spawner.type = type;
+                                spawner.pos = Point.at(x, flipY);
+                                spawners.add(spawner);
                             }
                         }
                     }

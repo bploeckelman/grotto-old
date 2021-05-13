@@ -201,13 +201,13 @@
 					"entityInstances": [
 						{
 							"__identifier": "Spawner",
-							"__grid": [9,4],
+							"__grid": [9,5],
 							"__pivot": [0.5,0.5],
 							"__tile": null,
 							"width": 16,
 							"height": 16,
 							"defUid": 8,
-							"px": [152,72],
+							"px": [152,88],
 							"fieldInstances": [{
 								"__identifier": "Type",
 								"__value": "player",
@@ -216,6 +216,66 @@
 								"realEditorValues": [{
 									"id": "V_String",
 									"params": ["player"]
+								}]
+							}]
+						},
+						{
+							"__identifier": "Spawner",
+							"__grid": [27,3],
+							"__pivot": [0.5,0.5],
+							"__tile": null,
+							"width": 16,
+							"height": 16,
+							"defUid": 8,
+							"px": [440,56],
+							"fieldInstances": [{
+								"__identifier": "Type",
+								"__value": "slime",
+								"__type": "String",
+								"defUid": 10,
+								"realEditorValues": [{
+									"id": "V_String",
+									"params": ["slime"]
+								}]
+							}]
+						},
+						{
+							"__identifier": "Spawner",
+							"__grid": [3,7],
+							"__pivot": [0.5,0.5],
+							"__tile": null,
+							"width": 16,
+							"height": 16,
+							"defUid": 8,
+							"px": [56,120],
+							"fieldInstances": [{
+								"__identifier": "Type",
+								"__value": "slime",
+								"__type": "String",
+								"defUid": 10,
+								"realEditorValues": [{
+									"id": "V_String",
+									"params": ["slime"]
+								}]
+							}]
+						},
+						{
+							"__identifier": "Spawner",
+							"__grid": [24,5],
+							"__pivot": [0.5,0.5],
+							"__tile": null,
+							"width": 16,
+							"height": 16,
+							"defUid": 8,
+							"px": [392,88],
+							"fieldInstances": [{
+								"__identifier": "Type",
+								"__value": "goblin",
+								"__type": "String",
+								"defUid": 10,
+								"realEditorValues": [{
+									"id": "V_String",
+									"params": ["goblin"]
 								}]
 							}]
 						}
@@ -287,7 +347,6 @@
 						{ "coordId": 163, "v": 0 },
 						{ "coordId": 176, "v": 0 },
 						{ "coordId": 180, "v": 0 },
-						{ "coordId": 182, "v": 0 },
 						{ "coordId": 188, "v": 0 },
 						{ "coordId": 189, "v": 0 },
 						{ "coordId": 190, "v": 0 },
@@ -300,7 +359,6 @@
 						{ "coordId": 205, "v": 0 },
 						{ "coordId": 206, "v": 0 },
 						{ "coordId": 210, "v": 0 },
-						{ "coordId": 213, "v": 0 },
 						{ "coordId": 218, "v": 0 },
 						{ "coordId": 220, "v": 0 },
 						{ "coordId": 225, "v": 0 },
@@ -383,8 +441,8 @@
 						0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,
 						0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 						0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,
-						0,1,0,0,0,1,0,1,0,0,0,0,0,1,1,1,0,0,0,0,1,1,1,0,0,0,0,1,1,1,1,1,0,0,0,
-						1,0,0,1,0,0,0,0,1,0,1,0,0,0,0,1,0,1,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,1,
+						0,1,0,0,0,1,0,0,0,0,0,0,0,1,1,1,0,0,0,0,1,1,1,0,0,0,0,1,1,1,1,1,0,0,0,
+						1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,1,0,1,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,1,
 						0,0,0,1,1,1,0,0,0,0,1,1,1,0,0,0,0,1,1,1,1,1,0,0,0,1,0,0,0,0,0,0,0,0,0,
 						0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,
 						0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,1,0,0,0,0,0,0,1,1,1,0,0,0,0,1,1,1,0,0,
