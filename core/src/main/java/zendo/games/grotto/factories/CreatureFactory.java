@@ -93,18 +93,11 @@ public class CreatureFactory {
                             anim.mode = Animator.LoopMode.none;
                             anim.play("hurt");
 
-                            // self destruct after playing death animation
+                            // play death animation and self destruct after last hurt animation finishes
                             entity.add(new Timer(anim.duration(), (timer) -> {
-                                anim.play("death");
-                                entity.add(new Timer(anim.duration(), (timer1) -> entity.destroy()), Timer.class);
+                                EffectFactory.deathAnim(world, entity.position, "slime", "death");
+                                entity.destroy();
                             }), Timer.class);
-
-                            // disable some components that would interfere with the death animation
-                            // todo - if hurt/death animations were a spawned effect rather than attached to this entity this wouldn't be a problem
-                            hurtable.collider = null;
-                            collider.destroy();
-                            moveTimer.destroy();
-                            mover.destroy();
                         }
                     }
                 }
@@ -190,18 +183,11 @@ public class CreatureFactory {
                         anim.mode = Animator.LoopMode.none;
                         anim.play("hurt");
 
-                        // self destruct after playing death animation
+                        // play death animation and self destruct after last hurt animation finishes
                         entity.add(new Timer(anim.duration(), (timer) -> {
-                            anim.play("death");
-                            entity.add(new Timer(anim.duration(), (timer1) -> entity.destroy()), Timer.class);
+                            EffectFactory.deathAnim(world, entity.position, "goblin", "death");
+                            entity.destroy();
                         }), Timer.class);
-
-                        // disable some components that would interfere with the death animation
-                        // todo - if hurt/death animations were a spawned effect rather than attached to this entity this wouldn't be a problem
-                        hurtable.collider = null;
-                        collider.destroy();
-                        moveTimer.destroy();
-                        mover.destroy();
                     }
                 }
             };
