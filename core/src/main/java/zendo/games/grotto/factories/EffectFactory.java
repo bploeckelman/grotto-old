@@ -16,8 +16,6 @@ public class EffectFactory {
             var anim = entity.add(new Animator(sprite, animation), Animator.class);
             anim.depth = 100;
 
-            // TODO - set facing
-
             entity.add(new Timer(anim.duration(), (self) -> self.entity().destroy()), Timer.class);
         }
         return entity;
