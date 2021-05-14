@@ -102,8 +102,9 @@ public class CreatureFactory {
                             // disable some components that would interfere with the death animation
                             // todo - if hurt/death animations were a spawned effect rather than attached to this entity this wouldn't be a problem
                             hurtable.collider = null;
+                            collider.destroy();
                             moveTimer.destroy();
-                            mover.stop();
+                            mover.destroy();
                         }
                     }
                 }
@@ -198,8 +199,9 @@ public class CreatureFactory {
                         // disable some components that would interfere with the death animation
                         // todo - if hurt/death animations were a spawned effect rather than attached to this entity this wouldn't be a problem
                         hurtable.collider = null;
+                        collider.destroy();
                         moveTimer.destroy();
-                        mover.stop();
+                        mover.destroy();
                     }
                 }
             };
