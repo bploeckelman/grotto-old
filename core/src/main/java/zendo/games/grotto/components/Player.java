@@ -44,6 +44,7 @@ public class Player extends Component {
         super();
         stick = new VirtualStick()
                 .addButtons(0, Input.Button.left, Input.Button.right, Input.Button.up, Input.Button.down)
+                .addAxes(0, Input.Axis.leftX, Input.Axis.leftY, 0.2f)
                 .addKeys(Input.Key.left, Input.Key.right, Input.Key.up, Input.Key.down)
                 .addKeys(Input.Key.a, Input.Key.d, Input.Key.w, Input.Key.s)
                 .pressBuffer(0.15f);
