@@ -235,8 +235,8 @@ public class Game extends ApplicationAdapter {
                 world.render(batch);
 
                 // in-world ui ------------------
-                assets.layout.setText(assets.font, "Grotto", Color.WHITE, worldCamera.viewportWidth, Align.center, false);
-                assets.font.draw(batch, assets.layout, 0, (3f / 4f) * worldCamera.viewportHeight + assets.layout.height);
+//                assets.layout.setText(assets.font, "Grotto", Color.WHITE, worldCamera.viewportWidth, Align.center, false);
+//                assets.font.draw(batch, assets.layout, 0, (3f / 4f) * worldCamera.viewportHeight + assets.layout.height);
 
                 if (mode == Mode.edit) {
                     editor.renderWorld(batch);
