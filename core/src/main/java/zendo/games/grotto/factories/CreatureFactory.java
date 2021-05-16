@@ -95,7 +95,7 @@ public class CreatureFactory {
 
                             // play death animation and self destruct after last hurt animation finishes
                             entity.add(new Timer(anim.duration(), (timer) -> {
-                                EffectFactory.deathAnim(world, entity.position, "slime", "death")
+                                EffectFactory.spriteAnimOneShot(world, entity.position, "slime", "death")
                                         .get(Animator.class).scale.set(anim.scale);
                                 entity.destroy();
                             }), Timer.class);
@@ -186,7 +186,7 @@ public class CreatureFactory {
 
                         // play death animation and self destruct after last hurt animation finishes
                         entity.add(new Timer(anim.duration(), (timer) -> {
-                            EffectFactory.deathAnim(world, entity.position, "goblin", "death")
+                            EffectFactory.spriteAnimOneShot(world, entity.position, "goblin", "death")
                                     .get(Animator.class).scale.set(anim.scale);
                             entity.destroy();
                         }), Timer.class);

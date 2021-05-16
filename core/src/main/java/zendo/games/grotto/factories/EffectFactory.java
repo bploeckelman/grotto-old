@@ -8,7 +8,7 @@ import zendo.games.grotto.utils.Point;
 
 public class EffectFactory {
 
-    public static Entity deathAnim(World world, Point position, String sprite, String animation) {
+    public static Entity spriteAnimOneShot(World world, Point position, String sprite, String animation) {
         var entity = world.addEntity();
         {
             entity.position.set(position);
