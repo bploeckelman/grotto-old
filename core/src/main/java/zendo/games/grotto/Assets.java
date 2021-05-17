@@ -43,10 +43,10 @@ public class Assets extends Content implements Disposable {
             Tween.registerAccessor(OrthographicCamera.class, new CameraAccessor());
         }
 
-        FileHandle fontFile = Gdx.files.internal("fonts/dogicapixel.ttf");
-        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(fontFile);
         {
-            FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+            var fontFile = Gdx.files.internal("fonts/dogicapixel.ttf");
+            var generator = new FreeTypeFontGenerator(fontFile);
+            var parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
             parameter.size = 20;
             parameter.color = Color.WHITE;
             parameter.borderColor = Color.DARK_GRAY;
@@ -55,14 +55,21 @@ public class Assets extends Content implements Disposable {
             parameter.shadowOffsetX = 1;
             parameter.shadowOffsetY = 2;
             font = generator.generateFont(parameter);
+            generator.dispose();
 
-            parameter.size = 5;
+            fontFile = Gdx.files.internal("fonts/smallest_pixel-7.ttf");
+            generator = new FreeTypeFontGenerator(fontFile);
+            parameter.size = 10;
+            parameter.color = Color.WHITE;
+            parameter.borderColor = Color.DARK_GRAY;
+            parameter.shadowColor = Color.BLACK;
             parameter.borderWidth = 1;
             parameter.shadowOffsetX = 0;
             parameter.shadowOffsetY = 0;
             worldFont = generator.generateFont(parameter);
+            generator.dispose();
         }
-        generator.dispose();
+
         layout = new GlyphLayout();
 
         batch = new SpriteBatch();
