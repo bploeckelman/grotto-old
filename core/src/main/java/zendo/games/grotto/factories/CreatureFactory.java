@@ -1,5 +1,6 @@
 package zendo.games.grotto.factories;
 
+import zendo.games.grotto.Assets;
 import zendo.games.grotto.components.*;
 import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
@@ -9,7 +10,7 @@ import zendo.games.grotto.utils.RectI;
 
 public class CreatureFactory {
 
-    public static Entity player(World world, Point position) {
+    public static Entity player(Assets assets, World world, Point position) {
         var entity = world.addEntity();
         {
             entity.add(new Player(), Player.class);
@@ -27,11 +28,13 @@ public class CreatureFactory {
             entity.position.set(
                     (int) (position.x - anim.sprite().origin.x),
                     (int) (position.y - anim.sprite().origin.y));
+
+            entity.add(new Text(assets, "player", Point.at(-16, 16)), Text.class);
         }
         return entity;
     }
 
-    public static Entity slime(World world, Point position) {
+    public static Entity slime(Assets assets, World world, Point position) {
         var entity = world.addEntity();
         {
             entity.add(new Enemy(), Enemy.class);
@@ -107,11 +110,13 @@ public class CreatureFactory {
             entity.position.set(
                     (int) (position.x - anim.sprite().origin.x),
                     (int) (position.y - anim.sprite().origin.y));
+
+            entity.add(new Text(assets, "slime", Point.at(-16, 16)), Text.class);
         }
         return entity;
     }
 
-    public static Entity goblin(World world, Point position) {
+    public static Entity goblin(Assets assets, World world, Point position) {
         var entity = world.addEntity();
         {
             entity.add(new Enemy(), Enemy.class);
@@ -197,6 +202,8 @@ public class CreatureFactory {
             entity.position.set(
                     (int) (position.x - anim.sprite().origin.x),
                     (int) (position.y - anim.sprite().origin.y));
+
+            entity.add(new Text(assets, "gerblin", Point.at(-16, 16)), Text.class);
         }
         return entity;
     }

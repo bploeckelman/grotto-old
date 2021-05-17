@@ -4,7 +4,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.badlogic.gdx.utils.Json;
-import org.w3c.dom.css.Rect;
 import zendo.games.grotto.Assets;
 import zendo.games.grotto.Config;
 import zendo.games.grotto.components.Collider;
@@ -44,6 +43,16 @@ public class Level {
     public int pixelWidth;
     public int pixelHeight;
 
+    private Assets assets;
+
+    public Level(World world, Assets assets, String filename) {
+        entities = new ArrayList<>();
+        spawners = new ArrayList<>();
+
+        this.assets = assets;
+        load(world, filename);
+    }
+
     public Entity entity() {
         return entities.get(0);
     }
@@ -77,7 +86,7 @@ public class Level {
         for (var spawner : spawners) {
             // todo - only spawn from current room's player spawner
             if (spawner.type.equals("player")) {
-                player = CreatureFactory.player(world, spawner.pos);
+                player = CreatureFactory.player(assets, world, spawner.pos);
                 break;
             }
         }
@@ -88,18 +97,11 @@ public class Level {
         var enemies = new ArrayList<Enemy>();
         for (var spawner : spawners) {
             switch (spawner.type) {
-                case "slime"  -> enemies.add(CreatureFactory.slime(world, spawner.pos).get(Enemy.class));
-                case "goblin" -> enemies.add(CreatureFactory.goblin(world, spawner.pos).get(Enemy.class));
+                case "slime"  -> enemies.add(CreatureFactory.slime(assets, world, spawner.pos).get(Enemy.class));
+                case "goblin" -> enemies.add(CreatureFactory.goblin(assets, world, spawner.pos).get(Enemy.class));
             }
         }
         return enemies;
-    }
-
-    public Level(World world, Assets assets, String filename) {
-        entities = new ArrayList<>();
-        spawners = new ArrayList<>();
-
-        load(world, assets, filename);
     }
 
     public void clear() {
@@ -110,7 +112,7 @@ public class Level {
         spawners.clear();
     }
 
-    public void load(World world, Assets assets, String filename) {
+    public void load(World world, String filename) {
         var json = new Json();
         if (filename.endsWith(".json")) {
             // load the map descriptor directly from the specified json file
