@@ -14,6 +14,7 @@ import zendo.games.grotto.components.Tilemap;
 import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
 import zendo.games.grotto.factories.CreatureFactory;
+import zendo.games.grotto.factories.ItemFactory;
 import zendo.games.grotto.utils.Point;
 import zendo.games.grotto.utils.RectI;
 
@@ -112,6 +113,8 @@ public class Level {
             switch (spawner.type) {
                 case "slime"  -> enemies.add(CreatureFactory.slime(assets, world, spawner.pos).get(Enemy.class));
                 case "goblin" -> enemies.add(CreatureFactory.goblin(assets, world, spawner.pos).get(Enemy.class));
+                // TODO - spawn enemies / items separately?
+                case "coin"   -> ItemFactory.coin(world, spawner.pos);
             }
         }
         return enemies;

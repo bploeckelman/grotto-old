@@ -102,7 +102,7 @@
 			"hollow": false,
 			"color": "#00FF00",
 			"renderMode": "Rectangle",
-			"showName": true,
+			"showName": false,
 			"tilesetId": null,
 			"tileId": null,
 			"tileRenderMode": "FitInside",
@@ -316,6 +316,126 @@
 								"realEditorValues": [{
 									"id": "V_String",
 									"params": ["goblin"]
+								}]
+							}]
+						},
+						{
+							"__identifier": "Spawner",
+							"__grid": [16,5],
+							"__pivot": [0.5,0.5],
+							"__tile": null,
+							"width": 16,
+							"height": 16,
+							"defUid": 8,
+							"px": [264,88],
+							"fieldInstances": [{
+								"__identifier": "Type",
+								"__value": "coin",
+								"__type": "String",
+								"defUid": 10,
+								"realEditorValues": [{
+									"id": "V_String",
+									"params": ["coin"]
+								}]
+							}]
+						},
+						{
+							"__identifier": "Spawner",
+							"__grid": [19,3],
+							"__pivot": [0.5,0.5],
+							"__tile": null,
+							"width": 16,
+							"height": 16,
+							"defUid": 8,
+							"px": [312,56],
+							"fieldInstances": [{
+								"__identifier": "Type",
+								"__value": "coin",
+								"__type": "String",
+								"defUid": 10,
+								"realEditorValues": [{
+									"id": "V_String",
+									"params": ["coin"]
+								}]
+							}]
+						},
+						{
+							"__identifier": "Spawner",
+							"__grid": [20,3],
+							"__pivot": [0.5,0.5],
+							"__tile": null,
+							"width": 16,
+							"height": 16,
+							"defUid": 8,
+							"px": [328,56],
+							"fieldInstances": [{
+								"__identifier": "Type",
+								"__value": "coin",
+								"__type": "String",
+								"defUid": 10,
+								"realEditorValues": [{
+									"id": "V_String",
+									"params": ["coin"]
+								}]
+							}]
+						},
+						{
+							"__identifier": "Spawner",
+							"__grid": [22,13],
+							"__pivot": [0.5,0.5],
+							"__tile": null,
+							"width": 16,
+							"height": 16,
+							"defUid": 8,
+							"px": [360,216],
+							"fieldInstances": [{
+								"__identifier": "Type",
+								"__value": "coin",
+								"__type": "String",
+								"defUid": 10,
+								"realEditorValues": [{
+									"id": "V_String",
+									"params": ["coin"]
+								}]
+							}]
+						},
+						{
+							"__identifier": "Spawner",
+							"__grid": [21,13],
+							"__pivot": [0.5,0.5],
+							"__tile": null,
+							"width": 16,
+							"height": 16,
+							"defUid": 8,
+							"px": [344,216],
+							"fieldInstances": [{
+								"__identifier": "Type",
+								"__value": "coin",
+								"__type": "String",
+								"defUid": 10,
+								"realEditorValues": [{
+									"id": "V_String",
+									"params": ["coin"]
+								}]
+							}]
+						},
+						{
+							"__identifier": "Spawner",
+							"__grid": [1,9],
+							"__pivot": [0.5,0.5],
+							"__tile": null,
+							"width": 16,
+							"height": 16,
+							"defUid": 8,
+							"px": [24,152],
+							"fieldInstances": [{
+								"__identifier": "Type",
+								"__value": "coin",
+								"__type": "String",
+								"defUid": 10,
+								"realEditorValues": [{
+									"id": "V_String",
+									"params": ["coin"]
 								}]
 							}]
 						}
