@@ -3,6 +3,7 @@ package zendo.games.grotto.editor;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.utils.GdxRuntimeException;
+import com.badlogic.gdx.utils.IntMap;
 import com.badlogic.gdx.utils.Json;
 import zendo.games.grotto.Assets;
 import zendo.games.grotto.Config;
@@ -27,7 +28,7 @@ public class Level {
         public int tileSize;
         public int cols;
         public int rows;
-        public String tileset;
+        public int tilesetUid;
         public int[] colliderCells;
         public Point[] tilemapCellTextures;
     }
@@ -37,9 +38,19 @@ public class Level {
         public Point pos;
     }
 
+    static class Tileset {
+        public int uid;
+        public int gridSize;
+        public int rows;
+        public int cols;
+        public String name;
+    }
+
     public List<Entity> entities; // these are rooms
     public List<Spawner> spawners;
+    public IntMap<Tileset> tilesets;
 
+    // TODO - store per-room (or just room bounds in pixels)
     public int pixelWidth;
     public int pixelHeight;
 
@@ -48,6 +59,7 @@ public class Level {
     public Level(World world, Assets assets, String filename) {
         entities = new ArrayList<>();
         spawners = new ArrayList<>();
+        tilesets = new IntMap<>();
 
         this.assets = assets;
         load(world, filename);
@@ -61,6 +73,7 @@ public class Level {
         Entity room = null;
         var bounds = RectI.pool.obtain();
         for (var entity : entities) {
+            // TODO - add a Collider component to each room entity (with its own mask) that stores the room bounds instead of recalculating every time
             var tilemap = entity.get(Tilemap.class);
             bounds.set(entity.position.x, entity.position.y,
                     tilemap.cols() * tilemap.tileSize(),
@@ -147,8 +160,9 @@ public class Level {
 
     public Entity createFromDesc(Desc desc, Assets assets, World world) {
         // setup tileset
-        var tileset = assets.atlas.findRegion(desc.tileset);
-        var regions = assets.tilesetRegions;
+        var tileset = tilesets.get(desc.tilesetUid);
+        var tilesetTexture = assets.tilesetAtlas.findRegion(tileset.name);
+        var regions = tilesetTexture.split(tileset.gridSize, tileset.gridSize);
 
         // initialize a map between texture region array indices and the texture region they point to in the tileset
         var pointRegionMap = new HashMap<Point, TextureRegion>();
@@ -250,7 +264,7 @@ public class Level {
             desc.tileSize = tileSize;
             desc.cols = cols;
             desc.rows = rows;
-            desc.tileset = "tileset";
+            desc.tilesetUid = 5;
             desc.colliderCells = new int[cols * rows];
             desc.tilemapCellTextures = new Point[cols * rows];
 
@@ -308,7 +322,7 @@ public class Level {
             desc.tileSize = tilemap.tileSize();
             desc.cols = tilemap.cols();
             desc.rows = tilemap.rows();
-            desc.tileset = "tileset";                                                  // TODO
+            desc.tilesetUid = 5;
             desc.colliderCells = new int[desc.cols * desc.rows];
             desc.tilemapCellTextures = new Point[desc.cols * desc.rows];
 
@@ -355,13 +369,27 @@ public class Level {
     private List<Level.Desc> loadDescsFromLdtk(Ldtk ldtk) {
         var descs = new ArrayList<Level.Desc>();
 
+        // instantiate tilesets
+        for (var def : ldtk.defs.tilesets) {
+            var nameEndIndex = def.relPath.lastIndexOf(".png");
+            var nameBeginIndex = def.relPath.lastIndexOf("/");
+            if (nameBeginIndex == -1) {
+                nameBeginIndex = 0;
+            }
+            var tileset = new Tileset();
+            tileset.uid = def.uid;
+            tileset.rows = def.__cHei;
+            tileset.cols = def.__cWid;
+            tileset.gridSize = def.tileGridSize;
+            tileset.name = def.relPath.substring(nameBeginIndex, nameEndIndex);
+            tilesets.put(tileset.uid, tileset);
+        }
+
         var numLevels = ldtk.levels.size();
         for (int levelNum = 0; levelNum < numLevels; levelNum++) {
             var desc = new Level.Desc();
             {
                 var level = ldtk.levels.get(levelNum);
-                var tileset = ldtk.defs.tilesets.get(0);
-                var tilesetName = tileset.relPath.substring(tileset.relPath.lastIndexOf("/") + 1, tileset.relPath.lastIndexOf(".png"));
 
                 // find required layers
                 Ldtk.LayerInstance tileLayer = null;
@@ -386,11 +414,18 @@ public class Level {
                     throw new GdxRuntimeException("Failed to load ldtk file, no 'Entities' layer found");
                 }
 
+                // lookup tileset
+                var tilesetUid = tileLayer.__tilesetDefUid;
+                var tileset = tilesets.get(tilesetUid, null);
+                if (tileset == null) {
+                    throw new GdxRuntimeException("Failed to load ldtk file, missing tileset with uid " + tilesetUid + " in tile layer");
+                }
+
                 desc.position = Point.at(level.worldX, -(level.worldY + level.pxHei));
-                desc.tileSize = tileset.tileGridSize;
+                desc.tileSize = tileset.gridSize;
                 desc.cols = tileLayer.__cWid;
                 desc.rows = tileLayer.__cHei;
-                desc.tileset = tilesetName;
+                desc.tilesetUid = tileset.uid;
                 desc.colliderCells = new int[desc.cols * desc.rows];
                 desc.tilemapCellTextures = new Point[desc.cols * desc.rows];
 
@@ -428,12 +463,12 @@ public class Level {
                 // setup tilemap layer
                 for (var gridTileEntry : tileLayer.gridTiles) {
                     var px = gridTileEntry.px;
-                    var tile = Point.at(px[0] / tileset.tileGridSize, px[1] / tileset.tileGridSize);
+                    var tile = Point.at(px[0] / tileset.gridSize, px[1] / tileset.gridSize);
                     // note: ldtk files are stored with origin = top left so we have to flip y
                     tile.y = (desc.rows - 1) - tile.y;
 
                     var src = gridTileEntry.src;
-                    var textureIndex = Point.at(src[0] / tileset.tileGridSize, src[1] / tileset.tileGridSize);
+                    var textureIndex = Point.at(src[0] / tileset.gridSize, src[1] / tileset.gridSize);
 
                     desc.tilemapCellTextures[tile.x + tile.y * desc.cols] = textureIndex;
                 }

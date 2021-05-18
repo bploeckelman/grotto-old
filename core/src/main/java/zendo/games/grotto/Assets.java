@@ -29,6 +29,7 @@ public class Assets extends Content implements Disposable {
 
     public Texture pixel;
     public TextureAtlas atlas;
+    public TextureAtlas tilesetAtlas;
     public TextureRegion[][] tilesetRegions;
 
     public Assets() {
@@ -81,6 +82,9 @@ public class Assets extends Content implements Disposable {
         // load raw sprites from an atlas (see gradle lwjgl3:pack_rawsprites)
         atlas = new TextureAtlas("atlas/sprites.atlas");
 
+        // load tileset sprites from an atlas (see gradle lwjgl3:pack_tilesets)
+        tilesetAtlas = new TextureAtlas("atlas/tilesets.atlas");
+        // temp
         tilesetRegions = atlas.findRegion("tileset").split(16, 16);
 
         // load aseprite sprites from an atlas and json definitions
@@ -101,6 +105,7 @@ public class Assets extends Content implements Disposable {
         font.dispose();
         batch.dispose();
         shapes.dispose();
+        tilesetAtlas.dispose();
         atlas.dispose();
     }
 

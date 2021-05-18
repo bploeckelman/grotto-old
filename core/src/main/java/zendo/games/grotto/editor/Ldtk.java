@@ -69,6 +69,7 @@ public class Ldtk {
     public static class LayerInstance {
         public String __identifier;
         public String __type;
+        public Integer __tilesetDefUid;
         public int __cWid; // layer width (grid based)
         public int __cHei; // layer height (grid based)
         public int __gridSize;

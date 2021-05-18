@@ -27,6 +27,14 @@ task pack_rawsprites(dependsOn: classes, type: JavaExec) {
 	args = ['../sprites/raw/', '../assets/atlas/', 'sprites.atlas']
 }
 
+task pack_tilesets(dependsOn: classes, type: JavaExec) {
+	main = 'com.badlogic.gdx.tools.texturepacker.TexturePacker'
+	classpath = sourceSets.main.runtimeClasspath
+	args = ['../assets/levels/', '../assets/atlas/', 'tilesets.atlas']
+}
+
+task pack_sprites(type: GradleBuild, dependsOn: ['pack_rawsprites', 'pack_tilesets']) {}
+
 run {
 	workingDir = rootProject.file('assets').path
 	setIgnoreExitValue(true)
