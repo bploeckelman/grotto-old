@@ -1,7 +1,6 @@
 package zendo.games.grotto.components;
 
 import zendo.games.grotto.ecs.Component;
-import zendo.games.grotto.utils.Time;
 
 public class Pickupable extends Component {
 
@@ -30,6 +29,7 @@ public class Pickupable extends Component {
                 if (onPickup != null) {
                     onPickup.pickup(this);
                 }
+                destroy();
             }
         }
     }

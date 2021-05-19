@@ -1,8 +1,6 @@
 package zendo.games.grotto.factories;
 
-import zendo.games.grotto.components.Animator;
-import zendo.games.grotto.components.Collider;
-import zendo.games.grotto.components.Pickupable;
+import zendo.games.grotto.components.*;
 import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
 import zendo.games.grotto.utils.Point;
@@ -14,6 +12,7 @@ public class ItemFactory {
         var entity = world.addEntity();
         {
             var anim = entity.add(new Animator("coin", "idle"), Animator.class);
+            anim.depth = 10;
 
             entity.position.set(
                     (int) (position.x - anim.sprite().origin.x),
@@ -23,13 +22,17 @@ public class ItemFactory {
             var collider = entity.add(Collider.makeRect(bounds), Collider.class);
             collider.mask = Collider.Mask.item;
 
+            var mover = entity.add(new Mover(), Mover.class);
+
             var pickup = entity.add(new Pickupable(), Pickupable.class);
             pickup.collider = collider;
             pickup.pickupBy = Collider.Mask.player;
             pickup.onPickup = (self) -> {
-                var pos = Point.at(entity.position.x, entity.position.y + 4);
-                EffectFactory.spriteAnimOneShot(world, pos, "coin", "pickup");
-                self.entity().destroy();
+                mover.speed.y = 120f;
+                entity.add(new Timer(0.1f, (timer) -> {
+                    EffectFactory.spriteAnimOneShot(world, entity.position, "coin", "pickup");
+                    entity.destroy();
+                }), Timer.class);
             };
         }
         return entity;
