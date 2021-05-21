@@ -29,7 +29,7 @@ public class CreatureFactory {
                     (int) (position.x - anim.sprite().origin.x),
                     (int) (position.y - anim.sprite().origin.y));
 
-            entity.add(new Text(assets, "player", Point.at(-16, 16)), Text.class);
+//            entity.add(new Text(assets, "player", Point.at(-16, 16)), Text.class);
         }
         return entity;
     }
@@ -111,7 +111,7 @@ public class CreatureFactory {
                     (int) (position.x - anim.sprite().origin.x),
                     (int) (position.y - anim.sprite().origin.y));
 
-            entity.add(new Text(assets, "slime", Point.at(-16, 16)), Text.class);
+//            entity.add(new Text(assets, "slime", Point.at(-16, 16)), Text.class);
         }
         return entity;
     }
@@ -203,7 +203,7 @@ public class CreatureFactory {
                     (int) (position.x - anim.sprite().origin.x),
                     (int) (position.y - anim.sprite().origin.y));
 
-            entity.add(new Text(assets, "gerblin", Point.at(-16, 16)), Text.class);
+//            entity.add(new Text(assets, "gerblin", Point.at(-16, 16)), Text.class);
         }
         return entity;
     }

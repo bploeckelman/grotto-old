@@ -163,20 +163,33 @@ public class Animator extends Component {
 
     @Override
     public void render(ShapeRenderer shapes) {
+        var shapeType = shapes.getCurrentType();
+        {
+            // entity position
+            var x = entity.position.x;
+            var y = entity.position.y;
+            var radius = 1;
+            shapes.set(ShapeRenderer.ShapeType.Filled);
+            shapes.setColor(1f, 0f, 1f, 0.75f);
+            shapes.circle(x, y, radius);
+            shapes.setColor(Color.WHITE);
+        }
+        shapes.set(shapeType);
+
         if (!Game.DebugFlags.draw_anim_bounds) return;
 
-        var shapeType = shapes.getCurrentType();
-
-        // image bounds
-        var x = entity.position.x - sprite().origin.x;
-        var y = entity.position.y - sprite().origin.y;
-        var w = frame().image.getRegionWidth();
-        var h = frame().image.getRegionHeight();
-        shapes.set(ShapeRenderer.ShapeType.Line);
-        shapes.setColor(1f, 1f, 0f, 0.75f);
-        shapes.rect(x, y, w, h);
-        shapes.setColor(Color.WHITE);
-
+        shapeType = shapes.getCurrentType();
+        {
+            // image bounds
+            var x = entity.position.x - sprite().origin.x;
+            var y = entity.position.y - sprite().origin.y;
+            var w = frame().image.getRegionWidth();
+            var h = frame().image.getRegionHeight();
+            shapes.set(ShapeRenderer.ShapeType.Line);
+            shapes.setColor(1f, 1f, 0f, 0.75f);
+            shapes.rect(x, y, w, h);
+            shapes.setColor(Color.WHITE);
+        }
         shapes.set(shapeType);
     }
 
