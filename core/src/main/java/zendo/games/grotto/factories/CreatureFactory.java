@@ -13,6 +13,7 @@ public class CreatureFactory {
     public static Entity player(Assets assets, World world, Point position) {
         var entity = world.addEntity();
         {
+            entity.position.set(position);
             entity.add(new Player(), Player.class);
 
             var anim = entity.add(new Animator("hero", "idle"), Animator.class);
@@ -24,12 +25,6 @@ public class CreatureFactory {
 
             var mover = entity.add(new Mover(), Mover.class);
             mover.collider = collider;
-
-            entity.position.set(
-                    (int) (position.x - anim.sprite().origin.x),
-                    (int) (position.y - anim.sprite().origin.y));
-
-//            entity.add(new Text(assets, "player", Point.at(-16, 16)), Text.class);
         }
         return entity;
     }
@@ -37,6 +32,7 @@ public class CreatureFactory {
     public static Entity slime(Assets assets, World world, Point position) {
         var entity = world.addEntity();
         {
+            entity.position.set(position);
             entity.add(new Enemy(), Enemy.class);
 
             var anim = entity.add(new Animator("slime", "idle"), Animator.class);
@@ -106,12 +102,6 @@ public class CreatureFactory {
                     }
                 }
             };
-
-            entity.position.set(
-                    (int) (position.x - anim.sprite().origin.x),
-                    (int) (position.y - anim.sprite().origin.y));
-
-//            entity.add(new Text(assets, "slime", Point.at(-16, 16)), Text.class);
         }
         return entity;
     }
@@ -119,6 +109,7 @@ public class CreatureFactory {
     public static Entity goblin(Assets assets, World world, Point position) {
         var entity = world.addEntity();
         {
+            entity.position.set(position);
             entity.add(new Enemy(), Enemy.class);
 
             var anim = entity.add(new Animator("goblin", "idle"), Animator.class);
@@ -198,12 +189,6 @@ public class CreatureFactory {
                     }
                 }
             };
-
-            entity.position.set(
-                    (int) (position.x - anim.sprite().origin.x),
-                    (int) (position.y - anim.sprite().origin.y));
-
-//            entity.add(new Text(assets, "gerblin", Point.at(-16, 16)), Text.class);
         }
         return entity;
     }

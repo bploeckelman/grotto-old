@@ -11,14 +11,12 @@ public class ItemFactory {
     public static Entity coin(World world, Point position) {
         var entity = world.addEntity();
         {
+            entity.position.set(position);
+
             var anim = entity.add(new Animator("coin", "idle"), Animator.class);
             anim.depth = 10;
 
-            entity.position.set(
-                    (int) (position.x - anim.sprite().origin.x),
-                    (int) (position.y - anim.sprite().origin.y));
-
-            var bounds = RectI.at(-4, 0, 8, 8);
+            var bounds = RectI.at(-4, -4, 8, 8);
             var collider = entity.add(Collider.makeRect(bounds), Collider.class);
             collider.mask = Collider.Mask.item;
 

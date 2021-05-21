@@ -473,7 +473,7 @@ public class Level {
                         for (var field : entity.fieldInstances) {
                             if ("Type".equals(field.__identifier)) {
                                 var type = field.__value;
-                                var x = desc.position.x + entity.px[0] + desc.tileSize / 2;
+                                var x = desc.position.x + entity.px[0];
                                 var flipY = level.pxHei - entity.px[1];
                                 var y = desc.position.y + flipY;
                                 var spawner = new Spawner();
