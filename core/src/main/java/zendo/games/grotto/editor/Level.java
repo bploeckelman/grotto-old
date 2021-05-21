@@ -47,9 +47,9 @@ public class Level {
         public String name;
     }
 
-    public List<Entity> rooms;
-    public List<Spawner> spawners;
-    public IntMap<Tileset> tilesets;
+    private final List<Entity> rooms;
+    private final List<Spawner> spawners;
+    private final IntMap<Tileset> tilesets;
 
     private final Assets assets;
 
