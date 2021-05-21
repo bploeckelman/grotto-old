@@ -83,8 +83,12 @@ public class CameraController extends Component {
 
         // update target
         var speed = 50f;
-        target.x = Calc.approach(target.x, targetPoint.x, speed * dt);
-        target.y = Calc.approach(target.y, targetPoint.y, speed * dt);
+        var dx = targetPoint.x - target.x;
+        var dy = targetPoint.y - target.y;
+        var scaleX = Calc.abs(dx) < ((1f / 4f) * camera.viewportWidth) ? 1 : 1.5f;
+        var scaleY = Calc.abs(dy) < ((1f / 5f) * camera.viewportHeight) ? 1 : 5f;
+        target.x = Calc.approach(target.x, targetPoint.x, scaleX * speed * dt);
+        target.y = Calc.approach(target.y, targetPoint.y, scaleY * speed * dt);
 
         // keep in bounds
         if (level != null) {
@@ -95,8 +99,12 @@ public class CameraController extends Component {
                     // clamp the camera to within the current room's bounds
                     var cameraHorzEdge = (int) (camera.viewportWidth / 2f);
                     var cameraVertEdge = (int) (camera.viewportHeight / 2f);
-                    target.x = MathUtils.clamp(target.x, bounds.x + cameraHorzEdge, bounds.x + bounds.w - cameraHorzEdge);
-                    target.y = MathUtils.clamp(target.y, bounds.y + cameraVertEdge, bounds.y + bounds.h - cameraVertEdge);
+                    var left   = bounds.x + cameraHorzEdge;
+                    var bottom = bounds.y + cameraVertEdge;
+                    var right  = bounds.x + bounds.w - cameraHorzEdge;
+                    var top    = bounds.y + bounds.h - cameraVertEdge;
+                    target.x = MathUtils.clamp(target.x, left, right);
+                    target.y = MathUtils.clamp(target.y, bottom, top);
                 }
             }
         }
