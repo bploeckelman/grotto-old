@@ -47,18 +47,14 @@ public class Level {
         public String name;
     }
 
-    public List<Entity> entities; // these are rooms
+    public List<Entity> rooms;
     public List<Spawner> spawners;
     public IntMap<Tileset> tilesets;
 
-    // TODO - store per-room (or just room bounds in pixels)
-    public int pixelWidth;
-    public int pixelHeight;
-
-    private Assets assets;
+    private final Assets assets;
 
     public Level(World world, Assets assets, String filename) {
-        entities = new ArrayList<>();
+        rooms = new ArrayList<>();
         spawners = new ArrayList<>();
         tilesets = new IntMap<>();
 
@@ -66,26 +62,39 @@ public class Level {
         load(world, filename);
     }
 
+    // TODO - removeme, only used in editor
     public Entity entity() {
-        return entities.get(0);
+        return rooms.get(0);
     }
 
     public Entity room(int x, int y) {
-        Entity room = null;
-        var bounds = RectI.pool.obtain();
-        for (var entity : entities) {
-            // TODO - add a Collider component to each room entity (with its own mask) that stores the room bounds instead of recalculating every time
-            var tilemap = entity.get(Tilemap.class);
-            bounds.set(entity.position.x, entity.position.y,
-                    tilemap.cols() * tilemap.tileSize(),
-                    tilemap.rows() * tilemap.tileSize());
-            if (bounds.contains(x, y)) {
-                room = entity;
-                break;
+        for (var room : rooms) {
+            var bounds = getRoomBounds(room);
+            if (bounds != null && bounds.contains(x, y)) {
+                return room;
             }
         }
-        RectI.pool.free(bounds);
-        return room;
+        return null;
+    }
+
+    public RectI getRoomBounds(Entity room) {
+        if (room == null) {
+            return null;
+        }
+
+        // find the room's bounds collider
+        var collider = room.get(Collider.class);
+        while (collider != null) {
+            if (collider.mask == Collider.Mask.room_bounds) {
+                break;
+            }
+            collider = (Collider) collider.next;
+        }
+
+        if (collider == null) {
+            return null;
+        }
+        return collider.rect();
     }
 
     public Entity spawnPlayer(World world) {
@@ -121,26 +130,25 @@ public class Level {
     }
 
     public void clear() {
-        for (var entity : entities) {
+        for (var entity : rooms) {
             entity.destroy();
         }
-        entities.clear();
+        rooms.clear();
         spawners.clear();
     }
 
     public void load(World world, String filename) {
         var json = new Json();
         if (filename.endsWith(".json")) {
-            // load the map descriptor directly from the specified json file
+            // load the map descriptor from the specified json file
             var desc = json.fromJson(Level.Desc.class, Gdx.files.local(filename));
             if (desc == null) {
                 throw new GdxRuntimeException("Unable to load level file: '" + filename + "'");
             }
-            var entity = createFromDesc(desc, assets, world);
-            entities.add(entity);
 
-            pixelWidth  = desc.tileSize * desc.cols;
-            pixelHeight = desc.tileSize * desc.rows;
+            // load the room from the map descriptor
+            var room = createRoomEntityFromDesc(desc, assets, world);
+            rooms.add(room);
         } else if (filename.endsWith(".ldtk")) {
             // load ldtk file
             json.setIgnoreUnknownFields(true);
@@ -150,18 +158,13 @@ public class Level {
             var descs = loadDescsFromLdtk(ldtk);
             for (var desc : descs) {
                 // load a room entity based on the level descriptor
-                var entity = createFromDesc(desc, assets, world);
-                entities.add(entity);
+                var room = createRoomEntityFromDesc(desc, assets, world);
+                rooms.add(room);
             }
-
-            // TODO - set pix w/h from 'current' level, not just level 0, maybe even do this somewhere else
-            var tilemap = entity().get(Tilemap.class);
-            pixelWidth  = tilemap.tileSize() * tilemap.cols();
-            pixelHeight = tilemap.tileSize() * tilemap.rows();
         }
     }
 
-    public Entity createFromDesc(Desc desc, Assets assets, World world) {
+    public Entity createRoomEntityFromDesc(Desc desc, Assets assets, World world) {
         // setup tileset
         var tileset = tilesets.get(desc.tilesetUid);
         var tilesetTexture = assets.tilesetAtlas.findRegion(tileset.name);
@@ -196,6 +199,14 @@ public class Level {
                     collider.setCell(x, y, value);
                 }
             }
+
+            // setup a collider for quick lookup of the room's bounds
+            collider = entity.add(Collider.makeRect(RectI.at(
+                    desc.position.x, desc.position.y,
+                    desc.tileSize * desc.cols,
+                    desc.tileSize * desc.rows
+            )), Collider.class);
+            collider.mask = Collider.Mask.room_bounds;
         }
         entity.position.set(desc.position);
 
@@ -295,11 +306,8 @@ public class Level {
             var descJson = json.toJson(desc, Level.Desc.class);
             var outFile = Gdx.files.local(filename);
             outFile.writeString(descJson, false);
-
-            pixelWidth  = desc.tileSize * desc.cols;
-            pixelHeight = desc.tileSize * desc.rows;
         }
-        entities.add(entity);
+        rooms.add(entity);
     }
 
     public void save(String filename, Assets assets) {

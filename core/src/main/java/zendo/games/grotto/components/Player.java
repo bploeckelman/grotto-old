@@ -22,7 +22,7 @@ public class Player extends Component {
     private static final float hurt_duration = 0.5f;
     private static final float invincible_duration = 1.5f;
     private static final float jump_time = 0.15f;
-    private static final float jump_impulse = 150;
+    private static final float jump_impulse = 155;
     private static final float ground_accel = 500;
     private static final float ground_speed_max = 100;
 

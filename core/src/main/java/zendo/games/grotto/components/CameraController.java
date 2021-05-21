@@ -8,7 +8,6 @@ import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.editor.Level;
 import zendo.games.grotto.utils.Calc;
 import zendo.games.grotto.utils.Point;
-import zendo.games.grotto.utils.RectI;
 
 public class CameraController extends Component {
 
@@ -91,16 +90,14 @@ public class CameraController extends Component {
         if (level != null) {
             var room = level.room(targetPoint.x, targetPoint.y);
             if (room != null) {
-                var tilemap = room.get(Tilemap.class);
-                var bounds = RectI.pool.obtain();
-                bounds.set(room.position.x, room.position.y,
-                        tilemap.cols() * tilemap.tileSize(),
-                        tilemap.rows() * tilemap.tileSize());
-                var cameraHorzEdge = (int) (camera.viewportWidth / 2f);
-                var cameraVertEdge = (int) (camera.viewportHeight / 2f);
-                target.x = MathUtils.clamp(target.x, bounds.x + cameraHorzEdge, bounds.x + bounds.w - cameraHorzEdge);
-                target.y = MathUtils.clamp(target.y, bounds.y + cameraVertEdge, bounds.y + bounds.h - cameraVertEdge);
-                RectI.pool.free(bounds);
+                var bounds = level.getRoomBounds(room);
+                if (bounds != null) {
+                    // clamp the camera to within the current room's bounds
+                    var cameraHorzEdge = (int) (camera.viewportWidth / 2f);
+                    var cameraVertEdge = (int) (camera.viewportHeight / 2f);
+                    target.x = MathUtils.clamp(target.x, bounds.x + cameraHorzEdge, bounds.x + bounds.w - cameraHorzEdge);
+                    target.y = MathUtils.clamp(target.y, bounds.y + cameraVertEdge, bounds.y + bounds.h - cameraVertEdge);
+                }
             }
         }
 

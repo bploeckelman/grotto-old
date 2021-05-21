@@ -17,10 +17,8 @@ import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
 import zendo.games.grotto.editor.Editor;
 import zendo.games.grotto.editor.Level;
-import zendo.games.grotto.factories.CreatureFactory;
 import zendo.games.grotto.input.Input;
 import zendo.games.grotto.utils.Calc;
-import zendo.games.grotto.utils.Point;
 import zendo.games.grotto.utils.Time;
 
 import java.util.List;
