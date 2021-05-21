@@ -37,6 +37,10 @@ public class Level {
     static class Spawner {
         public String type;
         public Point pos;
+        Spawner(String type, int x, int y) {
+            this.type = type;
+            this.pos = Point.at(x, y);
+        }
     }
 
     static class Tileset {
@@ -469,17 +473,13 @@ public class Level {
                 // setup spawners
                 for (var entity : entityLayer.entityInstances) {
                     if ("Spawner".equals(entity.__identifier)) {
-                        // extract 'Type' field to figure out what to spawn
                         for (var field : entity.fieldInstances) {
                             if ("Type".equals(field.__identifier)) {
                                 var type = field.__value;
                                 var x = desc.position.x + entity.px[0];
                                 var flipY = level.pxHei - entity.px[1];
                                 var y = desc.position.y + flipY;
-                                var spawner = new Spawner();
-                                spawner.type = type;
-                                spawner.pos = Point.at(x, y);
-                                spawners.add(spawner);
+                                spawners.add(new Spawner(type, x, y));
                             }
                         }
                     }
