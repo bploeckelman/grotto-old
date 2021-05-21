@@ -146,6 +146,16 @@ public class Game extends ApplicationAdapter {
             world.first(CameraController.class).active = false;
 
             inputMux.addProcessor(0, editor.getStage());
+
+            // deactivate player
+            player.active = false;
+
+            // deactivate enemies
+            var enemy = world.first(Enemy.class);
+            while (enemy != null) {
+                enemy.entity().active = false;
+                enemy = (Enemy) enemy.next;
+            }
         } else {
             worldCamera.zoom = editor.lastZoom;
             worldCamera.update();
@@ -155,15 +165,11 @@ public class Game extends ApplicationAdapter {
             camController.setTarget(player, true);
 
             inputMux.removeProcessor(editor.getStage());
-        }
 
-        if (player != null) {
-            player.active = !player.active;
-        }
-        var enemy = world.first(Enemy.class);
-        while (enemy != null) {
-            enemy.entity().active = !enemy.entity().active;
-            enemy = (Enemy) enemy.next;
+            // activate player
+            player.active = true;
+
+            // enemies get reactivated in Level.update() during play mode update loop
         }
     }
 
@@ -174,6 +180,7 @@ public class Game extends ApplicationAdapter {
 
             if (Input.pressed(Input.Key.tab)) {
                 toggleMode();
+                return;
             }
 
             if (Input.pressed(Input.Key.escape)) Gdx.app.exit();
