@@ -882,26 +882,6 @@
 					"entityInstances": [
 						{
 							"__identifier": "Spawner",
-							"__grid": [8,28],
-							"__pivot": [0.5,0.5],
-							"__tile": null,
-							"width": 16,
-							"height": 16,
-							"defUid": 8,
-							"px": [136,456],
-							"fieldInstances": [{
-								"__identifier": "Type",
-								"__value": "goblin",
-								"__type": "String",
-								"defUid": 10,
-								"realEditorValues": [{
-									"id": "V_String",
-									"params": ["goblin"]
-								}]
-							}]
-						},
-						{
-							"__identifier": "Spawner",
 							"__grid": [11,2],
 							"__pivot": [0.5,0.5],
 							"__tile": null,
@@ -917,6 +897,26 @@
 								"realEditorValues": [{
 									"id": "V_String",
 									"params": ["slime"]
+								}]
+							}]
+						},
+						{
+							"__identifier": "Spawner",
+							"__grid": [8,28],
+							"__pivot": [0.5,0.5],
+							"__tile": null,
+							"width": 16,
+							"height": 16,
+							"defUid": 8,
+							"px": [136,456],
+							"fieldInstances": [{
+								"__identifier": "Type",
+								"__value": "goblin",
+								"__type": "String",
+								"defUid": 10,
+								"realEditorValues": [{
+									"id": "V_String",
+									"params": ["goblin"]
 								}]
 							}]
 						}

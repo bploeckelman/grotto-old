@@ -206,6 +206,7 @@ public class Game extends ApplicationAdapter {
         {
             assets.tween.update(Time.delta);
             world.update(Time.delta);
+            level.update(Time.delta, world);
         }
     }
 

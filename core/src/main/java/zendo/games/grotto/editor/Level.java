@@ -67,6 +67,10 @@ public class Level {
         return rooms.get(0);
     }
 
+    public Entity room(Point position) {
+        return room(position.x, position.y);
+    }
+
     public Entity room(int x, int y) {
         for (var room : rooms) {
             var bounds = getRoomBounds(room);
@@ -107,7 +111,6 @@ public class Level {
         // spawn new player
         Entity player = null;
         for (var spawner : spawners) {
-            // todo - only spawn from current room's player spawner
             if (spawner.type.equals("player")) {
                 player = CreatureFactory.player(assets, world, spawner.pos);
                 break;
@@ -116,14 +119,37 @@ public class Level {
         return player;
     }
 
+    public void update(float dt, World world) {
+        var player = world.first(Player.class);
+        var playerRoom = room(player.entity().position);
+        var enemy = world.first(Enemy.class);
+        while (enemy != null) {
+            if (enemy.entity() == null) continue;
+            var enemyRoom = room(enemy.entity().position);
+            enemy.entity().active = (enemyRoom == playerRoom);
+            enemy = (Enemy) enemy.next;
+        }
+    }
+
     public List<Enemy> spawnEnemies(World world) {
+        var player = world.first(Player.class);
+        var playerRoom = room(player.entity().position);
+
         var enemies = new ArrayList<Enemy>();
         for (var spawner : spawners) {
+            Enemy enemy = null;
             switch (spawner.type) {
-                case "slime"  -> enemies.add(CreatureFactory.slime(assets, world, spawner.pos).get(Enemy.class));
-                case "goblin" -> enemies.add(CreatureFactory.goblin(assets, world, spawner.pos).get(Enemy.class));
+                case "slime"  -> enemy = CreatureFactory.slime(assets, world, spawner.pos).get(Enemy.class);
+                case "goblin" -> enemy = CreatureFactory.goblin(assets, world, spawner.pos).get(Enemy.class);
                 // TODO - spawn enemies / items separately?
                 case "coin"   -> ItemFactory.coin(world, spawner.pos);
+            }
+            if (enemy != null) {
+                var enemyRoom = room(enemy.entity().position);
+                if (enemyRoom != playerRoom) {
+                    enemy.entity().active = false;
+                }
+                enemies.add(enemy);
             }
         }
         return enemies;
@@ -448,11 +474,11 @@ public class Level {
                             if ("Type".equals(field.__identifier)) {
                                 var type = field.__value;
                                 var x = desc.position.x + entity.px[0] + desc.tileSize / 2;
-                                var y = desc.position.y + entity.px[1];
-                                var flipY = ((desc.rows - 1) * desc.tileSize) - y + desc.tileSize / 2;
+                                var flipY = level.pxHei - entity.px[1];
+                                var y = desc.position.y + flipY;
                                 var spawner = new Spawner();
                                 spawner.type = type;
-                                spawner.pos = Point.at(x, flipY);
+                                spawner.pos = Point.at(x, y);
                                 spawners.add(spawner);
                             }
                         }
