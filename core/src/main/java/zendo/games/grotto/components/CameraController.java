@@ -1,7 +1,10 @@
 package zendo.games.grotto.components;
 
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import zendo.games.grotto.ecs.Component;
 import zendo.games.grotto.ecs.Entity;
@@ -20,6 +23,7 @@ public class CameraController extends Component {
 
     private TargetMode mode;
     private Vector3 target;
+    private Vector2 dist;
 
     public CameraController() {}
 
@@ -27,6 +31,7 @@ public class CameraController extends Component {
         this.camera = camera;
         this.point = Point.zero();
         this.target = new Vector3();
+        this.dist = new Vector2();
     }
 
     @Override
@@ -83,10 +88,10 @@ public class CameraController extends Component {
 
         // update target
         var speed = 50f;
-        var dx = targetPoint.x - target.x;
-        var dy = targetPoint.y - target.y;
-        var scaleX = Calc.abs(dx) < ((1f / 4f) * camera.viewportWidth) ? 1 : 1.5f;
-        var scaleY = Calc.abs(dy) < ((1f / 5f) * camera.viewportHeight) ? 1 : 5f;
+        dist.x = targetPoint.x - target.x;
+        dist.y = targetPoint.y - target.y;
+        var scaleX = Calc.abs(dist.x) < ((1f / 4f) * camera.viewportWidth)  ? 1 : 1.5f;
+        var scaleY = Calc.abs(dist.y) < ((1f / 5f) * camera.viewportHeight) ? 1 : 5f;
         target.x = Calc.approach(target.x, targetPoint.x, scaleX * speed * dt);
         target.y = Calc.approach(target.y, targetPoint.y, scaleY * speed * dt);
 
@@ -111,6 +116,24 @@ public class CameraController extends Component {
 
         camera.position.set((int) target.x, (int) target.y, 0);
         camera.update();
+    }
+
+    @Override
+    public void render(ShapeRenderer shapes) {
+        var shapeType = shapes.getCurrentType();
+        {
+            // entity position
+            var x = entity.position.x;
+            var y = entity.position.y;
+            var scale = 0.25f;
+            shapes.set(ShapeRenderer.ShapeType.Line);
+            shapes.setColor(1f, 0f, 0f, 1f);
+            shapes.rect(x, y, dist.x * scale, 1);
+            shapes.setColor(0f, 1f, 0f, 1f);
+            shapes.rect(x, y, 1, dist.y * scale);
+            shapes.setColor(Color.WHITE);
+        }
+        shapes.set(shapeType);
     }
 
 }
