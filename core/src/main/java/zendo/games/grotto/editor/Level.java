@@ -30,8 +30,10 @@ public class Level {
         public int cols;
         public int rows;
         public int tilesetUid;
+        public int foregroundTilesetUid;
         public int[] colliderCells;
         public Point[] tilemapCellTextures;
+        public Point[] foregroundTilemapCellTextures;
     }
 
     static class Spawner {
@@ -227,6 +229,35 @@ public class Level {
 
                     var value = (desc.colliderCells[x + y * desc.cols] == 1);
                     collider.setCell(x, y, value);
+                }
+            }
+
+            // add a foreground tile layer if one exists in the desc
+            if (desc.foregroundTilemapCellTextures != null && desc.foregroundTilesetUid != -1) {
+                // setup tileset
+                tileset = tilesets.get(desc.foregroundTilesetUid);
+                tilesetTexture = assets.tilesetAtlas.findRegion(tileset.name);
+                regions = tilesetTexture.split(tileset.gridSize, tileset.gridSize);
+
+                // initialize a map between texture region array indices and the texture region they point to in the tileset
+                pointRegionMap.clear();
+                for (int x = 0; x < desc.cols; x++) {
+                    for (int y = 0; y < desc.rows; y++) {
+                        var point = desc.foregroundTilemapCellTextures[x + y * desc.cols];
+                        if (point != null) {
+                            pointRegionMap.putIfAbsent(point, regions[point.y][point.x]);
+                        }
+                    }
+                }
+
+                // create foreground tilemap component and set regions
+                var foreground = entity.add(new Tilemap(desc.tileSize, desc.cols, desc.rows), Tilemap.class);
+                foreground.depth = 10;
+                for (int x = 0; x < desc.cols; x++) {
+                    for (int y = 0; y < desc.rows; y++) {
+                        var point = desc.foregroundTilemapCellTextures[x + y * desc.cols];
+                        foreground.setCell(x, y, pointRegionMap.get(point));
+                    }
                 }
             }
 
@@ -436,12 +467,17 @@ public class Level {
                 Ldtk.LayerInstance tileLayer = null;
                 Ldtk.LayerInstance collisionLayer = null;
                 Ldtk.LayerInstance entityLayer = null;
+                Ldtk.LayerInstance foregroundLayer = null;
                 for (var layer : level.layerInstances) {
-                    if (layer.__type.equals("Tiles") && layer.__identifier.equals("Tiles")) {
-                        tileLayer = layer;
-                    } else if (layer.__type.equals("IntGrid") && layer.__identifier.equals("Collision")) {
+                    if ("Tiles".equals(layer.__type)) {
+                        if ("Tiles".equals(layer.__identifier)) {
+                            tileLayer = layer;
+                        } else if ("Foreground".equals(layer.__identifier)) {
+                            foregroundLayer = layer;
+                        }
+                    } else if ("IntGrid".equals(layer.__type) && "Collision".equals(layer.__identifier)) {
                         collisionLayer = layer;
-                    } else if (layer.__type.equals("Entities") && layer.__identifier.equals("Entities")) {
+                    } else if ("Entities".equals(layer.__type) && "Entities".equals(layer.__identifier)) {
                         entityLayer = layer;
                     }
                 }
@@ -467,8 +503,10 @@ public class Level {
                 desc.cols = tileLayer.__cWid;
                 desc.rows = tileLayer.__cHei;
                 desc.tilesetUid = tileset.uid;
+                desc.foregroundTilesetUid = -1;
                 desc.colliderCells = new int[desc.cols * desc.rows];
                 desc.tilemapCellTextures = new Point[desc.cols * desc.rows];
+                desc.foregroundTilemapCellTextures = null;
 
                 // setup spawners
                 for (var entity : entityLayer.entityInstances) {
@@ -508,6 +546,31 @@ public class Level {
                     var textureIndex = Point.at(src[0] / tileset.gridSize, src[1] / tileset.gridSize);
 
                     desc.tilemapCellTextures[tile.x + tile.y * desc.cols] = textureIndex;
+                }
+
+                // setup foreground tilemap layer
+                if (foregroundLayer != null) {
+                    var foregroundTilesetUid = foregroundLayer.__tilesetDefUid;
+                    desc.foregroundTilesetUid = foregroundTilesetUid;
+
+                    var foregroundTileset = tilesets.get(foregroundTilesetUid, null);
+                    if (foregroundTileset == null) {
+                        throw new GdxRuntimeException("Failed to load ldtk file, missing tileset with uid " + foregroundTilesetUid + " in foreground layer");
+                    }
+
+                    // setup foreground layer
+                    desc.foregroundTilemapCellTextures = new Point[desc.cols * desc.rows];
+                    for (var gridTileEntry : foregroundLayer.gridTiles) {
+                        var px = gridTileEntry.px;
+                        var tile = Point.at(px[0] / foregroundTileset.gridSize, px[1] / foregroundTileset.gridSize);
+                        // note: ldtk files are stored with origin = top left so we have to flip y
+                        tile.y = (desc.rows - 1) - tile.y;
+
+                        var src = gridTileEntry.src;
+                        var textureIndex = Point.at(src[0] / foregroundTileset.gridSize, src[1] / foregroundTileset.gridSize);
+
+                        desc.foregroundTilemapCellTextures[tile.x + tile.y * desc.cols] = textureIndex;
+                    }
                 }
             }
             descs.add(desc);
