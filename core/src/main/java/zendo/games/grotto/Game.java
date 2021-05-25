@@ -79,7 +79,8 @@ public class Game extends ApplicationAdapter {
         frameBufferRegion.flip(false, true);
 
         world = new World();
-        level = new Level(world, assets, "levels/ldtk-test.ldtk");
+//        level = new Level(world, assets, "levels/ldtk-test.ldtk");
+        level = new Level(world, assets, "levels/world-1.ldtk");
         player = level.spawnPlayer(world);
         enemies = level.spawnEnemies(world);
 
