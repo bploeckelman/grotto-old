@@ -193,4 +193,57 @@ public class CreatureFactory {
         return entity;
     }
 
+    public static Entity shroom(World world, Point position) {
+        var entity = world.addEntity();
+        {
+            entity.position.set(position);
+            entity.add(new Enemy(), Enemy.class);
+
+            var anim = entity.add(new Animator("shroom", "idle"), Animator.class);
+
+            var bounds = RectI.at(-6, 0, 12, 12);
+            var collider = entity.add(Collider.makeRect(bounds), Collider.class);
+            collider.mask = Collider.Mask.enemy;
+
+            var mover = entity.add(new Mover(), Mover.class);
+            mover.collider = collider;
+
+            var hurtable = entity.add(new Hurtable(), Hurtable.class);
+            hurtable.hurtBy = Collider.Mask.player_attack;
+            hurtable.collider = collider;
+            // TODO - allow for jump squish
+            hurtable.onHurt = new Hurtable.OnHurt() {
+                int health = 2;
+                @Override
+                public void hurt(Hurtable self) {
+                    var player = self.world().first(Player.class);
+                    if (player != null) {
+                        health -= 1;
+
+                        if (health > 0) {
+                            anim.mode = Animator.LoopMode.none;
+                            anim.play("hurt");
+                            entity.add(new Timer(anim.duration(), (timer) -> anim.mode = Animator.LoopMode.loop), Timer.class);
+
+                            var sign = Calc.sign(self.entity().position.x - player.entity().position.x);
+                            mover.speed.x = sign * 120;
+                            mover.speed.y = 20;
+                        } else {
+                            anim.mode = Animator.LoopMode.none;
+                            anim.play("hurt");
+
+                            // play death animation and self destruct after last hurt animation finishes
+                            entity.add(new Timer(anim.duration(), (timer) -> {
+                                EffectFactory.spriteAnimOneShot(world, entity.position, "shroom", "death")
+                                        .get(Animator.class).scale.set(anim.scale);
+                                entity.destroy();
+                            }), Timer.class);
+                        }
+                    }
+                }
+            };
+        }
+        return entity;
+    }
+
 }
