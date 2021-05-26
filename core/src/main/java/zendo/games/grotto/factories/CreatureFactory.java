@@ -2,6 +2,7 @@ package zendo.games.grotto.factories;
 
 import zendo.games.grotto.Assets;
 import zendo.games.grotto.components.*;
+import zendo.games.grotto.ecs.Component;
 import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
 import zendo.games.grotto.utils.Calc;
@@ -206,6 +207,7 @@ public class CreatureFactory {
             collider.mask = Collider.Mask.enemy;
 
             var mover = entity.add(new Mover(), Mover.class);
+            mover.gravity = -300;
             mover.collider = collider;
 
             var hurtable = entity.add(new Hurtable(), Hurtable.class);
@@ -242,6 +244,32 @@ public class CreatureFactory {
                     }
                 }
             };
+
+            // custom behavior
+            entity.add(new Component() {
+                @Override
+                public void update(float dt) {
+                    var player = world().first(Player.class);
+                    if (player != null) {
+                        var dx = player.entity().position.x - entity().position.x;
+                        if (Calc.abs(dx) < 64) {
+                            anim.play("walk");
+
+                            var dir = Calc.sign(dx);
+                            if (dir == 0) dir = 1;
+                            anim.scale.set(dir, 1);
+                            var speed = mover.speed.x + dir * 100 * dt;
+                            mover.speed.x = Calc.clampInt((int) speed, -80, 80);
+                        } else {
+                            mover.speed.x = Calc.approach(mover.speed.x, 0, 100 * dt);
+                            if (Calc.abs(mover.speed.x) < 10) {
+                                mover.stopX();
+                                anim.play("idle");
+                            }
+                        }
+                    }
+                }
+            }, Component.class);
         }
         return entity;
     }

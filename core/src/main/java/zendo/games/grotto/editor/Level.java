@@ -147,6 +147,7 @@ public class Level {
             switch (spawner.type) {
                 case "slime"  -> enemy = CreatureFactory.slime(assets, world, spawner.pos).get(Enemy.class);
                 case "goblin" -> enemy = CreatureFactory.goblin(assets, world, spawner.pos).get(Enemy.class);
+                case "shroom" -> enemy = CreatureFactory.shroom(world, spawner.pos).get(Enemy.class);
                 // TODO - spawn enemies / items separately?
                 case "coin"   -> ItemFactory.coin(world, spawner.pos);
             }
