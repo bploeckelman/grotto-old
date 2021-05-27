@@ -8,8 +8,12 @@ public class Hurtable extends Component {
     public interface OnHurt {
         void hurt(Hurtable hurtable);
     }
+    public interface HurtCheck {
+        boolean check(Hurtable hurtable);
+    }
 
     public Collider collider;
+    public HurtCheck hurtCheck;
     public OnHurt onHurt;
     public int hurtBy;
     public float stunTimer;
@@ -22,6 +26,7 @@ public class Hurtable extends Component {
         super.reset();
         collider = null;
         onHurt = null;
+        hurtCheck = null;
         hurtBy = 0;
         stunTimer = 0;
         flickerTimer = 0;
@@ -30,7 +35,14 @@ public class Hurtable extends Component {
     @Override
     public void update(float dt) {
         if (collider != null && stunTimer <= 0) {
-            if (collider.check(hurtBy)) {
+            var wasHurt = false;
+            if (hurtCheck != null) {
+                wasHurt = hurtCheck.check(this);
+            } else {
+                wasHurt = collider.check(hurtBy);
+            }
+
+            if (wasHurt) {
                 Time.pause_for(0.1f);
                 stunTimer = 0.5f;
                 flickerTimer = 0.5f;

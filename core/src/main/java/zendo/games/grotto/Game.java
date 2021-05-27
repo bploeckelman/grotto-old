@@ -110,7 +110,8 @@ public class Game extends ApplicationAdapter {
         if (Input.pressed(Input.Key.r)) {
             // clear and reload level
             level.clear();
-            level.load(world, "levels/ldtk-test.ldtk");
+//            level.load(world, "levels/ldtk-test.ldtk");
+            level.load(world, "levels/world-1.ldtk");
 
             // wire up camera controller
             world.first(CameraController.class).level = level;

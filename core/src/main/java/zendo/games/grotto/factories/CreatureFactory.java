@@ -213,9 +213,33 @@ public class CreatureFactory {
             var hurtable = entity.add(new Hurtable(), Hurtable.class);
             hurtable.hurtBy = Collider.Mask.player_attack;
             hurtable.collider = collider;
-            // TODO - allow for jump squish
+            // handle a player stomp
+            hurtable.hurtCheck = (self) -> {
+                var player = self.world().first(Player.class);
+                if (player != null) {
+                    var playerMover = player.get(Mover.class);
+                    if (playerMover.speed.y < 0) {
+                        var stomped = self.collider.check(Collider.Mask.player, Point.at(0, -1));
+                        if (stomped) {
+                            // play the crush animation
+                            anim.mode = Animator.LoopMode.none;
+                            anim.play("crush");
+                            entity.add(new Timer(anim.duration(), (timer) -> anim.mode = Animator.LoopMode.loop), Timer.class);
+
+                            // mover player up a bit so they don't get hurt
+                            player.entity().position.y += 5;
+                            // bounce the player up as if they jumped
+                            playerMover.speed.y = 155;
+                        }
+                        return stomped;
+                    }
+                }
+                return self.collider.check(self.hurtBy);
+            };
+            // handle a hurt
             hurtable.onHurt = new Hurtable.OnHurt() {
-                int health = 2;
+                // TODO: pass along the method of hurt (stomp vs attack) and play appropriate response animation here
+                int health = 3;
                 @Override
                 public void hurt(Hurtable self) {
                     var player = self.world().first(Player.class);
@@ -223,16 +247,16 @@ public class CreatureFactory {
                         health -= 1;
 
                         if (health > 0) {
-                            anim.mode = Animator.LoopMode.none;
-                            anim.play("hurt");
-                            entity.add(new Timer(anim.duration(), (timer) -> anim.mode = Animator.LoopMode.loop), Timer.class);
+//                            anim.mode = Animator.LoopMode.none;
+//                            anim.play("hurt");
+//                            entity.add(new Timer(anim.duration(), (timer) -> anim.mode = Animator.LoopMode.loop), Timer.class);
 
                             var sign = Calc.sign(self.entity().position.x - player.entity().position.x);
                             mover.speed.x = sign * 120;
                             mover.speed.y = 20;
                         } else {
-                            anim.mode = Animator.LoopMode.none;
-                            anim.play("hurt");
+//                            anim.mode = Animator.LoopMode.none;
+//                            anim.play("hurt");
 
                             // play death animation and self destruct after last hurt animation finishes
                             entity.add(new Timer(anim.duration(), (timer) -> {
@@ -253,7 +277,9 @@ public class CreatureFactory {
                     if (player != null) {
                         var dx = player.entity().position.x - entity().position.x;
                         if (Calc.abs(dx) < 64) {
-                            anim.play("walk");
+                            if (hurtable.stunTimer < 0) {
+                                anim.play("walk");
+                            }
 
                             var dir = Calc.sign(dx);
                             if (dir == 0) dir = 1;
@@ -264,7 +290,9 @@ public class CreatureFactory {
                             mover.speed.x = Calc.approach(mover.speed.x, 0, 100 * dt);
                             if (Calc.abs(mover.speed.x) < 10) {
                                 mover.stopX();
-                                anim.play("idle");
+                                if (hurtable.stunTimer < 0) {
+                                    anim.play("idle");
+                                }
                             }
                         }
                     }
