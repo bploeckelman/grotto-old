@@ -120,7 +120,7 @@ public class Assets extends Content implements Disposable {
             sprite.name = name;
 
             // TODO: pass this in
-            sprite.origin.set(12, 12);
+            sprite.origin.set(12, 0);
 
             // build animation frames
             String anim_name = "idle";

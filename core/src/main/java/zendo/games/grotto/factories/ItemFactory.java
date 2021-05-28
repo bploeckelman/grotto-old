@@ -1,6 +1,8 @@
 package zendo.games.grotto.factories;
 
+import com.badlogic.gdx.math.MathUtils;
 import zendo.games.grotto.components.*;
+import zendo.games.grotto.ecs.Component;
 import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
 import zendo.games.grotto.utils.Point;
@@ -48,8 +50,16 @@ public class ItemFactory {
             var collider = entity.add(Collider.makeRect(bounds), Collider.class);
             collider.mask = Collider.Mask.item;
 
-            // TODO: add a timer or something that 'bounces' this
-            var mover = entity.add(new Mover(), Mover.class);
+            entity.add(new Component() {
+                final float amplitude = 5;
+                final float frequency = 6;
+                float time = 0f;
+                @Override
+                public void update(float dt) {
+                    time += dt;
+                    entity.position.y = position.y + (int) (amplitude * MathUtils.sin(frequency * time));
+                }
+            }, Component.class);
 
             var pickup = entity.add(new Pickupable(), Pickupable.class);
             pickup.collider = collider;
