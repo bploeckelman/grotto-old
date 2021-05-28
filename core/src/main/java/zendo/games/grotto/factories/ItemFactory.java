@@ -36,4 +36,31 @@ public class ItemFactory {
         return entity;
     }
 
+    public static Entity bacterium(String name, World world, Point position) {
+        var entity = world.addEntity();
+        {
+            entity.position.set(position);
+
+            var anim = entity.add(new Animator(name, "idle"), Animator.class);
+            anim.depth = 1;
+
+            var bounds = RectI.at(-8, -8, 16, 16);
+            var collider = entity.add(Collider.makeRect(bounds), Collider.class);
+            collider.mask = Collider.Mask.item;
+
+            // TODO: add a timer or something that 'bounces' this
+            var mover = entity.add(new Mover(), Mover.class);
+
+            var pickup = entity.add(new Pickupable(), Pickupable.class);
+            pickup.collider = collider;
+            pickup.pickupBy = Collider.Mask.player;
+            pickup.onPickup = (self) -> {
+                // TODO: add a new pickup animation
+                EffectFactory.spriteAnimOneShot(world, entity.position, "coin", "pickup");
+                entity.destroy();
+            };
+        }
+        return entity;
+    }
+
 }

@@ -16,6 +16,8 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Disposable;
 import com.kotcrab.vis.ui.VisUI;
 import zendo.games.grotto.sprites.Content;
+import zendo.games.grotto.sprites.Sprite;
+import zendo.games.grotto.utils.Point;
 import zendo.games.grotto.utils.accessors.*;
 
 public class Assets extends Content implements Disposable {
@@ -30,7 +32,6 @@ public class Assets extends Content implements Disposable {
     public Texture pixel;
     public TextureAtlas atlas;
     public TextureAtlas tilesetAtlas;
-    public TextureRegion[][] tilesetRegions;
 
     public Assets() {
         tween = new TweenManager();
@@ -84,8 +85,6 @@ public class Assets extends Content implements Disposable {
 
         // load tileset sprites from an atlas (see gradle lwjgl3:pack_tilesets)
         tilesetAtlas = new TextureAtlas("atlas/tilesets.atlas");
-        // temp
-        tilesetRegions = atlas.findRegion("tileset").split(16, 16);
 
         // load aseprite sprites from an atlas and json definitions
         TextureAtlas aseAtlas = new TextureAtlas("atlas/aseprites.atlas");
@@ -93,6 +92,11 @@ public class Assets extends Content implements Disposable {
         for (FileHandle fileHandle : spritesDir.list(".json")) {
             sprites.add(Content.loadSprite(fileHandle.path(), aseAtlas));
         }
+
+        sprites.add(loadSpriteManual("clostridium",    atlas.findRegion("clostridium")    .split(24, 24), Point.at(0, 0)));
+        sprites.add(loadSpriteManual("geobacter",      atlas.findRegion("geobacter")      .split(24, 24), Point.at(0, 0)));
+        sprites.add(loadSpriteManual("staphylococcus", atlas.findRegion("staphylococcus") .split(24, 24), Point.at(0, 0)));
+        sprites.add(loadSpriteManual("synechococcus",  atlas.findRegion("synechococcus")  .split(24, 24), Point.at(0, 0)));
 
         VisUI.load();
     }
@@ -107,6 +111,34 @@ public class Assets extends Content implements Disposable {
         shapes.dispose();
         tilesetAtlas.dispose();
         atlas.dispose();
+    }
+
+    private static Sprite loadSpriteManual(String name, TextureRegion[][] sheet, Point... sheetIndices) {
+        Sprite sprite = new Sprite();
+        {
+            // set the SpriteInfo
+            sprite.name = name;
+
+            // TODO: pass this in
+            sprite.origin.set(12, 12);
+
+            // build animation frames
+            String anim_name = "idle";
+            Sprite.Frame[] anim_frames = new Sprite.Frame[sheetIndices.length];
+            for (int i = 0; i < sheetIndices.length; i++) {
+                Point index = sheetIndices[i];
+                int frame_duration = 100; // millis
+                TextureRegion frame_region = sheet[index.y][index.x];
+                anim_frames[i] = new Sprite.Frame(frame_region, frame_duration / 1000f);
+            }
+
+            // create animation from frames
+            Sprite.Anim anim = new Sprite.Anim(anim_name, anim_frames);
+
+            // add animation to sprite
+            sprite.animations.add(anim);
+        }
+        return sprite;
     }
 
 }

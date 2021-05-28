@@ -4,16 +4,15 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.kotcrab.vis.ui.widget.*;
+import com.kotcrab.vis.ui.widget.VisScrollPane;
+import com.kotcrab.vis.ui.widget.VisTable;
+import com.kotcrab.vis.ui.widget.VisTextButton;
+import com.kotcrab.vis.ui.widget.VisWindow;
 import zendo.games.grotto.Assets;
 import zendo.games.grotto.Game;
 import zendo.games.grotto.components.Collider;
@@ -95,6 +94,7 @@ public class Editor {
         window.add(scrollPane).growX();
 
         // tileset buttons in scroll pane
+        /*
         var tiles = assets.tilesetRegions;
         var cols = 12;
         var sections = 8;
@@ -132,6 +132,7 @@ public class Editor {
                 done = true;
             }
         } while (!done);
+        */
 
         stage.addActor(window);
     }
@@ -201,6 +202,7 @@ public class Editor {
             if (leftMousePressed) {
                 mouseDelta.set((int) Input.mouse().x - lastPress.x, (int) Input.mouse().y - lastPress.y);
                 // paint tile onto map
+                /*
                 if (selectedTileCoord != null) {
                     var tilemap = level.entity().get(Tilemap.class);
                     var collider = level.entity().get(Collider.class);
@@ -216,6 +218,7 @@ public class Editor {
                         collider.setCell(tileX, tileY, true);
                     }
                 }
+                */
             }
             else if (rightMousePressed) {
                 mouseDelta.set((int) Input.mouse().x - lastPress.x, (int) Input.mouse().y - lastPress.y);
@@ -269,6 +272,7 @@ public class Editor {
     }
 
     public void renderWorld(SpriteBatch batch) {
+        /*
         if (selectedTileCoord != null) {
             var level = game.getLevel();
             var worldMouse = game.getWorldMouse();
@@ -278,6 +282,7 @@ public class Editor {
             batch.draw(assets.tilesetRegions[selectedTileCoord.y][selectedTileCoord.x],
                     tileX, tileY, tileSize, tileSize);
         }
+        */
     }
 
     public void render(SpriteBatch batch) {

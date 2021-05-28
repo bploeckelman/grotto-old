@@ -6,7 +6,6 @@ import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.badlogic.gdx.utils.IntMap;
 import com.badlogic.gdx.utils.Json;
 import zendo.games.grotto.Assets;
-import zendo.games.grotto.Config;
 import zendo.games.grotto.components.Collider;
 import zendo.games.grotto.components.Enemy;
 import zendo.games.grotto.components.Player;
@@ -149,7 +148,9 @@ public class Level {
                 case "goblin" -> enemy = CreatureFactory.goblin(assets, world, spawner.pos).get(Enemy.class);
                 case "shroom" -> enemy = CreatureFactory.shroom(world, spawner.pos).get(Enemy.class);
                 // TODO - spawn enemies / items separately?
-                case "coin"   -> ItemFactory.coin(world, spawner.pos);
+                case "coin"        -> ItemFactory.coin(world, spawner.pos);
+                case "clostridium", "geobacter", "staphylococcus", "synechococcus"
+                        -> ItemFactory.bacterium(spawner.type, world, spawner.pos);
             }
             if (enemy != null) {
                 var enemyRoom = room(enemy.entity().position);
@@ -278,6 +279,7 @@ public class Level {
     public void createAndSaveTestFile(World world, Assets assets, String filename) {
         var entity = world.addEntity();
         {
+            /*
             var tileSize = 16;
             var cols = (Config.framebuffer_width + (Config.framebuffer_width / 2)) / tileSize;
             var rows = (Config.framebuffer_height + (Config.framebuffer_height / 3)) / tileSize + 1;
@@ -368,6 +370,7 @@ public class Level {
             var descJson = json.toJson(desc, Level.Desc.class);
             var outFile = Gdx.files.local(filename);
             outFile.writeString(descJson, false);
+            */
         }
         rooms.add(entity);
     }
@@ -424,6 +427,7 @@ public class Level {
 
     private Point findTilesetIndex(TextureRegion tile, Assets assets) {
         var index = Point.zero();
+        /*
         var tiles = assets.tilesetRegions;
         var rows = tiles.length;
         var cols = tiles[0].length;
@@ -436,6 +440,7 @@ public class Level {
             }
         }
         Gdx.app.log("findTilesetIndex", "failed to find tile");
+        */
         return index;
     }
 

@@ -142,7 +142,7 @@
 					"arrayMaxLength": null,
 					"editorDisplayMode": "ValueOnly",
 					"editorDisplayPos": "Above",
-					"editorAlwaysShow": false,
+					"editorAlwaysShow": true,
 					"editorCutLongValues": true,
 					"min": null,
 					"max": null,
@@ -390,7 +390,7 @@
 						{ "px": [208,144], "src": [336,256], "f": 0, "t": 1045, "d": [193] },
 						{ "px": [224,144], "src": [112,256], "f": 0, "t": 1031, "d": [194] },
 						{ "px": [240,144], "src": [128,256], "f": 0, "t": 1032, "d": [195] },
-						{ "px": [256,144], "src": [144,256], "f": 0, "t": 1033, "d": [196] },
+						{ "px": [256,144], "src": [176,144], "f": 0, "t": 587, "d": [196] },
 						{ "px": [272,144], "src": [352,256], "f": 0, "t": 1046, "d": [197] }
 					],
 					"entityInstances": []
@@ -441,13 +441,73 @@
 						},
 						{
 							"__identifier": "Spawner",
-							"__grid": [16,9],
+							"__grid": [2,8],
 							"__pivot": [0.5,0.5],
 							"__tile": null,
 							"width": 16,
 							"height": 16,
 							"defUid": 14,
-							"px": [264,152],
+							"px": [40,136],
+							"fieldInstances": [{
+								"__identifier": "Type",
+								"__value": "clostridium",
+								"__type": "String",
+								"defUid": 15,
+								"realEditorValues": [{
+									"id": "V_String",
+									"params": ["clostridium"]
+								}]
+							}]
+						},
+						{
+							"__identifier": "Spawner",
+							"__grid": [14,6],
+							"__pivot": [0.5,0.5],
+							"__tile": null,
+							"width": 16,
+							"height": 16,
+							"defUid": 14,
+							"px": [232,104],
+							"fieldInstances": [{
+								"__identifier": "Type",
+								"__value": "synechococcus",
+								"__type": "String",
+								"defUid": 15,
+								"realEditorValues": [{
+									"id": "V_String",
+									"params": ["synechococcus"]
+								}]
+							}]
+						},
+						{
+							"__identifier": "Spawner",
+							"__grid": [17,6],
+							"__pivot": [0.5,0.5],
+							"__tile": null,
+							"width": 16,
+							"height": 16,
+							"defUid": 14,
+							"px": [280,104],
+							"fieldInstances": [{
+								"__identifier": "Type",
+								"__value": "geobacter",
+								"__type": "String",
+								"defUid": 15,
+								"realEditorValues": [{
+									"id": "V_String",
+									"params": ["geobacter"]
+								}]
+							}]
+						},
+						{
+							"__identifier": "Spawner",
+							"__grid": [11,9],
+							"__pivot": [0.5,0.5],
+							"__tile": null,
+							"width": 16,
+							"height": 16,
+							"defUid": 14,
+							"px": [184,152],
 							"fieldInstances": [{
 								"__identifier": "Type",
 								"__value": "shroom",
@@ -456,6 +516,26 @@
 								"realEditorValues": [{
 									"id": "V_String",
 									"params": ["shroom"]
+								}]
+							}]
+						},
+						{
+							"__identifier": "Spawner",
+							"__grid": [15,9],
+							"__pivot": [0.5,0.5],
+							"__tile": null,
+							"width": 16,
+							"height": 16,
+							"defUid": 14,
+							"px": [248,152],
+							"fieldInstances": [{
+								"__identifier": "Type",
+								"__value": "staphylococcus",
+								"__type": "String",
+								"defUid": 15,
+								"realEditorValues": [{
+									"id": "V_String",
+									"params": ["staphylococcus"]
 								}]
 							}]
 						}
