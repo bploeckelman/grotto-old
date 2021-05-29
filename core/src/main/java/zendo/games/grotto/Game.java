@@ -13,6 +13,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Align;
 import zendo.games.grotto.components.CameraController;
 import zendo.games.grotto.components.Enemy;
+import zendo.games.grotto.components.Item;
 import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
 import zendo.games.grotto.editor.Editor;
@@ -118,6 +119,16 @@ public class Game extends ApplicationAdapter {
 
             // respawn player
             player = level.spawnPlayer(world);
+
+            // destroy items (will be respawned by level.spawnEnemies())
+            var item = world.first(Item.class);
+            while (item != null) {
+                var next = (Item) item.next;
+                if (item.entity() != null) {
+                    item.entity().destroy();
+                }
+                item = next;
+            }
 
             // destroy and respawn enemies
             enemies.forEach(enemy -> {

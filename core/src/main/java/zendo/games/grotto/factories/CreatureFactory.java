@@ -8,6 +8,7 @@ import zendo.games.grotto.ecs.World;
 import zendo.games.grotto.utils.Calc;
 import zendo.games.grotto.utils.Point;
 import zendo.games.grotto.utils.RectI;
+import zendo.games.grotto.utils.Time;
 
 public class CreatureFactory {
 
@@ -221,10 +222,18 @@ public class CreatureFactory {
                     if (playerMover.speed.y < 0) {
                         var stomped = self.collider.check(Collider.Mask.player, Point.at(0, -1));
                         if (stomped) {
+                            // stop the shroom
+                            mover.stopX();
+                            mover.active = false;
+                            Time.pause_for(0.2f);
+
                             // play the crush animation
                             anim.mode = Animator.LoopMode.none;
                             anim.play("crush");
-                            entity.add(new Timer(anim.duration(), (timer) -> anim.mode = Animator.LoopMode.loop), Timer.class);
+                            entity.add(new Timer(anim.duration(), (timer) -> {
+                                anim.mode = Animator.LoopMode.loop;
+                                mover.active = true;
+                            }), Timer.class);
 
                             // mover player up a bit so they don't get hurt
                             player.entity().position.y += 5;
