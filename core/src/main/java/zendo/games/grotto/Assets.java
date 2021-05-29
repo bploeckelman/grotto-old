@@ -38,6 +38,7 @@ public class Assets extends Content implements Disposable {
         {
             Tween.setWaypointsLimit(4);
             Tween.setCombinedAttributesLimit(4);
+            Tween.registerAccessor(Point.class, new PointAccessor());
             Tween.registerAccessor(Color.class, new ColorAccessor());
             Tween.registerAccessor(Vector2.class, new Vector2Accessor());
             Tween.registerAccessor(Vector3.class, new Vector3Accessor());
@@ -93,10 +94,13 @@ public class Assets extends Content implements Disposable {
             sprites.add(Content.loadSprite(fileHandle.path(), aseAtlas));
         }
 
-        sprites.add(loadSpriteManual("clostridium",    atlas.findRegion("clostridium")    .split(24, 24), Point.at(0, 0)));
-        sprites.add(loadSpriteManual("geobacter",      atlas.findRegion("geobacter")      .split(24, 24), Point.at(0, 0)));
-        sprites.add(loadSpriteManual("staphylococcus", atlas.findRegion("staphylococcus") .split(24, 24), Point.at(0, 0)));
-        sprites.add(loadSpriteManual("synechococcus",  atlas.findRegion("synechococcus")  .split(24, 24), Point.at(0, 0)));
+        // load sprites from the raw spritesheet
+        sprites.addAll(
+              loadSpriteManual("clostridium",    atlas.findRegion("clostridium")    .split(24, 24), Point.at(12, 12), Point.at(0, 0))
+            , loadSpriteManual("geobacter",      atlas.findRegion("geobacter")      .split(24, 24), Point.at(12, 12), Point.at(0, 0))
+            , loadSpriteManual("staphylococcus", atlas.findRegion("staphylococcus") .split(24, 24), Point.at(12, 12), Point.at(0, 0))
+            , loadSpriteManual("synechococcus",  atlas.findRegion("synechococcus")  .split(24, 24), Point.at(12, 12), Point.at(0, 0))
+        );
 
         VisUI.load();
     }
@@ -113,14 +117,12 @@ public class Assets extends Content implements Disposable {
         atlas.dispose();
     }
 
-    private static Sprite loadSpriteManual(String name, TextureRegion[][] sheet, Point... sheetIndices) {
+    private static Sprite loadSpriteManual(String name, TextureRegion[][] sheet, Point origin, Point... sheetIndices) {
         Sprite sprite = new Sprite();
         {
             // set the SpriteInfo
             sprite.name = name;
-
-            // TODO: pass this in
-            sprite.origin.set(12, 0);
+            sprite.origin.set(origin.x, origin.y);
 
             // build animation frames
             String anim_name = "idle";

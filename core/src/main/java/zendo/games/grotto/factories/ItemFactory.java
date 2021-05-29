@@ -1,12 +1,14 @@
 package zendo.games.grotto.factories;
 
-import com.badlogic.gdx.math.MathUtils;
+import aurelienribon.tweenengine.Tween;
+import aurelienribon.tweenengine.equations.Sine;
+import zendo.games.grotto.Assets;
 import zendo.games.grotto.components.*;
-import zendo.games.grotto.ecs.Component;
 import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
 import zendo.games.grotto.utils.Point;
 import zendo.games.grotto.utils.RectI;
+import zendo.games.grotto.utils.accessors.PointAccessor;
 
 public class ItemFactory {
 
@@ -38,10 +40,16 @@ public class ItemFactory {
         return entity;
     }
 
-    public static Entity bacterium(String name, World world, Point position) {
+    public static Entity bacterium(String name, Assets assets, World world, Point position) {
         var entity = world.addEntity();
         {
             entity.position.set(position);
+
+            Tween.to(entity.position, PointAccessor.Y, 0.33f)
+                    .target(position.y + 5)
+                    .ease(Sine.INOUT)
+                    .repeatYoyo(-1, 0.15f)
+                    .start(assets.tween);
 
             var anim = entity.add(new Animator(name, "idle"), Animator.class);
             anim.depth = 1;
@@ -49,17 +57,6 @@ public class ItemFactory {
             var bounds = RectI.at(-8, -8, 16, 16);
             var collider = entity.add(Collider.makeRect(bounds), Collider.class);
             collider.mask = Collider.Mask.item;
-
-            entity.add(new Component() {
-                final float amplitude = 5;
-                final float frequency = 6;
-                float time = 0f;
-                @Override
-                public void update(float dt) {
-                    time += dt;
-                    entity.position.y = position.y + (int) (amplitude * MathUtils.sin(frequency * time));
-                }
-            }, Component.class);
 
             var pickup = entity.add(new Pickupable(), Pickupable.class);
             pickup.collider = collider;

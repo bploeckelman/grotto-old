@@ -150,7 +150,7 @@ public class Level {
                 // TODO - spawn enemies / items separately?
                 case "coin"        -> ItemFactory.coin(world, spawner.pos);
                 case "clostridium", "geobacter", "staphylococcus", "synechococcus"
-                        -> ItemFactory.bacterium(spawner.type, world, spawner.pos);
+                        -> ItemFactory.bacterium(spawner.type, assets, world, spawner.pos);
             }
             if (enemy != null) {
                 var enemyRoom = room(enemy.entity().position);
