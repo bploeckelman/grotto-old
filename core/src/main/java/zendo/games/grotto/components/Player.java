@@ -21,6 +21,7 @@ public class Player extends Component {
     private static final float hurt_friction = 200;
     private static final float hurt_duration = 0.5f;
     private static final float invincible_duration = 1.5f;
+    private static final float hover_grav = 0.5f;
     private static final float jump_time = 0.15f;
     private static final float jump_impulse = 155;
     private static final float ground_accel = 500;
@@ -298,7 +299,7 @@ public class Player extends Component {
             // make gravity more 'hovery' when in the air
             var grav = gravity;
             if (Calc.abs(mover.speed.y) < 20 && jumpButton.down()) {
-                grav *= 0.4f;
+                grav *= hover_grav;
             }
 
             // wall sliding, kinda sorta
