@@ -1,14 +1,15 @@
 package zendo.games.grotto.factories;
 
-import com.badlogic.gdx.math.MathUtils;
+import aurelienribon.tweenengine.Tween;
+import aurelienribon.tweenengine.equations.Sine;
 import zendo.games.grotto.Assets;
 import zendo.games.grotto.components.*;
-import zendo.games.grotto.ecs.Component;
 import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
 import zendo.games.grotto.utils.Point;
 import zendo.games.grotto.utils.RectI;
 import zendo.games.grotto.utils.Time;
+import zendo.games.grotto.utils.accessors.PointAccessor;
 
 public class ItemFactory {
 
@@ -77,24 +78,13 @@ public class ItemFactory {
 
             entity.add(new Item(), Item.class);
 
-            // TODO : using a tween screws up respawning because the entities are reused
-            //  in a pool and the tween doesn't stop when the entity is killed
-//            Tween.to(entity.position, PointAccessor.Y, 0.33f)
-//                    .target(position.y + 5)
-//                    .ease(Sine.INOUT)
-//                    .repeatYoyo(-1, 0.15f)
-//                    .start(assets.tween);
-
-            entity.add(new Component() {
-                final float amplitude = 3;
-                final float frequency = 6;
-                float time = 0f;
-                @Override
-                public void update(float dt) {
-                    time += dt;
-                    entity.position.y = position.y + (int) (amplitude * MathUtils.sin(frequency * time));
-                }
-            }, Component.class);
+            entity.add(new TweenComponent(
+                    Tween.to(entity.position, PointAccessor.Y, 0.33f)
+                            .target(position.y + 5)
+                            .ease(Sine.INOUT)
+                            .repeatYoyo(-1, 0.15f)
+                            .start(assets.tween)
+            ), TweenComponent.class);
 
             var anim = entity.add(new Animator(name, "idle"), Animator.class);
             anim.depth = 1;
