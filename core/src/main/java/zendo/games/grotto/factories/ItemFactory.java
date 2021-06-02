@@ -62,6 +62,8 @@ public class ItemFactory {
             hurtable.collider = collider;
             hurtable.hurtBy = Collider.Mask.player_attack;
             hurtable.onHurt = (self) -> {
+                ItemFactory.coin(world, position);
+
                 anim.mode = Animator.LoopMode.none;
                 anim.play("break");
                 collider.active = false;
