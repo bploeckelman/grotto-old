@@ -280,31 +280,33 @@ public class CreatureFactory {
 
             // custom behavior
             entity.add(new Component() {
+                int dir = 1;
                 @Override
                 public void update(float dt) {
-                    var player = world().first(Player.class);
-                    if (player != null) {
-                        var dx = player.entity().position.x - entity().position.x;
-                        if (Calc.abs(dx) < 64) {
-                            if (hurtable.stunTimer < 0) {
-                                anim.play("walk");
-                            }
-
-                            var dir = Calc.sign(dx);
-                            if (dir == 0) dir = 1;
-                            anim.scale.set(dir, 1);
-                            var speed = mover.speed.x + dir * 100 * dt;
-                            mover.speed.x = Calc.clampInt((int) speed, -80, 80);
-                        } else {
-                            mover.speed.x = Calc.approach(mover.speed.x, 0, 100 * dt);
-                            if (Calc.abs(mover.speed.x) < 10) {
-                                mover.stopX();
-                                if (hurtable.stunTimer < 0) {
-                                    anim.play("idle");
-                                }
-                            }
-                        }
+                    if (hurtable.stunTimer < 0) {
+                        anim.play("walk");
                     }
+
+                    // check whether to turn around
+                    var feelerDist = 5;
+                    var offset = Point.at(feelerDist * dir, -1);
+                    var willFallOff = !collider.check(Collider.Mask.solid, offset);
+                    var willHitWall = collider.check(Collider.Mask.solid, Point.at(dir, 0));
+                    if (willFallOff || willHitWall) {
+                        // stop moving
+                        mover.stopX();
+                        // turn around
+                        dir *= -1;
+                    }
+
+                    // set facing direction
+                    anim.scale.set(dir, 1);
+
+                    // calculate speed for frame
+                    var speed = mover.speed.x + dir * 100 * dt;
+
+                    // limit max horizontal speed
+                    mover.speed.x = Calc.clampInt((int) speed, -40, 40);
                 }
             }, Component.class);
         }
