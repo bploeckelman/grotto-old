@@ -33,7 +33,7 @@ public class ItemFactory {
             pickup.collider = collider;
             pickup.pickupBy = Collider.Mask.player;
             pickup.onPickup = (self) -> {
-                Time.pause_for(0.1f);
+                Time.pause_for(0.05f);
                 mover.speed.y = 120f;
                 entity.add(new Timer(0.1f, (timer) -> {
                     EffectFactory.spriteAnimOneShot(world, entity.position, "coin", "pickup");
@@ -67,7 +67,7 @@ public class ItemFactory {
                 anim.mode = Animator.LoopMode.none;
                 anim.play("break");
                 collider.active = false;
-                Time.pause_for(0.15f);
+                Time.pause_for(0.1f);
             };
         }
         return entity;
