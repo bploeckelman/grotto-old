@@ -8,7 +8,6 @@ import zendo.games.grotto.input.Input;
 import zendo.games.grotto.input.VirtualButton;
 import zendo.games.grotto.input.VirtualStick;
 import zendo.games.grotto.utils.Calc;
-import zendo.games.grotto.utils.Point;
 import zendo.games.grotto.utils.RectI;
 import zendo.games.grotto.utils.Time;
 
@@ -303,11 +302,11 @@ public class Player extends Component {
             }
 
             // wall sliding, kinda sorta
-            if (mover.speed.y < 0 &&
-                (mover.collider.check(Collider.Mask.solid, Point.at(-1, 0))
-              || mover.collider.check(Collider.Mask.solid, Point.at(1, 0)))) {
-                grav *= 0.2f;
-            }
+//            if (mover.speed.y < 0 &&
+//                (mover.collider.check(Collider.Mask.solid, Point.at(-1, 0))
+//              || mover.collider.check(Collider.Mask.solid, Point.at(1, 0)))) {
+//                grav *= 0.2f;
+//            }
 
             mover.speed.y += grav * dt;
         }
