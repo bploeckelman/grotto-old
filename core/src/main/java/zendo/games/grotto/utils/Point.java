@@ -1,8 +1,11 @@
 package zendo.games.grotto.utils;
 
-public class Point {
+import com.badlogic.gdx.utils.Pool;
+import com.badlogic.gdx.utils.Pools;
 
-    // TODO - make poolable and add a static pool
+public class Point implements Pool.Poolable {
+
+    public static Pool<Point> pool = Pools.get(Point.class);
 
     public static Point zero() {
         return new Point();
@@ -24,13 +27,14 @@ public class Point {
         set(x, y);
     }
 
-    public void set(int x, int y) {
+    public Point set(int x, int y) {
         this.x = x;
         this.y = y;
+        return this;
     }
 
-    public void set(Point other) {
-        set(other.x, other.y);
+    public Point set(Point other) {
+        return set(other.x, other.y);
     }
 
     public boolean is(int x, int y) {
@@ -80,6 +84,12 @@ public class Point {
     @Override
     public String toString() {
         return String.format("(%d,%d)", x, y);
+    }
+
+    @Override
+    public void reset() {
+        this.x = 0;
+        this.y = 0;
     }
 
 }

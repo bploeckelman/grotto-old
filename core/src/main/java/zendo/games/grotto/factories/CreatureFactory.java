@@ -220,7 +220,8 @@ public class CreatureFactory {
                 if (player != null) {
                     var playerMover = player.get(Mover.class);
                     if (playerMover.speed.y < 0) {
-                        var stomped = self.collider.check(Collider.Mask.player, Point.at(0, -1));
+                        var offset = Point.pool.obtain().set(0, -1);
+                        var stomped = self.collider.check(Collider.Mask.player, offset);
                         if (stomped) {
                             // stop the shroom
                             mover.stopX();
@@ -240,6 +241,7 @@ public class CreatureFactory {
                             // bounce the player up as if they jumped
                             playerMover.speed.y = 155;
                         }
+                        Point.pool.free(offset);
                         return stomped;
                     }
                 }
@@ -289,15 +291,20 @@ public class CreatureFactory {
 
                     // check whether to turn around
                     var feelerDist = 5;
-                    var offset = Point.at(feelerDist * dir, -1);
-                    var willFallOff = !collider.check(Collider.Mask.solid, offset);
-                    var willHitWall = collider.check(Collider.Mask.solid, Point.at(dir, 0));
-                    if (willFallOff || willHitWall) {
-                        // stop moving
-                        mover.stopX();
-                        // turn around
-                        dir *= -1;
+                    var fallOffset = Point.pool.obtain().set(feelerDist * dir, -1);
+                    var hitOffset = Point.pool.obtain().set(dir, 0);
+                    {
+                        var willFallOff = !collider.check(Collider.Mask.solid, fallOffset);
+                        var willHitWall = collider.check(Collider.Mask.solid, hitOffset);
+                        if (willFallOff || willHitWall) {
+                            // stop moving
+                            mover.stopX();
+                            // turn around
+                            dir *= -1;
+                        }
                     }
+                    Point.pool.free(fallOffset);
+                    Point.pool.free(hitOffset);
 
                     // set facing direction
                     anim.scale.set(dir, 1);
