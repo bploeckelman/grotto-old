@@ -81,6 +81,11 @@ public class Player extends Component {
 
     @Override
     public void update(float dt) {
+//        oldUpdate(dt);
+        newUpdate(dt);
+    }
+
+    public void oldUpdate(float dt) {
         // get components
         var anim = get(Animator.class);
         var mover = get(Mover.class);
@@ -349,6 +354,40 @@ public class Player extends Component {
                 state = State.hurt;
             }
         }
+    }
+
+    public void newUpdate(float dt) {
+        // get components
+        var anim = get(Animator.class);
+        var mover = get(Mover.class);
+
+        // store previous state
+        var wasOnGround = onGround;
+        onGround = mover.onGround();
+
+        // handle input
+        var moveDir = 0;
+        {
+            jumpButton.update();
+            attackButton.update();
+
+            var sign = 0;
+            stick.update();
+            if (stick.pressed()) {
+                stick.clearPressBuffer();
+                var move = stick.value();
+                if      (move.x < 0) sign = -1;
+                else if (move.x > 0) sign = 1;
+            }
+            moveDir = sign;
+        }
+
+        // TEMP: set animation
+        anim.play("idle");
+
+        // TODO: update horizontal movement
+        // TODO: update vertical movement
+        // TODO: test for state changes
     }
 
     @Override
