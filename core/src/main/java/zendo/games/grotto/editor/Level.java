@@ -271,6 +271,8 @@ public class Level {
                     desc.tileSize * desc.rows
             )), Collider.class);
             collider.mask = Collider.Mask.room_bounds;
+            collider.origin.set(-desc.position.x, -desc.position.y);
+            collider.depth = 100;
         }
         entity.position.set(desc.position);
 

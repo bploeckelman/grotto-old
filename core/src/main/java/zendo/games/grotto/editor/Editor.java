@@ -323,6 +323,9 @@ public class Editor {
     }
 
     public void renderGrid(ShapeRenderer shapes) {
+        // skip this since we're not actually using this mode as an editor anymore
+        if (true) return;
+
         var level = game.getLevel();
         var tilemap = level.entity().get(Tilemap.class);
         var tileSize = tilemap.tileSize();
