@@ -388,6 +388,19 @@ public class Player extends Component {
         // TODO: update horizontal movement
         // TODO: update vertical movement
         // TODO: test for state changes
+
+        // https://github.com/ExOK/Celeste2/blob/main/player.lua
+        // https://github.com/NoelFB/Celeste/blob/master/Source/PICO-8/Classic.cs#L203
+        // order:
+        // - general stuff (ground check; set jump_grace_amount)
+        // - state machine
+        //   - normal
+        //     - facing
+        //     - running (horiz movement)
+        //     - gravity
+        //     - variable jump
+        //     - jump
+        //     - throwing
     }
 
     @Override
