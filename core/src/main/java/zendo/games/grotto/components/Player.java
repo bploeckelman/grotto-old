@@ -2,6 +2,7 @@ package zendo.games.grotto.components;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Vector2;
 import zendo.games.grotto.ecs.Component;
 import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.input.Input;
@@ -25,18 +26,28 @@ public class Player extends Component {
     private static final float jump_impulse = 155;
     private static final float ground_accel = 500;
     private static final float ground_speed_max = 100;
+    private static final Vector2 acceleration_air = new Vector2(600, 600);
+    private static final Vector2 acceleration_ground = new Vector2(500, 500);
+    private static final Vector2 acceleration_turnaround = new Vector2(50, 50);
+    private static final Vector2 grounded_normal = new Vector2(500, 500);
+    private static final float maxspeed_ground = 100;
+    private static final float maxspeed_air = 100;
 
     private int facing = 1;
     private float jumpTimer;
     private float attackTimer;
     private float hurtTimer;
     private float invincibleTimer;
+    private float runStartupTimer;
     private boolean onGround;
     private boolean canJump;
+    private boolean ducking;
+    private boolean turning;
     private State state;
     private VirtualStick stick;
     private VirtualButton jumpButton;
     private VirtualButton attackButton;
+    private VirtualButton duckButton;
     private Entity attackEntity;
     private Collider attackCollider;
     private Animator attackEffectAnim;
@@ -58,6 +69,12 @@ public class Player extends Component {
                 .addKey(Input.Key.control_left)
                 .addKey(Input.Key.f)
                 .pressBuffer(0.15f);
+        duckButton = new VirtualButton()
+                .addAxis(0, Input.Axis.leftY, 0.5f, true)
+                .addButton(0, Input.Button.down)
+                .addKey(Input.Key.z)
+                .addKey(Input.Key.down)
+                .pressBuffer(0.15f);
         canJump = true;
     }
 
@@ -66,14 +83,18 @@ public class Player extends Component {
         super.reset();
         onGround = false;
         canJump = false;
+        ducking = false;
+        turning = false;
         jumpTimer = 0;
         attackTimer = 0;
         hurtTimer = 0;
         invincibleTimer = 0;
+        runStartupTimer = 0;
         state = State.normal;
         stick = null;
         jumpButton = null;
         attackButton = null;
+        duckButton = null;
         attackEntity = null;
         attackCollider = null;
         attackEffectAnim = null;
@@ -99,6 +120,7 @@ public class Player extends Component {
         {
             jumpButton.update();
             attackButton.update();
+            duckButton.update();
 
             var sign = 0;
             stick.update();
@@ -382,25 +404,115 @@ public class Player extends Component {
             moveDir = sign;
         }
 
-        // TEMP: set animation
+        // TODO TEMP: set animation
         anim.play("idle");
 
-        // TODO: update horizontal movement
-        // TODO: update vertical movement
-        // TODO: test for state changes
+        // ----------------------------------------
+
+        // handle gravity & jumping
+        updateVerticalSpeed();
+
+        // jumping
+        {
+            if (tryJump()) {
+                // cancel backwards horizontal movement
+                if (Calc.sign(mover.speed.x) == -moveDir) {
+                    mover.speed.x = 0;
+                }
+
+                // push out the way we're inputting
+                facing = moveDir;
+                mover.speed.x += moveDir * 50;
+            }
+
+            tryWallJump();
+        }
+
+        // ducking
+        {
+            boolean wasDucking = ducking;
+            ducking = onGround && duckButton.down();
+            duckButton.clearPressBuffer();
+
+            // stopped ducking, squash and stretch
+            if (wasDucking && !ducking) {
+                anim.scale.set(0.7f, 1.2f);
+            }
+        }
+
+        // acceleration
+        turning = false;
+        if (moveDir != 0 && !ducking && runStartupTimer <= 0) {
+            var prevSpeedX = mover.speed.x;
+
+            if (onGround) {
+                facing = moveDir;
+            }
+
+            // get accel value
+            // TODO: pool me
+            var accelerationAmount = new Vector2();
+            if (onGround) {
+                if (moveDir == -Calc.sign(mover.speed.x)) {
+                    turning = true;
+                    accelerationAmount.set(
+                            -grounded_normal.y * moveDir * acceleration_turnaround.x,
+                             grounded_normal.x * moveDir * acceleration_turnaround.y
+                    );
+                } else {
+                    if (mover.speed.len() < maxspeed_ground) {
+                        accelerationAmount.set(
+                                -grounded_normal.y * moveDir * acceleration_ground.x,
+                                 grounded_normal.x * moveDir * acceleration_ground.y
+                        );
+                    }
+                }
+            } else if (Calc.abs(mover.speed.x) < maxspeed_air || moveDir == Calc.sign(mover.speed.x)) {
+                accelerationAmount.set(
+                        1f * moveDir * acceleration_air.x,
+                        0f * moveDir * acceleration_air.y
+                );
+            }
+
+            // apply
+            mover.speed.x += accelerationAmount.x * dt;
+            mover.speed.y += accelerationAmount.y * dt;
+
+            // freeze-frame on turnaround
+            if (turning && Calc.sign(prevSpeedX) != Calc.sign(mover.speed.x)) {
+                Time.pause_for(0.05f);
+            }
+        }
+
+        updateHorizontalSpeed(moveDir == 0 || ducking);
+
+        trySlash();
 
         // https://github.com/ExOK/Celeste2/blob/main/player.lua
         // https://github.com/NoelFB/Celeste/blob/master/Source/PICO-8/Classic.cs#L203
-        // order:
-        // - general stuff (ground check; set jump_grace_amount)
-        // - state machine
-        //   - normal
-        //     - facing
-        //     - running (horiz movement)
-        //     - gravity
-        //     - variable jump
-        //     - jump
-        //     - throwing
+    }
+
+    private boolean tryJump() {
+        // TODO
+        return false;
+    }
+
+    private boolean tryWallJump() {
+        // TODO
+        return false;
+    }
+
+    private boolean trySlash() {
+        // TODO
+        return false;
+    }
+
+    private void updateVerticalSpeed() {
+        // TODO
+    }
+
+    private void updateHorizontalSpeed(boolean isStopped) {
+        // TODO
     }
 
     @Override
