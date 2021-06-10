@@ -40,6 +40,8 @@ public class Player extends Component {
     private static final float maxspeed_ground = 100;
     private static final float maxspeed_air = 100;
     private static final float slash_cooldown = 0.2f;
+    private static final float jumpforce_max_duration = 0.2f;
+    private static final float jumpforce_min_duration = 0.1f;
 
     private int facing = 1;
     private float jumpTimer;
@@ -48,6 +50,8 @@ public class Player extends Component {
     private float invincibleTimer;
     private float runStartupTimer;
     private float slashCooldownTimer;
+    private float jumpforceTimer;
+    private float jumpforceAmount;
     private boolean onGround;
     private boolean canJump;
     private boolean ducking;
@@ -596,7 +600,15 @@ public class Player extends Component {
         // apply the jump
         // either we're holding down & jump timer hasn't run out
         // or jump timer is within the minimum and forced on
-        // TODO: (scratch.txt line 38)
+        if ((jumpButton.down() && jumpforceTimer > 0)
+         || (jumpforceTimer > jumpforce_max_duration - jumpforce_min_duration)) {
+            jumpforceTimer -= dt;
+            if (mover.speed.y < -jumpforceAmount) {
+                mover.speed.y = -jumpforceAmount;
+            }
+        } else {
+            jumpforceTimer = 0;
+        }
 
         // max falling
         {
