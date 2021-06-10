@@ -9,6 +9,7 @@ import zendo.games.grotto.input.Input;
 import zendo.games.grotto.input.VirtualButton;
 import zendo.games.grotto.input.VirtualStick;
 import zendo.games.grotto.utils.Calc;
+import zendo.games.grotto.utils.Point;
 import zendo.games.grotto.utils.RectI;
 import zendo.games.grotto.utils.Time;
 
@@ -17,6 +18,12 @@ public class Player extends Component {
     private enum State { normal, attack, hurt }
 
     private static final float gravity = -400;
+    private static final float gravity_peak = gravity * 0.5f;
+    private static final float gravity_fastfall = gravity * 2f;
+    private static final float gravity_wallsliding = gravity * 0.33f;
+    private static final float maxfall = -100;
+    private static final float maxfall_fastfall = -150;
+    private static final float maxfall_wallsliding = -50;
     private static final float friction = 800;
     private static final float hurt_friction = 200;
     private static final float hurt_duration = 0.5f;
@@ -32,6 +39,7 @@ public class Player extends Component {
     private static final Vector2 grounded_normal = new Vector2(500, 500);
     private static final float maxspeed_ground = 100;
     private static final float maxspeed_air = 100;
+    private static final float slash_cooldown = 0.2f;
 
     private int facing = 1;
     private float jumpTimer;
@@ -39,6 +47,7 @@ public class Player extends Component {
     private float hurtTimer;
     private float invincibleTimer;
     private float runStartupTimer;
+    private float slashCooldownTimer;
     private boolean onGround;
     private boolean canJump;
     private boolean ducking;
@@ -410,7 +419,7 @@ public class Player extends Component {
         // ----------------------------------------
 
         // handle gravity & jumping
-        updateVerticalSpeed();
+        updateVerticalSpeed(dt, moveDir);
 
         // jumping
         {
@@ -493,7 +502,44 @@ public class Player extends Component {
     }
 
     private boolean tryJump() {
-        // TODO
+        /*
+        if (jumpButton.pressed() && air_timer < coyote_time) {
+            jumpButton.clearPressBuffer();
+
+            var mover = get(Mover.class);
+            var anim = get(Animator.class);
+
+            // can we fall through a platform instead?
+            var isFallthrough = false; // mover.isFallthrough();
+            if (duckButton.down() && state == State.normal && onGround && isFallthrough) {
+                mover.moveY(-1);
+            } else {
+                jumpforceAmount = jumpforce_normaljump;
+                jumpforceTimer = jumpforce_max_duration;
+
+                // check ground / platform speed
+                if (groundedVelocity.y < 0) {
+                    jumpforceAmount -= groundedVelocity.y;
+                }
+                if (conveyorVelocity.y < 0) {
+                    jumpforceAmount -= conveyorVelocity.y * 0.75f;
+                }
+
+                mover.speed.y = -jumpforceAmount;
+                mover.speed.x += groundedVelocity.x;
+                mover.speed.x += conveyorVelocity.x * 1.5f;
+
+                entity.position.y = groundedPosition.y;
+                anim.scale.set(0.8f, 1.4f);
+
+                // TODO: trigger jump effect
+//                EffectFactory.jump(entity.world, entity.position);
+
+                return true;
+            }
+        }
+        */
+
         return false;
     }
 
@@ -503,12 +549,73 @@ public class Player extends Component {
     }
 
     private boolean trySlash() {
-        // TODO
+        if (attackButton.pressed() && slashCooldownTimer <= 0) {
+            attackButton.clearPressBuffer();
+            // TODO: if we change to a state machine interface with enter/update/exit methods, set cooldown timer in attack.enter()
+            slashCooldownTimer = slash_cooldown;
+            state = State.attack;
+            return true;
+        }
         return false;
     }
 
-    private void updateVerticalSpeed() {
-        // TODO
+    private void updateVerticalSpeed(float dt, int moveDir) {
+        var mover = get(Mover.class);
+        var fastFalling = false;
+        var wallSliding = false;
+
+        // gravity
+        if (!onGround) {
+            var gravityAmount = gravity;
+
+            // slow gravity at peak of jump
+            var peakJumpThreshold = 12;
+            if (jumpButton.down() && Calc.abs(mover.speed.y) < peakJumpThreshold) {
+                gravityAmount = gravity_peak;
+            }
+
+            // fast falling
+            if (duckButton.down() && !jumpButton.down() && mover.speed.y <= 0) {
+                fastFalling = true;
+                gravityAmount = gravity_fastfall;
+            }
+            // wall behavior
+            else if (moveDir != 0 && mover.collider.check(Collider.Mask.solid, Point.at(moveDir, 0))) {
+                // wall sliding
+                if (mover.speed.y < 0) {
+                    wallSliding = true;
+                    facing = moveDir;
+                    gravityAmount = gravity_wallsliding;
+                }
+            }
+
+            // apply gravity
+            mover.speed.y += gravityAmount * dt;
+        }
+
+        // apply the jump
+        // either we're holding down & jump timer hasn't run out
+        // or jump timer is within the minimum and forced on
+        // TODO: (scratch.txt line 38)
+
+        // max falling
+        {
+            var maxfallAmount = maxfall;
+
+            if (fastFalling) {
+                maxfallAmount = maxfall_fastfall;
+            } else if (wallSliding) {
+                maxfallAmount = maxfall_wallsliding;
+            }
+            // TODO: are there other conditions here?
+
+            // apply maxfall
+            if (mover.speed.y < maxfallAmount) {
+                mover.speed.y = maxfallAmount;
+            }
+        }
+
+        // TODO: probably other stuff? need to review the stream
     }
 
     private void updateHorizontalSpeed(boolean isStopped) {
