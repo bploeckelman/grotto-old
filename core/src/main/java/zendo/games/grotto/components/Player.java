@@ -17,50 +17,85 @@ public class Player extends Component {
 
     private enum State { normal, attack, hurt }
 
-    private static final float gravity = -400;
-    private static final float gravity_peak = gravity * 0.5f;
-    private static final float gravity_fastfall = gravity * 2f;
-    private static final float gravity_wallsliding = gravity * 0.33f;
-    private static final float maxfall = -100;
-    private static final float maxfall_fastfall = -150;
-    private static final float maxfall_wallsliding = -50;
+    private static final float gravity = -550;
+    private static final float gravity_peak = -130;
+    private static final float gravity_fastfall = -900;
+    private static final float gravity_wallsliding = -200;
+
+    private static final float maxfall = -140;
+    private static final float maxfall_fastfall = -200;
+    private static final float maxfall_wallsliding = -15;
+
+    private static final float friction_ground = 450;
+    private static final float friction_air = 200;
+
+    private static final float acceleration_ground = 700;
+    private static final float acceleration_turnaround = 500;
+    private static final float acceleration_air = 250;
+
+    private static final float maxspeed_ground = 80;
+    private static final float maxspeed_air = 90;
+    private static final float maxspeed_running = 180;
+    private static final float maxspeed_approach = 300;
+
+    private static final float coyote_time = 0.1f;
+
+    private static final float jumpforce_min_duration = 0.10f;
+    private static final float jumpforce_max_duration = 0.25f;
+    private static final float jumpforce_normaljump = 85;
+    private static final float jumpforce_walljump = 80;
+    private static final float jumpforce_walljump_horizontal = 160;
+
+    private static final float slash_cooldown = 0.25f;
+    private static final float slash_velocity = 187;
+    private static final float slash_jumpcancel_speed = 260;
+    private static final float slash_anticipation = 0.05f;
+    private static final float slash_duration = 0.22f;
+    private static final float slash_damage_duration = 0.12f;
+    private static final float slash_friction = 2000;
+    private static final float slash_running_friction = 1000;
+    private static final float slash_min_speed = 40;
+    private static final float slash_running_min_speed = 80;
+
+    private static final float run_startup_time = 0.30f;
+
+    // OLD CONSTANTS ---------------------------------
     private static final float friction = 800;
     private static final float hurt_friction = 200;
     private static final float hurt_duration = 0.5f;
     private static final float invincible_duration = 1.5f;
     private static final float hover_grav = 0.5f;
-    private static final float jump_time = 0.15f;
-    private static final float jump_impulse = 155;
     private static final float ground_accel = 500;
     private static final float ground_speed_max = 100;
-    private static final Vector2 acceleration_air = new Vector2(600, 600);
-    private static final Vector2 acceleration_ground = new Vector2(500, 500);
-    private static final Vector2 acceleration_turnaround = new Vector2(50, 50);
     private static final Vector2 grounded_normal = new Vector2(500, 500);
-    private static final float maxspeed_ground = 100;
-    private static final float maxspeed_air = 100;
-    private static final float slash_cooldown = 0.2f;
-    private static final float jumpforce_max_duration = 0.2f;
-    private static final float jumpforce_min_duration = 0.1f;
+    private static final float jump_time = 0.15f;
+    private static final float jump_impulse = 155;
+    // OLD CONSTANTS ---------------------------------
 
     private int facing = 1;
+
+    private float airTimer;
     private float jumpTimer;
-    private float attackTimer;
+    private float jumpforceTimer;
+    private float jumpforceAmount;
     private float hurtTimer;
+    private float attackTimer;
     private float invincibleTimer;
     private float runStartupTimer;
     private float slashCooldownTimer;
-    private float jumpforceTimer;
-    private float jumpforceAmount;
+
     private boolean onGround;
     private boolean canJump;
     private boolean ducking;
     private boolean turning;
+
     private State state;
+
     private VirtualStick stick;
     private VirtualButton jumpButton;
     private VirtualButton attackButton;
     private VirtualButton duckButton;
+
     private Entity attackEntity;
     private Collider attackCollider;
     private Animator attackEffectAnim;
@@ -94,16 +129,20 @@ public class Player extends Component {
     @Override
     public void reset() {
         super.reset();
+        airTimer = 0;
+        jumpTimer = 0;
+        jumpforceTimer = 0;
+        jumpforceAmount = 0;
+        hurtTimer = 0;
+        attackTimer = 0;
+        invincibleTimer = 0;
+        runStartupTimer = 0;
+        slashCooldownTimer = 0;
         onGround = false;
         canJump = false;
         ducking = false;
         turning = false;
-        jumpTimer = 0;
-        attackTimer = 0;
-        hurtTimer = 0;
-        invincibleTimer = 0;
-        runStartupTimer = 0;
-        state = State.normal;
+        state = null;
         stick = null;
         jumpButton = null;
         attackButton = null;
@@ -469,21 +508,21 @@ public class Player extends Component {
                 if (moveDir == -Calc.sign(mover.speed.x)) {
                     turning = true;
                     accelerationAmount.set(
-                            -grounded_normal.y * moveDir * acceleration_turnaround.x,
-                             grounded_normal.x * moveDir * acceleration_turnaround.y
+                            -grounded_normal.y * moveDir * acceleration_turnaround,
+                             grounded_normal.x * moveDir * acceleration_turnaround
                     );
                 } else {
                     if (mover.speed.len() < maxspeed_ground) {
                         accelerationAmount.set(
-                                -grounded_normal.y * moveDir * acceleration_ground.x,
-                                 grounded_normal.x * moveDir * acceleration_ground.y
+                                -grounded_normal.y * moveDir * acceleration_ground,
+                                 grounded_normal.x * moveDir * acceleration_ground
                         );
                     }
                 }
             } else if (Calc.abs(mover.speed.x) < maxspeed_air || moveDir == Calc.sign(mover.speed.x)) {
                 accelerationAmount.set(
-                        1f * moveDir * acceleration_air.x,
-                        0f * moveDir * acceleration_air.y
+                        1f * moveDir * acceleration_air,
+                        0f * moveDir * acceleration_air
                 );
             }
 
@@ -506,8 +545,7 @@ public class Player extends Component {
     }
 
     private boolean tryJump() {
-        /*
-        if (jumpButton.pressed() && air_timer < coyote_time) {
+        if (jumpButton.pressed() && airTimer < coyote_time) {
             jumpButton.clearPressBuffer();
 
             var mover = get(Mover.class);
@@ -522,18 +560,18 @@ public class Player extends Component {
                 jumpforceTimer = jumpforce_max_duration;
 
                 // check ground / platform speed
-                if (groundedVelocity.y < 0) {
-                    jumpforceAmount -= groundedVelocity.y;
-                }
-                if (conveyorVelocity.y < 0) {
-                    jumpforceAmount -= conveyorVelocity.y * 0.75f;
-                }
+//                if (groundedVelocity.y < 0) {
+//                    jumpforceAmount -= groundedVelocity.y;
+//                }
+//                if (conveyorVelocity.y < 0) {
+//                    jumpforceAmount -= conveyorVelocity.y * 0.75f;
+//                }
 
-                mover.speed.y = -jumpforceAmount;
-                mover.speed.x += groundedVelocity.x;
-                mover.speed.x += conveyorVelocity.x * 1.5f;
+                mover.speed.y = jumpforceAmount;
+//                mover.speed.x += groundedVelocity.x;
+//                mover.speed.x += conveyorVelocity.x * 1.5f;
 
-                entity.position.y = groundedPosition.y;
+//                entity.position.y = groundedPosition.y;
                 anim.scale.set(0.8f, 1.4f);
 
                 // TODO: trigger jump effect
@@ -542,7 +580,7 @@ public class Player extends Component {
                 return true;
             }
         }
-        */
+//        */
 
         return false;
     }
