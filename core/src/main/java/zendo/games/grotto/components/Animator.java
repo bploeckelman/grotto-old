@@ -78,6 +78,10 @@ public class Animator extends Component {
         return tint;
     }
 
+    public float getAlpha() {
+        return tint.a;
+    }
+
     public void setAlpha(float a) {
         tint.a = a;
     }

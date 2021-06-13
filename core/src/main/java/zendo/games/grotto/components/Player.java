@@ -72,22 +72,39 @@ public class Player extends Component {
     private static final float jump_impulse = 155;
     // OLD CONSTANTS ---------------------------------
 
-    private int facing = 1;
-
-    private float airTimer;
+    // OLD TIMERS ------------------------------------
     private float jumpTimer;
-    private float jumpforceTimer;
-    private float jumpforceAmount;
     private float hurtTimer;
     private float attackTimer;
+    // OLD TIMERS ------------------------------------
+
+    // timers
+    private float airTimer;
+    private float jumpforceTimer;
     private float invincibleTimer;
     private float runStartupTimer;
     private float slashCooldownTimer;
 
-    private boolean onGround;
-    private boolean canJump;
+    // properties
+    int facing = 1; // TODO: make enum?
+    int runningDir = 1; // TODO: make enum?
+    Vector2 groundedNormal;
+    Vector2 groundedPosition;
+    Vector2 groundedVelocity;
+    Vector2 conveyorVelocity;
+    Vector2 safePosition;
+    float jumpforceAmount;
+
+    // flags
+    private boolean dead;
     private boolean ducking;
+    private boolean grounded;
+    private boolean wallsliding;
+    private boolean fastfalling;
     private boolean turning;
+    private boolean running;
+
+    private boolean canJump;
 
     private State state;
 
@@ -95,6 +112,7 @@ public class Player extends Component {
     private VirtualButton jumpButton;
     private VirtualButton attackButton;
     private VirtualButton duckButton;
+    private VirtualButton runButton;
 
     private Entity attackEntity;
     private Collider attackCollider;
@@ -123,12 +141,27 @@ public class Player extends Component {
                 .addKey(Input.Key.z)
                 .addKey(Input.Key.down)
                 .pressBuffer(0.15f);
+        runButton = new VirtualButton()
+                .addButton(0, Input.Button.rightShoulder)
+                .addKey(Input.Key.shift_left)
+                .pressBuffer(0.15f);
+        groundedNormal = new Vector2();
+        groundedPosition = new Vector2();
+        groundedVelocity = new Vector2();
+        conveyorVelocity = new Vector2();
+        safePosition = new Vector2();
         canJump = true;
     }
 
     @Override
     public void reset() {
         super.reset();
+        facing = 1;
+        runningDir = 1;
+        groundedNormal = null;
+        groundedPosition = null;
+        groundedVelocity = null;
+        conveyorVelocity = null;
         airTimer = 0;
         jumpTimer = 0;
         jumpforceTimer = 0;
@@ -138,8 +171,8 @@ public class Player extends Component {
         invincibleTimer = 0;
         runStartupTimer = 0;
         slashCooldownTimer = 0;
-        onGround = false;
         canJump = false;
+        grounded = false;
         ducking = false;
         turning = false;
         state = null;
@@ -147,6 +180,7 @@ public class Player extends Component {
         jumpButton = null;
         attackButton = null;
         duckButton = null;
+        runButton = null;
         attackEntity = null;
         attackCollider = null;
         attackEffectAnim = null;
@@ -164,8 +198,8 @@ public class Player extends Component {
         var mover = get(Mover.class);
 
         // store previous state
-        var wasOnGround = onGround;
-        onGround = mover.onGround();
+        var wasOnGround = grounded;
+        grounded = mover.onGround();
 
         // handle input
         var moveDir = 0;
@@ -188,7 +222,7 @@ public class Player extends Component {
         // update sprite
         {
             // landing squish
-            if (!wasOnGround && onGround) {
+            if (!wasOnGround && grounded) {
                 anim.scale.set(facing * 1.5f, 0.7f);
             }
 
@@ -204,7 +238,7 @@ public class Player extends Component {
         // ----------------------------------------------------------
         if (state == State.normal) {
             // stopped
-            if (onGround) {
+            if (grounded) {
                 if (moveDir != 0) {
                     anim.play("run");
                 } else {
@@ -233,7 +267,7 @@ public class Player extends Component {
                 }
 
                 // friction
-                if (moveDir == 0 && onGround) {
+                if (moveDir == 0 && grounded) {
                     mover.speed.x = Calc.approach(mover.speed.x, 0, friction * dt);
                 }
 
@@ -245,7 +279,7 @@ public class Player extends Component {
 
             // vertical movement (jump trigger)
             {
-                if (onGround && !canJump) {
+                if (grounded && !canJump) {
                     canJump = jumpButton.released();
                 }
 
@@ -292,7 +326,7 @@ public class Player extends Component {
             attackEffectAnim.play("attack-effect");
 
             // apply friction
-            if (moveDir == 0 && onGround) {
+            if (moveDir == 0 && grounded) {
                 mover.speed.x = Calc.approach(mover.speed.x, 0, friction * dt);
             }
 
@@ -373,7 +407,7 @@ public class Player extends Component {
         }
 
         // gravity
-        if (!onGround) {
+        if (!grounded) {
             // make gravity more 'hovery' when in the air
             var grav = gravity;
             if (Calc.abs(mover.speed.y) < 20 && jumpButton.down()) {
@@ -435,16 +469,15 @@ public class Player extends Component {
         var anim = get(Animator.class);
         var mover = get(Mover.class);
 
-        // store previous state
-        var wasOnGround = onGround;
-        onGround = mover.onGround();
+        // update buttons
+        jumpButton.update();
+        attackButton.update();
+        duckButton.update();
+        runButton.update();
 
-        // handle input
+        // movement input
         var moveDir = 0;
         {
-            jumpButton.update();
-            attackButton.update();
-
             var sign = 0;
             stick.update();
             if (stick.pressed()) {
@@ -456,35 +489,294 @@ public class Player extends Component {
             moveDir = sign;
         }
 
-        // TODO TEMP: set animation
-        anim.play("idle");
-
         // ----------------------------------------
+        // from noels game
+//        var inCutscene = world.first(Cutscene.class).isValid();
 
-        // handle gravity & jumping
+        // cancel speed if we're in a cutscene
+//        if (inCutscene) {
+//            mover.stop();
+//        }
+
+        // update light
+        /*
+        {
+            var inDarkRoom = world.game.room().dark;
+            var light = get(Light.class);
+            var lantern = SaveData.instance().hasLantern;
+            var targetRadius = lantern ? 100 : 32;
+            var targetStrength = lantern ? 1 : 0.75f;
+
+            light.radius = Calc.approach(light.radius, targetRadius, 100 * dt);
+            light.strength = Calc.aproach(light.strength, targetStrength, dt);
+            light.sourceAlpha = Calc.approach(light.sourceAlpha, (inDarkRoom && lantern) ? 1f : 0f, dt);
+
+            // set light position
+            if (lantern) {
+                // float around in dark rooms
+                if (inDarkRoom) {
+                    lightTarget.set(
+                            Calc.randFloat(6, 16) * (Calc.rand_int(0, 2) == 0 ? 1 : -1),
+                            Calc.randFloat(-32, -10)
+                    );
+
+                    // try to move in front when the player is moving
+                    lightOffset = Calc.approach(lightOffset, mover.speed.normal() * 32, 80 * dt);
+
+                    // floaty offset
+                    var offset = Point.at(
+                            entity.position.x + 6 * Calc.sin(4 * Time.elapsed_millis()),
+                            entity.position.y + 4 * Calc.sin(0.25f + 8 * Time.elapsed_millis())
+                    );
+
+                    // update position
+                    lightPosition.add(
+                            entity.position.x + lightTarget.x + offset.x - lightPosition.x * 1f - Calc.pow(0.00001f, dt),
+                            entity.position.y + lightTarget.y + offset.y - lightPosition.y * 1f - Calc.pow(0.00001f, dt)
+                    );
+                }
+                // return to player in light rooms
+                else {
+                    lightPosition.add(
+                            (entity.position.x + 0 - lightPosition.x) * (1f * Calc.pow(0.00001f, dt)),
+                            (entity.position.y + 0 - lightPosition.y) * (1f * Calc.pow(0.00001f, dt))
+                    );
+                }
+
+                light.offset = light.position - entity.position;
+            } else {
+                light.offset.set(0, -6);
+                lightPosition.set(entity.position.x + light.offset.x, entity.position.y + light.offset.y);
+            }
+        }
+        */
+
+        // toggle hurtbox
+        /*
+        if (!ducking) {
+            hurtbox.makeBox(RectI.at(-4, -12, 8, 12));
+        } else {
+            hurtbox.makeBox(RectI.at(-5, -6, 10, 6));
+        }
+        */
+
+        // update ground state
+        {
+            var wasGrounded = grounded;
+            groundedVelocity.set(0, 0);
+            // TODO: pass in groundedNormal and groundedVelocity, they should get set on mover.onGround
+//            grounded = mover.onGround(-1, max_slope, groundedNormal, groundedVelocity);
+            grounded = mover.onGround(-1);
+
+            // snap to slopes
+            /*
+            if (!grounded && !running && wasGrounded && jumpforceTimer <= 0 && mover.collider.overlaps(Collider.Mask.solid | Collider.Mask.jumpthru, Point.at(0, 4))) {
+                int steps = 0;
+                while (!mover.collider.overlaps(Masks.solid | Masks.jumpthru, Point.at(0, -1)) && steps++ < 16) {
+                    // TODO: entity.move(Vec2(0, 1))
+                    mover.moveY(-1);
+                }
+
+                grounded = mover.onGround(-1, max_slope, groundedNormal);
+
+                if (mover.speed.y > 0) {
+                    mover.speed.y = 0;
+                }
+            }
+            */
+
+            // reset air timer
+            if (grounded) {
+                if (!wasGrounded) {
+                    anim.scale.set(1.4f, 0.6f);
+                }
+
+                groundedPosition.set(entity.position.x, entity.position.y);
+                airTimer = 0;
+            }
+            // not touching ground, increase air timer
+            else {
+                airTimer += dt;
+            }
+
+            groundedNormal.set(groundedNormal.nor());
+        }
+
+        // store last ground position
+        if (grounded) {
+            // TODO: check around the collider to see if its safe (for respawn purposes)
+//         && mover.collider.overlaps(Masks.safe_ground, Vec2(0, 4))
+//         && mover.collider.overlaps(Masks.safe_ground, Vec2(-16, 4))
+//         && mover.collider.overlaps(Masks.safe_ground, Vec2(+16, 4))) {
+            safePosition.set(entity.position.x, entity.position.y);
+        }
+
+        var inCutscene = false;
+        if (!inCutscene) {
+            // slash cooldown
+            if (slashCooldownTimer > 0) {
+                slashCooldownTimer -= dt;
+            }
+
+            // flash while invincible & countdown timer
+            if (invincibleTimer > 0) {
+//                hittable.active = false;
+
+                if (Time.on_interval(0.05f)) {
+                    anim.visible = !anim.visible;
+                }
+
+                invincibleTimer -= dt;
+                if (invincibleTimer <= 0) {
+//                    hittable.active = true;
+                    anim.visible = true;
+                }
+            }
+
+            // manually update the state machine
+            // TODO add state machine
+            updateNormalState(dt, moveDir);
+        }
+
+        // lerp scale back to normal
+        {
+            var sx = Calc.approach(Calc.abs(anim.scale.x), 1f, 4 * dt);
+            var sy = Calc.approach(anim.scale.y, Calc.sign(anim.scale.y), 4 * dt);
+            anim.scale.set(facing * sx, sy);
+            anim.setAlpha(Calc.approach(anim.getAlpha(), 1f, dt));
+        }
+
+        // sprite animation speed
+        /*
+        {
+            anim.speed = 1f;
+            if (stateMachine.is(State.normal) && running) {
+                anim.speed = 1.5f;
+            }
+        }
+        */
+
+        // sprite animation
+        {
+            // TODO: [~:310] switch (state) case: anim.play("whatever")
+//            if (!stateMachine.is(State.dead) && !stateMachine.is(State.slash) && !stateMachine.is(State.out_of_bounds)) {
+//                if (stateMachine.is(State.hurt) || stateMachine.is(State.knockback)) {
+            if (state == State.normal) {// state != State.dead && state != State.slash && state != State.out_of_bounds) {
+                if (state == State.hurt) {// || state == State.knockback) {
+                    anim.play("hurt");
+                }
+                else if (grounded || inCutscene) {
+                    if (ducking) {
+                        anim.play("duck");
+                    }
+                    else if (Calc.abs(mover.speed.x) > 4) {
+                        anim.play("walk");
+                    }
+                    else {
+                        anim.play("idle");
+                    }
+                }
+                else if (wallsliding) {
+                    anim.play("slide");
+                }
+                else {
+                    if (mover.speed.y > 10) {
+                        anim.play("jump");
+                    }
+                    else if (airTimer > 0.1f) {
+                        anim.play("air");
+                    }
+                    else if (mover.speed.y > maxfall_fastfall - 5) {
+                        anim.play("fall");
+                    }
+                    else {
+                        anim.play("fastfall");
+                    }
+                }
+            }
+        }
+
+        // running trail
+        /*
+        if (running && (state == State.normal || state == State.attack)) { // && Time.on_interval(0.1f)) {
+            // TODO: manually create an entity that is a single animation frame from the player's current animation
+            //       and that has an attached timer that fades it a bit on update and then destroys the entity after X time
+        }
+        */
+
+        // reset conveyor speed
+        /*
+        conveyorVelocity.set(0, 0);
+        */
+    }
+
+    private void updateNormalState(float dt, int moveDir) {
+        var input = moveDir;
+        var mover = get(Mover.class);
+        var anim = get(Animator.class);
+
+        // start running
+        if (runButton.down() && grounded && !running) {
+            if (runStartupTimer <= 0) {
+                // TODO: spawn dash effect
+//                EffectFactory.dash(world(), entity.position, facing);
+            }
+
+            runStartupTimer += dt;
+            if (runStartupTimer >= run_startup_time) {
+                Time.pause_for(0.1f);
+
+                running = true;
+                runningDir = facing;
+                runStartupTimer = 0;
+
+                // TODO: camera shake
+            }
+        } else {
+            runStartupTimer = 0;
+        }
+
+        // keep running
+        if (running && input == 0) {
+            input = runningDir;
+        }
+
+        // dash effects
+        if (running && grounded && Time.on_interval(0.1f)) {
+            // TODO: spawn dash effect
+//            EffectFactory.dash(world(), entity.position, facing);
+        }
+
+        // stop running
+        if (!runButton.down() && facing != runningDir) {
+            running = false;
+        }
+
+        // handles gravity & jumping
         updateVerticalSpeed(dt, moveDir);
 
         // jumping
         {
+            // invoke a ground jump
             if (tryJump()) {
                 // cancel backwards horizontal movement
-                if (Calc.sign(mover.speed.x) == -moveDir) {
+                if (Calc.sign(mover.speed.x) == -input) {
                     mover.speed.x = 0;
                 }
 
                 // push out the way we're inputting
-                facing = moveDir;
-                mover.speed.x += moveDir * 50;
+                facing = input;
+                mover.speed.x += input * 50;
             }
 
+            // do a wall jump!
             tryWallJump();
         }
 
         // ducking
         {
             boolean wasDucking = ducking;
-            ducking = onGround && duckButton.down();
-            duckButton.clearPressBuffer();
+            ducking = grounded && duckButton.down();
 
             // stopped ducking, squash and stretch
             if (wasDucking && !ducking) {
@@ -492,37 +784,43 @@ public class Player extends Component {
             }
         }
 
+        // firgure out maxspeed
+        var maxspeed = (grounded ? maxspeed_ground : maxspeed_air);
+        if (running) {
+            maxspeed = maxspeed_running;
+        }
+
         // acceleration
         turning = false;
-        if (moveDir != 0 && !ducking && runStartupTimer <= 0) {
-            var prevSpeedX = mover.speed.x;
+        if (input != 0 && !ducking && runStartupTimer <= 0) {
+            var was = mover.speed.x;
 
-            if (onGround) {
-                facing = moveDir;
+            if (grounded) {
+                facing = input;
             }
 
             // get accel value
             // TODO: pool me
             var accelerationAmount = new Vector2();
-            if (onGround) {
-                if (moveDir == -Calc.sign(mover.speed.x)) {
+            if (grounded) {
+                if (input == -Calc.sign(mover.speed.x)) {
                     turning = true;
                     accelerationAmount.set(
-                            -grounded_normal.y * moveDir * acceleration_turnaround,
-                             grounded_normal.x * moveDir * acceleration_turnaround
+                            -grounded_normal.y * input * acceleration_turnaround,
+                             grounded_normal.x * input * acceleration_turnaround
                     );
                 } else {
-                    if (mover.speed.len() < maxspeed_ground) {
+                    if (mover.speed.len() < maxspeed) {
                         accelerationAmount.set(
-                                -grounded_normal.y * moveDir * acceleration_ground,
-                                 grounded_normal.x * moveDir * acceleration_ground
+                                -grounded_normal.y * input * acceleration_ground,
+                                 grounded_normal.x * input * acceleration_ground
                         );
                     }
                 }
-            } else if (Calc.abs(mover.speed.x) < maxspeed_air || moveDir == Calc.sign(mover.speed.x)) {
+            } else if (Calc.abs(mover.speed.x) < maxspeed || input != Calc.sign(mover.speed.x)) {
                 accelerationAmount.set(
-                        1f * moveDir * acceleration_air,
-                        0f * moveDir * acceleration_air
+                        1f * input * acceleration_air,
+                        0f * input * acceleration_air
                 );
             }
 
@@ -531,14 +829,18 @@ public class Player extends Component {
             mover.speed.y += accelerationAmount.y * dt;
 
             // freeze-frame on turnaround
-            if (turning && Calc.sign(prevSpeedX) != Calc.sign(mover.speed.x)) {
+            if (turning && Calc.sign(was) != Calc.sign(mover.speed.x)) {
                 Time.pause_for(0.05f);
             }
         }
 
-        updateHorizontalSpeed(moveDir == 0 || ducking);
+        var isStopped = (input == 0 || ducking || runStartupTimer > 0);
+        updateHorizontalSpeed(dt, isStopped, maxspeed);
 
-        trySlash();
+        if (trySlash()) {
+            // TODO
+//            keepRunning = true;
+        }
 
         // https://github.com/ExOK/Celeste2/blob/main/player.lua
         // https://github.com/NoelFB/Celeste/blob/master/Source/PICO-8/Classic.cs#L203
@@ -553,7 +855,7 @@ public class Player extends Component {
 
             // can we fall through a platform instead?
             var isFallthrough = false; // mover.isFallthrough();
-            if (duckButton.down() && state == State.normal && onGround && isFallthrough) {
+            if (duckButton.down() && state == State.normal && grounded && isFallthrough) {
                 mover.moveY(-1);
             } else {
                 jumpforceAmount = jumpforce_normaljump;
@@ -607,7 +909,7 @@ public class Player extends Component {
         var wallSliding = false;
 
         // gravity
-        if (!onGround) {
+        if (!grounded) {
             var gravityAmount = gravity;
 
             // slow gravity at peak of jump
@@ -668,8 +970,45 @@ public class Player extends Component {
         // TODO: probably other stuff? need to review the stream
     }
 
-    private void updateHorizontalSpeed(boolean isStopped) {
-        // TODO
+    private void updateHorizontalSpeed(float dt, boolean applyFriction, float altMaxspeed) {
+        var mover = get(Mover.class);
+
+        // friction
+        if (applyFriction) {
+            if (grounded) {// && Vector2.dot(0, -1, groundedNormal.x, groundedNormal.y) >= max_non_sliding_slope) {
+                var normal = mover.speed.cpy().nor();
+                var magnitude = mover.speed.len();
+                mover.speed.set(
+                        normal.x * Calc.approach(magnitude, 0, friction_ground * dt),
+                        normal.y * Calc.approach(magnitude, 0, friction_ground * dt)
+                );
+            } else {
+                mover.speed.x = Calc.approach(mover.speed.x, 0, friction_air * dt);
+            }
+        }
+
+        // max horizontal speed
+        {
+            var maxspeed = (grounded ? maxspeed_ground : maxspeed_air);
+            if (altMaxspeed >= 0) {
+                maxspeed = altMaxspeed;
+            }
+
+            if (grounded) {
+                var perp = groundedNormal.cpy().rotate90(-1); // rot 90 deg clockwise
+                if (Calc.sign(mover.speed.x) != Calc.sign(perp.x)) {
+                    perp.scl(-1);
+                }
+
+                if (Calc.abs(mover.speed.x) > Calc.abs(perp.x * maxspeed)
+                 || Calc.abs(mover.speed.y) > Calc.abs(perp.y * maxspeed)) {
+                    mover.speed.set(
+                            Calc.approach(mover.speed.x, perp.x * maxspeed, maxspeed_approach * dt),
+                            Calc.approach(mover.speed.y, perp.y * maxspeed, maxspeed_approach * dt)
+                    );
+                }
+            }
+        }
     }
 
     @Override
