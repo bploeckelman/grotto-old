@@ -905,8 +905,8 @@ public class Player extends Component {
 
     private void updateVerticalSpeed(float dt, int moveDir) {
         var mover = get(Mover.class);
-        var fastFalling = false;
-        var wallSliding = false;
+        fastfalling = false;
+        wallsliding = false;
 
         // gravity
         if (!grounded) {
@@ -920,14 +920,14 @@ public class Player extends Component {
 
             // fast falling
             if (duckButton.down() && !jumpButton.down() && mover.speed.y <= 0) {
-                fastFalling = true;
+                fastfalling = true;
                 gravityAmount = gravity_fastfall;
             }
             // wall behavior
             else if (moveDir != 0 && mover.collider.check(Collider.Mask.solid, Point.at(moveDir, 0))) {
                 // wall sliding
                 if (mover.speed.y < 0) {
-                    wallSliding = true;
+                    wallsliding = true;
                     facing = moveDir;
                     gravityAmount = gravity_wallsliding;
                 }
@@ -954,9 +954,9 @@ public class Player extends Component {
         {
             var maxfallAmount = maxfall;
 
-            if (fastFalling) {
+            if (fastfalling) {
                 maxfallAmount = maxfall_fastfall;
-            } else if (wallSliding) {
+            } else if (wallsliding) {
                 maxfallAmount = maxfall_wallsliding;
             }
             // TODO: are there other conditions here?
