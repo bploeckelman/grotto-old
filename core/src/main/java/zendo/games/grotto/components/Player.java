@@ -67,7 +67,7 @@ public class Player extends Component {
     private static final float hover_grav = 0.5f;
     private static final float ground_accel = 500;
     private static final float ground_speed_max = 100;
-    private static final Vector2 grounded_normal = new Vector2(500, 500);
+    private static final Vector2 grounded_normal = new Vector2(100, 0);
     private static final float jump_time = 0.15f;
     private static final float jump_impulse = 155;
     // OLD CONSTANTS ---------------------------------
@@ -469,17 +469,17 @@ public class Player extends Component {
         var anim = get(Animator.class);
         var mover = get(Mover.class);
 
-        // update buttons
+        // update virtual input
         jumpButton.update();
         attackButton.update();
         duckButton.update();
         runButton.update();
+        stick.update();
 
-        // movement input
+        // determine movement direction based on stick input
         var moveDir = 0;
         {
             var sign = 0;
-            stick.update();
             if (stick.pressed()) {
                 stick.clearPressBuffer();
                 var move = stick.value();
@@ -567,6 +567,8 @@ public class Player extends Component {
             // TODO: pass in groundedNormal and groundedVelocity, they should get set on mover.onGround
 //            grounded = mover.onGround(-1, max_slope, groundedNormal, groundedVelocity);
             grounded = mover.onGround(-1);
+            // TODO: ??????
+            groundedVelocity.set(mover.speed.x, mover.speed.y);
 
             // snap to slopes
             /*
@@ -587,6 +589,7 @@ public class Player extends Component {
 
             // reset air timer
             if (grounded) {
+                // just landed, squash and stretch
                 if (!wasGrounded) {
                     anim.scale.set(1.4f, 0.6f);
                 }
@@ -599,7 +602,10 @@ public class Player extends Component {
                 airTimer += dt;
             }
 
-            groundedNormal.set(groundedNormal.nor());
+            // normal is always unit y since we don't have slopes
+            groundedNormal.set(0, 1);
+            // TODO: this was used to normalize the groundedNormal that was set by the enhanced mover.onGround() call above
+//            groundedNormal.set(groundedNormal.nor());
         }
 
         // store last ground position
@@ -805,16 +811,18 @@ public class Player extends Component {
             if (grounded) {
                 if (input == -Calc.sign(mover.speed.x)) {
                     turning = true;
-                    accelerationAmount.set(
-                            -grounded_normal.y * input * acceleration_turnaround,
-                             grounded_normal.x * input * acceleration_turnaround
-                    );
+                    accelerationAmount.set(input * acceleration_turnaround,  input * acceleration_turnaround);
+//                    accelerationAmount.set(
+//                            -grounded_normal.y * input * acceleration_turnaround,
+//                             grounded_normal.x * input * acceleration_turnaround
+//                    );
                 } else {
                     if (mover.speed.len() < maxspeed) {
-                        accelerationAmount.set(
-                                -grounded_normal.y * input * acceleration_ground,
-                                 grounded_normal.x * input * acceleration_ground
-                        );
+                        accelerationAmount.set(input * acceleration_ground,  input * acceleration_ground);
+//                        accelerationAmount.set(
+//                                -grounded_normal.y * input * acceleration_ground,
+//                                 grounded_normal.x * input * acceleration_ground
+//                        );
                     }
                 }
             } else if (Calc.abs(mover.speed.x) < maxspeed || input != Calc.sign(mover.speed.x)) {
@@ -862,15 +870,15 @@ public class Player extends Component {
                 jumpforceTimer = jumpforce_max_duration;
 
                 // check ground / platform speed
-//                if (groundedVelocity.y < 0) {
-//                    jumpforceAmount -= groundedVelocity.y;
-//                }
+                if (groundedVelocity.y < 0) {
+                    jumpforceAmount -= groundedVelocity.y;
+                }
 //                if (conveyorVelocity.y < 0) {
 //                    jumpforceAmount -= conveyorVelocity.y * 0.75f;
 //                }
 
                 mover.speed.y = jumpforceAmount;
-//                mover.speed.x += groundedVelocity.x;
+                mover.speed.x += groundedVelocity.x;
 //                mover.speed.x += conveyorVelocity.x * 1.5f;
 
 //                entity.position.y = groundedPosition.y;
@@ -882,7 +890,6 @@ public class Player extends Component {
                 return true;
             }
         }
-//        */
 
         return false;
     }
@@ -995,7 +1002,8 @@ public class Player extends Component {
             }
 
             if (grounded) {
-                var perp = groundedNormal.cpy().rotate90(-1); // rot 90 deg clockwise
+                // turn 90 degrees clockwise
+                var perp = groundedNormal.cpy().rotate90(-1);
                 if (Calc.sign(mover.speed.x) != Calc.sign(perp.x)) {
                     perp.scl(-1);
                 }
