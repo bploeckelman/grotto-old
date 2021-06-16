@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import zendo.games.grotto.ecs.Component;
 import zendo.games.grotto.ecs.Entity;
+import zendo.games.grotto.factories.EffectFactory;
 import zendo.games.grotto.input.Input;
 import zendo.games.grotto.input.VirtualButton;
 import zendo.games.grotto.input.VirtualStick;
@@ -151,6 +152,11 @@ public class Player extends Component {
         conveyorVelocity = new Vector2();
         safePosition = new Vector2();
         canJump = true;
+
+//        var camera = world().first(CameraComponent.class);
+//        if (camera != null) {
+//            camera.follow(entity, Point.zero());
+//        }
     }
 
     @Override
@@ -189,7 +195,8 @@ public class Player extends Component {
     @Override
     public void update(float dt) {
 //        oldUpdate(dt);
-        newUpdate(dt);
+//        newUpdate(dt);
+        newerUpdate(dt);
     }
 
     public void oldUpdate(float dt) {
@@ -592,6 +599,7 @@ public class Player extends Component {
                 // just landed, squash and stretch
                 if (!wasGrounded) {
                     anim.scale.set(1.4f, 0.6f);
+                    // TODO: spawn 'landed' effect
                 }
 
                 groundedPosition.set(entity.position.x, entity.position.y);
@@ -714,6 +722,175 @@ public class Player extends Component {
         /*
         conveyorVelocity.set(0, 0);
         */
+    }
+
+    private void newerUpdate(float dt) {
+        // get components
+        var anim = get(Animator.class);
+        var mover = get(Mover.class);
+
+        // update virtual input
+        jumpButton.update();
+        attackButton.update();
+        duckButton.update();
+        runButton.update();
+        stick.update();
+
+        // determine movement direction based on stick input
+        var moveDir = 0;
+        {
+            var sign = 0;
+            if (stick.pressed()) {
+                stick.clearPressBuffer();
+                var move = stick.value();
+                if      (move.x < 0) sign = -1;
+                else if (move.x > 0) sign = 1;
+            }
+            moveDir = sign;
+        }
+
+        // update grounded state
+        {
+            var wasGrounded = grounded;
+            grounded = mover.onGround();
+
+            // reset air timer
+            if (grounded) {
+                // just landed, squash and stretch
+                if (!wasGrounded) {
+                    anim.scale.set(1.4f, 0.6f);
+                    // TODO: spawn 'landed' effect
+                    EffectFactory.spriteAnimOneShot(world(), entity.position, "vase", "break");
+                }
+
+                groundedPosition.set(entity.position.x, entity.position.y);
+                airTimer = 0;
+            }
+            // not touching ground, increase air timer
+            else {
+                airTimer += dt;
+            }
+        }
+
+        // TODO: update state machine
+        {
+            updateNormalStateNew(dt, moveDir);
+        }
+
+        // lerp scale back to normal
+        {
+            var sx = Calc.approach(Calc.abs(anim.scale.x), 1f, 4 * dt);
+            var sy = Calc.approach(anim.scale.y, Calc.sign(anim.scale.y), 4 * dt);
+            anim.scale.set(facing * sx, sy);
+
+            anim.setAlpha(Calc.approach(anim.getAlpha(), 1f, dt));
+        }
+
+        // set animation based on state and other stuff
+        {
+            if (state == State.normal) {
+                if (state == State.hurt) {
+                    anim.play("hurt");
+                }
+                else if (grounded) {
+                    if (Calc.abs(mover.speed.x) > 4) {
+                        anim.play("run");
+                    }
+                    else {
+                        anim.play("idle");
+                    }
+                }
+                else if (wallsliding) {
+                    anim.play("slide");
+                }
+                else {
+                    if (mover.speed.y > 10) {
+                        anim.play("jump");
+                    }
+//                    else if (airTimer > 0.1f) {
+//                        anim.play("air");
+//                    }
+                    else {// if (mover.speed.y > maxfall_fastfall - 5) {
+                        anim.play("fall");
+                    }
+//                    else {
+//                        anim.play("fastfall");
+//                    }
+                }
+            }
+        }
+    }
+
+    private void updateNormalStateNew(float dt, int moveDir) {
+        var input = moveDir;
+        var mover = get(Mover.class);
+        var anim = get(Animator.class);
+
+        // TODO: running
+
+        updateVerticalSpeed(dt, input);
+
+        // jumping
+        {
+            // invoke a ground jump
+            if (tryJump()) {
+                // cancel backwards horizontal movement
+                if (Calc.sign(mover.speed.x) == -input) {
+                    mover.speed.x = 0;
+                }
+
+                // push out the way we're inputting
+                facing = input;
+                mover.speed.x += input * 50;
+            }
+
+            // do a wall jump!
+            tryWallJump();
+        }
+
+        // ducking
+        {
+            boolean wasDucking = ducking;
+            ducking = grounded && duckButton.down();
+
+            // stopped ducking, squash and stretch
+            if (wasDucking && !ducking) {
+                anim.scale.set(0.7f, 1.2f);
+            }
+        }
+
+//        var isStopped = (input == 0 || ducking || runStartupTimer > 0);
+//        updateHorizontalSpeed(dt, isStopped, maxspeed);
+
+        // acceleration
+        if (input != 0) {
+            var was = mover.speed.x;
+
+            // acceleration
+            var accel = (grounded) ? acceleration_ground : acceleration_air;
+            mover.speed.x += input * accel * dt;
+
+            // max speed
+            var max = (grounded) ? maxspeed_ground : maxspeed_air;
+//            if (running) {
+//                max = maxspeed_running;
+//            }
+            if (Calc.abs(mover.speed.x) > max) {
+                mover.speed.x = Calc.approach(mover.speed.x, Calc.sign(mover.speed.x) * max, 2000 * dt);
+            }
+
+            // friction
+            if (input == 0 && grounded) {
+                mover.speed.x = Calc.approach(mover.speed.x, 0, friction * dt);
+            }
+
+            // facing
+            if (input != 0) {
+                facing = input;
+            }
+        }
+
+        // TODO: slash
     }
 
     private void updateNormalState(float dt, int moveDir) {
