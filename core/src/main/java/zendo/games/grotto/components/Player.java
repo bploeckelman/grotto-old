@@ -756,6 +756,8 @@ public class Player extends Component {
 
             // reset air timer
             if (grounded) {
+                airTimer = 0;
+
                 // just landed, squash and stretch
                 if (!wasGrounded) {
                     anim.scale.set(1.4f, 0.6f);
@@ -764,7 +766,6 @@ public class Player extends Component {
                 }
 
                 groundedPosition.set(entity.position.x, entity.position.y);
-                airTimer = 0;
             }
             // not touching ground, increase air timer
             else {
@@ -828,24 +829,74 @@ public class Player extends Component {
 
         // TODO: running
 
-        updateVerticalSpeed(dt, input);
-
         // jumping
         {
             // invoke a ground jump
             if (tryJump()) {
                 // cancel backwards horizontal movement
-                if (Calc.sign(mover.speed.x) == -input) {
-                    mover.speed.x = 0;
-                }
+//                if (Calc.sign(mover.speed.x) == -input) {
+//                    mover.speed.x = 0;
+//                }
 
                 // push out the way we're inputting
-                facing = input;
-                mover.speed.x += input * 50;
+//                facing = input;
+//                mover.speed.x += input * 50;
             }
 
             // do a wall jump!
             tryWallJump();
+        }
+
+        // vertical speed
+        {
+//            updateVerticalSpeed(dt, input);
+
+            // gravity
+            if (!grounded) {
+                var gravityAmount = gravity;
+
+                // slow gravity at peak of jump
+//                var peakJumpThreshold = 12;
+//                if (jumpButton.down() && Calc.abs(mover.speed.y) < peakJumpThreshold) {
+//                    gravityAmount = gravity_peak;
+//                }
+
+                // fast falling
+                if (duckButton.down() && !jumpButton.down() && mover.speed.y < 0) {
+                    fastfalling = true;
+                    gravityAmount = gravity_fastfall;
+                }
+                // wall behavior
+                else if (input != 0 && mover.collider.check(Collider.Mask.solid, Point.at(input, 0))) {
+                    // wall sliding
+                    if (mover.speed.y < 0) {
+                        wallsliding = true;
+                        facing = input;
+                        gravityAmount = gravity_wallsliding;
+                    }
+                }
+
+                // apply gravity
+                mover.speed.y += gravityAmount * dt;
+            }
+
+            // max falling
+            {
+                var maxfallAmount = maxfall;
+
+                if (fastfalling) {
+                    maxfallAmount = maxfall_fastfall;
+                } else if (wallsliding) {
+                    maxfallAmount = maxfall_wallsliding;
+                }
+
+                // apply maxfall
+                if (mover.speed.y < maxfallAmount) {
+                    mover.speed.y = maxfallAmount;
+                }
+            }
+
+
         }
 
         // ducking
@@ -862,10 +913,8 @@ public class Player extends Component {
 //        var isStopped = (input == 0 || ducking || runStartupTimer > 0);
 //        updateHorizontalSpeed(dt, isStopped, maxspeed);
 
-        // acceleration
-        if (input != 0) {
-            var was = mover.speed.x;
-
+        // horizontal speed
+        {
             // acceleration
             var accel = (grounded) ? acceleration_ground : acceleration_air;
             mover.speed.x += input * accel * dt;
@@ -1035,37 +1084,32 @@ public class Player extends Component {
         if (jumpButton.pressed() && airTimer < coyote_time) {
             jumpButton.clearPressBuffer();
 
-            var mover = get(Mover.class);
-            var anim = get(Animator.class);
+            jumpforceAmount = jumpforce_normaljump;
+            jumpforceTimer = jumpforce_max_duration;
 
-            // can we fall through a platform instead?
-            var isFallthrough = false; // mover.isFallthrough();
-            if (duckButton.down() && state == State.normal && grounded && isFallthrough) {
-                mover.moveY(-1);
-            } else {
-                jumpforceAmount = jumpforce_normaljump;
-                jumpforceTimer = jumpforce_max_duration;
-
-                // check ground / platform speed
-                if (groundedVelocity.y < 0) {
-                    jumpforceAmount -= groundedVelocity.y;
-                }
+            // check ground / platform speed
+//                if (groundedVelocity.y < 0) {
+//                    jumpforceAmount -= groundedVelocity.y;
+//                }
 //                if (conveyorVelocity.y < 0) {
 //                    jumpforceAmount -= conveyorVelocity.y * 0.75f;
 //                }
 
-                mover.speed.y = jumpforceAmount;
-                mover.speed.x += groundedVelocity.x;
-//                mover.speed.x += conveyorVelocity.x * 1.5f;
+            var mover = get(Mover.class);
+            mover.speed.y = jumpforceAmount;
+//            mover.speed.x += groundedVelocity.x;
+//            mover.speed.x += conveyorVelocity.x * 1.5f;
 
-//                entity.position.y = groundedPosition.y;
-                anim.scale.set(0.8f, 1.4f);
+//            entity.position.y = groundedPosition.y;
 
-                // TODO: trigger jump effect
-//                EffectFactory.jump(entity.world, entity.position);
+            // squash and stretch
+            var anim = get(Animator.class);
+            anim.scale.set(0.8f, 1.4f);
 
-                return true;
-            }
+            // TODO: trigger jump effect
+            EffectFactory.spriteAnimOneShot(entity.world, entity.position, "coin", "pickup");
+
+            return true;
         }
 
         return false;
