@@ -16,7 +16,7 @@ import zendo.games.grotto.utils.Time;
 
 public class Player extends Component {
 
-    private enum State { normal, attack, hurt }
+    private enum State { normal, slash, hurt }
 
     private static final float gravity = -550;
     private static final float gravity_peak = -130;
@@ -43,7 +43,8 @@ public class Player extends Component {
 
     private static final float jumpforce_min_duration = 0.10f;
     private static final float jumpforce_max_duration = 0.25f;
-    private static final float jumpforce_normaljump = 85;
+//    private static final float jumpforce_normaljump = 85;
+    private static final float jumpforce_normaljump = 185;
     private static final float jumpforce_walljump = 80;
     private static final float jumpforce_walljump_horizontal = 160;
 
@@ -152,6 +153,7 @@ public class Player extends Component {
         conveyorVelocity = new Vector2();
         safePosition = new Vector2();
         canJump = true;
+        state = State.normal;
 
 //        var camera = world().first(CameraComponent.class);
 //        if (camera != null) {
@@ -304,7 +306,7 @@ public class Player extends Component {
             // attack trigger
             if (attackButton.pressed()) {
                 attackButton.clearPressBuffer();
-                state = State.attack;
+                state = State.slash;
                 attackTimer = 0;
 
                 if (attackEntity == null) {
@@ -323,7 +325,7 @@ public class Player extends Component {
             }
         }
         // ----------------------------------------------------------
-        else if (state == State.attack) {
+        else if (state == State.slash) {
             attackTimer += dt;
 
             // play the attack animation if we're not moving
@@ -730,11 +732,13 @@ public class Player extends Component {
         var mover = get(Mover.class);
 
         // update virtual input
-        jumpButton.update();
-        attackButton.update();
-        duckButton.update();
-        runButton.update();
-        stick.update();
+        {
+            jumpButton.update();
+            attackButton.update();
+            duckButton.update();
+            runButton.update();
+            stick.update();
+        }
 
         // determine movement direction based on stick input
         var moveDir = 0;
@@ -775,6 +779,12 @@ public class Player extends Component {
 
         // TODO: update state machine
         {
+            if (slashCooldownTimer < 0) {
+                slashCooldownTimer = 0;
+                state = State.normal;
+            }
+            slashCooldownTimer -= dt;
+
             updateNormalStateNew(dt, moveDir);
         }
 
@@ -789,35 +799,36 @@ public class Player extends Component {
 
         // set animation based on state and other stuff
         {
-            if (state == State.normal) {
-                if (state == State.hurt) {
-                    anim.play("hurt");
-                }
-                else if (grounded) {
-                    if (Calc.abs(mover.speed.x) > 4) {
-                        anim.play("run");
-                    }
-                    else {
-                        anim.play("idle");
-                    }
-                }
-                else if (wallsliding) {
-                    anim.play("slide");
+            if (state == State.hurt) {
+                anim.play("hurt");
+            }
+            else if (state == State.slash) {
+                anim.play("attack");
+            }
+            else if (grounded) {
+                if (Calc.abs(mover.speed.x) > 4) {
+                    anim.play("run");
                 }
                 else {
-                    if (mover.speed.y > 10) {
-                        anim.play("jump");
-                    }
+                    anim.play("idle");
+                }
+            }
+            else if (wallsliding) {
+                anim.play("slide");
+            }
+            else {
+                if (mover.speed.y > 10) {
+                    anim.play("jump");
+                }
 //                    else if (airTimer > 0.1f) {
 //                        anim.play("air");
 //                    }
-                    else {// if (mover.speed.y > maxfall_fastfall - 5) {
-                        anim.play("fall");
-                    }
+                else {// if (mover.speed.y > maxfall_fastfall - 5) {
+                    anim.play("fall");
+                }
 //                    else {
 //                        anim.play("fastfall");
 //                    }
-                }
             }
         }
     }
@@ -826,6 +837,9 @@ public class Player extends Component {
         var input = moveDir;
         var mover = get(Mover.class);
         var anim = get(Animator.class);
+
+        wallsliding = false;
+        fastfalling = false;
 
         // TODO: running
 
@@ -856,10 +870,10 @@ public class Player extends Component {
                 var gravityAmount = gravity;
 
                 // slow gravity at peak of jump
-//                var peakJumpThreshold = 12;
-//                if (jumpButton.down() && Calc.abs(mover.speed.y) < peakJumpThreshold) {
-//                    gravityAmount = gravity_peak;
-//                }
+                var peakJumpThreshold = 12;
+                if (jumpButton.down() && Calc.abs(mover.speed.y) < peakJumpThreshold) {
+                    gravityAmount = gravity_peak;
+                }
 
                 // fast falling
                 if (duckButton.down() && !jumpButton.down() && mover.speed.y < 0) {
@@ -871,7 +885,7 @@ public class Player extends Component {
                     // wall sliding
                     if (mover.speed.y < 0) {
                         wallsliding = true;
-                        facing = input;
+                        facing = -input;
                         gravityAmount = gravity_wallsliding;
                     }
                 }
@@ -895,8 +909,6 @@ public class Player extends Component {
                     mover.speed.y = maxfallAmount;
                 }
             }
-
-
         }
 
         // ducking
@@ -921,9 +933,9 @@ public class Player extends Component {
 
             // max speed
             var max = (grounded) ? maxspeed_ground : maxspeed_air;
-//            if (running) {
-//                max = maxspeed_running;
-//            }
+            if (running) {
+                max = maxspeed_running;
+            }
             if (Calc.abs(mover.speed.x) > max) {
                 mover.speed.x = Calc.approach(mover.speed.x, Calc.sign(mover.speed.x) * max, 2000 * dt);
             }
@@ -934,12 +946,15 @@ public class Player extends Component {
             }
 
             // facing
-            if (input != 0) {
+            if (input != 0 && !wallsliding) {
                 facing = input;
             }
         }
 
-        // TODO: slash
+        if (trySlash()) {
+            state = State.slash;
+            slashCooldownTimer = slash_duration + slash_cooldown;
+        }
     }
 
     private void updateNormalState(float dt, int moveDir) {
@@ -1125,7 +1140,7 @@ public class Player extends Component {
             attackButton.clearPressBuffer();
             // TODO: if we change to a state machine interface with enter/update/exit methods, set cooldown timer in attack.enter()
             slashCooldownTimer = slash_cooldown;
-            state = State.attack;
+            state = State.slash;
             return true;
         }
         return false;
