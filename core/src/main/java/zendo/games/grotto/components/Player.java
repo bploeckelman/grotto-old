@@ -781,6 +781,15 @@ public class Player extends Component {
         {
             if (slashCooldownTimer < 0) {
                 slashCooldownTimer = 0;
+
+                // end the attack
+                if (attackEntity != null) {
+                    attackEntity.destroy();
+                    attackEntity = null;
+                    attackCollider = null;
+                    attackEffectAnim = null;
+                }
+
                 state = State.normal;
             }
             slashCooldownTimer -= dt;
@@ -804,6 +813,47 @@ public class Player extends Component {
             }
             else if (state == State.slash) {
                 anim.play("attack");
+
+                // trigger the slash animation
+                attackEffectAnim.play("attack-effect");
+
+                // setup collider based on what frame is currently activated in the attack animation
+                // assumes right facing, if left facing it gets flips after
+                if (attackTimer < 0.1f) {
+                    attackCollider.rect(-6, 1, 12, 9);
+                } else if (attackTimer < 0.2f) {
+                    attackCollider.rect(-8, 3, 15, 7);
+                } else if (attackTimer < 0.3f) {
+                    attackCollider.rect(-8, 8, 5, 4);
+                } else if (attackTimer < 0.4f) {
+                    attackCollider.rect(-8, 8, 3, 4);
+                }
+
+                // update animation and collider position/orientation based on facing direction
+                var collider = get(Collider.class);
+                if (attackEntity != null) {
+                    if (facing >= 0) {
+                        // update attack effect position
+                        attackEntity.position.x = entity.position.x + collider.rect().right() + 8;
+                        attackEntity.position.y = entity.position.y;
+                        // make sure animation points in the right direction
+                        if (attackEffectAnim.scale.x != 1) {
+                            attackEffectAnim.scale.x = 1;
+                        }
+                    } else if (facing < 0) {
+                        // update attack effect position
+                        attackEntity.position.x = entity.position.x - collider.rect().left() - 12;
+                        attackEntity.position.y = entity.position.y;
+                        // make sure animation points in the left direction
+                        if (attackEffectAnim.scale.x != -1) {
+                            attackEffectAnim.scale.x = -1;
+                        }
+                        // mirror the collider horizontally
+                        var rect = attackCollider.rect();
+                        rect.x = -(rect.x + rect.w);
+                        attackCollider.rect(rect);
+                    }
+                }
             }
             else if (grounded) {
                 if (Calc.abs(mover.speed.x) > 4) {
@@ -953,7 +1003,21 @@ public class Player extends Component {
 
         if (trySlash()) {
             state = State.slash;
-            slashCooldownTimer = slash_duration + slash_cooldown;
+            slashCooldownTimer = slash_duration;
+
+            if (attackEntity == null) {
+                attackEntity = world().addEntity();
+                attackEntity.position.set(entity.position);
+                // entity position gets updated during attack state based of facing
+
+                attackCollider = attackEntity.add(Collider.makeRect(new RectI()), Collider.class);
+                attackCollider.mask = Collider.Mask.player_attack;
+                // the rect for this collider is updated during attack state based on what frame is active
+
+                attackEffectAnim = attackEntity.add(new Animator("hero", "attack-effect"), Animator.class);
+                attackEffectAnim.mode = Animator.LoopMode.none;
+                attackEffectAnim.depth = 2;
+            }
         }
     }
 
@@ -1139,8 +1203,8 @@ public class Player extends Component {
         if (attackButton.pressed() && slashCooldownTimer <= 0) {
             attackButton.clearPressBuffer();
             // TODO: if we change to a state machine interface with enter/update/exit methods, set cooldown timer in attack.enter()
-            slashCooldownTimer = slash_cooldown;
-            state = State.slash;
+//            slashCooldownTimer = slash_cooldown;
+//            state = State.slash;
             return true;
         }
         return false;
