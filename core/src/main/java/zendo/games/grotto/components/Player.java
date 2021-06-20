@@ -893,24 +893,6 @@ public class Player extends Component {
 
         // TODO: running
 
-        // jumping
-        {
-            // invoke a ground jump
-            if (tryJump()) {
-                // cancel backwards horizontal movement
-//                if (Calc.sign(mover.speed.x) == -input) {
-//                    mover.speed.x = 0;
-//                }
-
-                // push out the way we're inputting
-//                facing = input;
-//                mover.speed.x += input * 50;
-            }
-
-            // do a wall jump!
-            tryWallJump();
-        }
-
         // vertical speed
         {
 //            updateVerticalSpeed(dt, input);
@@ -958,6 +940,27 @@ public class Player extends Component {
                 if (mover.speed.y < maxfallAmount) {
                     mover.speed.y = maxfallAmount;
                 }
+            }
+        }
+
+
+        // jumping
+        {
+            // invoke a ground jump
+            if (tryJump()) {
+                // cancel backwards horizontal movement
+//                if (Calc.sign(mover.speed.x) == -input) {
+//                    mover.speed.x = 0;
+//                }
+
+                // push out the way we're inputting
+//                facing = input;
+//                mover.speed.x += input * 50;
+            }
+
+            // do a wall jump!
+            if (tryWallJump()) {
+                // TODO: set a timer and ignore input for a brief period so facing stays in jump direction
             }
         }
 
@@ -1195,7 +1198,27 @@ public class Player extends Component {
     }
 
     private boolean tryWallJump() {
-        // TODO
+        if (jumpButton.pressed() && wallsliding) {
+            jumpButton.clearPressBuffer();
+
+            jumpforceAmount = jumpforce_walljump;
+            jumpforceTimer = jumpforce_max_duration;
+
+            var mover = get(Mover.class);
+            mover.speed.y = jumpforceAmount;
+            mover.speed.x = facing * 500f;
+            facing *= -1;
+
+            // squash and stretch
+            var anim = get(Animator.class);
+            anim.scale.set(1.4f, 0.8f);
+
+            // TODO: trigger jump effect
+            EffectFactory.spriteAnimOneShot(entity.world, entity.position, "coin", "pickup");
+
+            return true;
+        }
+
         return false;
     }
 
