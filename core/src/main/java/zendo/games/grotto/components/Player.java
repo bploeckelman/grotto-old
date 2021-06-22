@@ -43,10 +43,10 @@ public class Player extends Component {
 
     private static final float jumpforce_min_duration = 0.10f;
     private static final float jumpforce_max_duration = 0.25f;
-//    private static final float jumpforce_normaljump = 85;
     private static final float jumpforce_normaljump = 185;
-    private static final float jumpforce_walljump = 80;
-    private static final float jumpforce_walljump_horizontal = 160;
+    private static final float jumpforce_walljump = 200;
+    private static final float jumpforce_walljump_horizontal = 100;
+    private static final float walljump_facing_change_duration = 0.25f;
 
     private static final float slash_cooldown = 0.25f;
     private static final float slash_velocity = 187;
@@ -86,6 +86,7 @@ public class Player extends Component {
     private float invincibleTimer;
     private float runStartupTimer;
     private float slashCooldownTimer;
+    private float walljumpFacingChangeTimer;
 
     // properties
     int facing = 1; // TODO: make enum?
@@ -179,6 +180,7 @@ public class Player extends Component {
         invincibleTimer = 0;
         runStartupTimer = 0;
         slashCooldownTimer = 0;
+        walljumpFacingChangeTimer = 0;
         canJump = false;
         grounded = false;
         ducking = false;
@@ -959,8 +961,16 @@ public class Player extends Component {
             }
 
             // do a wall jump!
-            if (tryWallJump()) {
-                // TODO: set a timer and ignore input for a brief period so facing stays in jump direction
+            {
+                walljumpFacingChangeTimer -= dt;
+                if (walljumpFacingChangeTimer < 0) {
+                    walljumpFacingChangeTimer = 0;
+                }
+
+                if (tryWallJump()) {
+                    // set a timer and ignore input for a brief period so facing stays in jump direction
+                    walljumpFacingChangeTimer = walljump_facing_change_duration;
+                }
             }
         }
 
@@ -999,7 +1009,7 @@ public class Player extends Component {
             }
 
             // facing
-            if (input != 0 && !wallsliding) {
+            if (input != 0 && !wallsliding && walljumpFacingChangeTimer <= 0) {
                 facing = input;
             }
         }
@@ -1206,8 +1216,7 @@ public class Player extends Component {
 
             var mover = get(Mover.class);
             mover.speed.y = jumpforceAmount;
-            mover.speed.x = facing * 500f;
-            facing *= -1;
+            mover.speed.x = facing * jumpforce_walljump_horizontal;
 
             // squash and stretch
             var anim = get(Animator.class);
