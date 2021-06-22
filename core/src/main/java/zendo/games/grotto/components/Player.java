@@ -892,13 +892,10 @@ public class Player extends Component {
 
         wallsliding = false;
         fastfalling = false;
-
-        // TODO: running
+        running = false;
 
         // vertical speed
         {
-//            updateVerticalSpeed(dt, input);
-
             // gravity
             if (!grounded) {
                 var gravityAmount = gravity;
@@ -985,8 +982,16 @@ public class Player extends Component {
             }
         }
 
-//        var isStopped = (input == 0 || ducking || runStartupTimer > 0);
-//        updateHorizontalSpeed(dt, isStopped, maxspeed);
+        // running
+        {
+            boolean wasRunning = running;
+            running = runButton.down();
+
+            // stopped running, trigger a skid effect
+            if (wasRunning && !running) {
+                anim.scale.set(1.3f, 1f);
+            }
+        }
 
         // horizontal speed
         {
