@@ -969,6 +969,9 @@ public class Player extends Component {
                     walljumpFacingChangeTimer = walljump_facing_change_duration;
                 }
             }
+
+            // if we didn't jump this frame, clear the state anyways so we don't jump automatically when we land next
+            jumpButton.clearPressBuffer();
         }
 
         // ducking
