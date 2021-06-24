@@ -19,7 +19,7 @@ public class Player extends Component {
     private enum State { normal, slash, hurt }
 
     private static final float gravity = -500;
-    private static final float gravity_peak = -130;
+    private static final float gravity_peak = -100;
     private static final float gravity_fastfall = -900;
     private static final float gravity_wallsliding = -200;
 
