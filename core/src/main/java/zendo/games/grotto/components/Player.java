@@ -39,7 +39,7 @@ public class Player extends Component {
     private static final float maxspeed_running = 180;
     private static final float maxspeed_approach = 300;
 
-    private static final float coyote_time = 0.1f;
+    private static final float coyote_time = 1.1f;
 
     private static final float jumpforce_min_duration = 0.10f;
     private static final float jumpforce_max_duration = 0.25f;
