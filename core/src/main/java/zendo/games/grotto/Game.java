@@ -14,11 +14,13 @@ import com.badlogic.gdx.utils.Align;
 import zendo.games.grotto.components.CameraController;
 import zendo.games.grotto.components.Enemy;
 import zendo.games.grotto.components.Item;
+import zendo.games.grotto.components.Player;
 import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
 import zendo.games.grotto.editor.Editor;
 import zendo.games.grotto.editor.Level;
 import zendo.games.grotto.input.Input;
+import zendo.games.grotto.sprites.Sprite;
 import zendo.games.grotto.utils.Calc;
 import zendo.games.grotto.utils.Time;
 
@@ -307,7 +309,14 @@ public class Game extends ApplicationAdapter {
             batch.draw(frameBufferRegion, 0, 0, Config.window_width, Config.window_height);
 
             // hud overlay items --------------------------
-            // ...
+            Sprite coin = Assets.findSprite("coin");
+            if (coin != null) {
+                Sprite.Anim anim = coin.getAnimation("idle");
+                TextureRegion texture = anim.frames.get(4).image;
+                batch.draw(texture, 10, 10, 20, 20);
+                int numCoins = player.get(Player.class).numCoins();
+                assets.font.draw(batch, "" + numCoins, 35, 30);
+            }
         }
         batch.end();
     }

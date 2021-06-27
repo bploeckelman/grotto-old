@@ -121,6 +121,8 @@ public class Player extends Component {
     private Collider attackCollider;
     private Animator attackEffectAnim;
 
+    private int numCoins;
+
     public Player() {
         super();
         stick = new VirtualStick()
@@ -194,6 +196,7 @@ public class Player extends Component {
         attackEntity = null;
         attackCollider = null;
         attackEffectAnim = null;
+        numCoins = 0;
     }
 
     @Override
@@ -201,6 +204,14 @@ public class Player extends Component {
 //        oldUpdate(dt);
 //        newUpdate(dt);
         newerUpdate(dt);
+    }
+
+    public void addCoin() {
+        numCoins++;
+    }
+
+    public int numCoins() {
+        return numCoins;
     }
 
     public void oldUpdate(float dt) {

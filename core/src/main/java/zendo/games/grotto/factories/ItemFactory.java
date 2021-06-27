@@ -36,6 +36,8 @@ public class ItemFactory {
                 Time.pause_for(0.05f);
                 mover.speed.y = 120f;
                 entity.add(new Timer(0.1f, (timer) -> {
+                    world.first(Player.class).addCoin();
+
                     EffectFactory.spriteAnimOneShot(world, entity.position, "coin", "pickup");
                     entity.destroy();
                 }), Timer.class);
