@@ -15,7 +15,17 @@ import zendo.games.grotto.utils.RectI;
 
 public class Player extends Component {
 
-    private enum State { normal, slash, hurt }
+    private enum EState { normal, slash, hurt }
+    static abstract class State {
+        final Player player;
+        State(Player player) {
+            this.player = player;
+            enter();
+        }
+        void enter() {}
+        void update(float dt, int input) {}
+        void exit() {}
+    }
 
     private static final float gravity = -500;
     private static final float gravity_peak = -100;
@@ -89,6 +99,7 @@ public class Player extends Component {
     private boolean running;
     private boolean canJump;
 
+    private EState estate;
     private State state;
 
     private VirtualStick stick;
@@ -136,7 +147,8 @@ public class Player extends Component {
         conveyorVelocity = new Vector2();
         safePosition = new Vector2();
         canJump = true;
-        state = State.normal;
+        estate = EState.normal;
+        state = new NormalState(this);
 
 //        var camera = world().first(CameraComponent.class);
 //        if (camera != null) {
@@ -165,6 +177,7 @@ public class Player extends Component {
         grounded = false;
         ducking = false;
         turning = false;
+        estate = null;
         state = null;
         stick = null;
         jumpButton = null;
@@ -237,7 +250,7 @@ public class Player extends Component {
             }
         }
 
-        // TODO: update state machine
+        // update attack
         {
             if (slashCooldownTimer < 0) {
                 slashCooldownTimer = 0;
@@ -250,11 +263,21 @@ public class Player extends Component {
                     attackEffectAnim = null;
                 }
 
-                state = State.normal;
+                estate = EState.normal;
+
+                if (state != null) {
+                    state.exit();
+                }
+                state = new NormalState(this);
             }
             slashCooldownTimer -= dt;
+        }
 
-            updateNormalState(dt, moveDir);
+        // update state machine
+        {
+            if (state != null) {
+                state.update(dt, moveDir);
+            }
         }
 
         // lerp scale back to normal
@@ -268,10 +291,10 @@ public class Player extends Component {
 
         // set animation based on state and other stuff
         {
-            if (state == State.hurt) {
+            if (estate == EState.hurt) {
                 anim.play("hurt");
             }
-            else if (state == State.slash) {
+            else if (estate == EState.slash) {
                 anim.play("attack");
 
                 // trigger the slash animation
@@ -339,163 +362,6 @@ public class Player extends Component {
 //                    else {
 //                        anim.play("fastfall");
 //                    }
-            }
-        }
-    }
-
-    private void updateNormalState(float dt, int moveDir) {
-        var input = moveDir;
-        var mover = get(Mover.class);
-        var anim = get(Animator.class);
-
-        wallsliding = false;
-        fastfalling = false;
-        running = false;
-
-        // vertical speed
-        {
-            // gravity
-            if (!grounded) {
-                var gravityAmount = gravity;
-
-                // slow gravity at peak of jump
-                var peakJumpThreshold = 12;
-                if (jumpButton.down() && Calc.abs(mover.speed.y) < peakJumpThreshold) {
-                    gravityAmount = gravity_peak;
-                }
-
-                // fast falling
-                if (duckButton.down() && !jumpButton.down() && mover.speed.y < 0) {
-                    fastfalling = true;
-                    gravityAmount = gravity_fastfall;
-                }
-                // wall behavior
-                else if (input != 0 && mover.collider.check(Collider.Mask.solid, Point.at(input, 0))) {
-                    // wall sliding
-                    if (mover.speed.y < 0) {
-                        wallsliding = true;
-                        facing = -input;
-                        gravityAmount = gravity_wallsliding;
-                    }
-                }
-
-                // apply gravity
-                mover.speed.y += gravityAmount * dt;
-            }
-
-            // max falling
-            {
-                var maxfallAmount = maxfall;
-
-                if (fastfalling) {
-                    maxfallAmount = maxfall_fastfall;
-                } else if (wallsliding) {
-                    maxfallAmount = maxfall_wallsliding;
-                }
-
-                // apply maxfall
-                if (mover.speed.y < maxfallAmount) {
-                    mover.speed.y = maxfallAmount;
-                }
-            }
-        }
-
-
-        // jumping
-        {
-            // invoke a ground jump
-            if (tryJump()) {
-                // cancel backwards horizontal movement
-//                if (Calc.sign(mover.speed.x) == -input) {
-//                    mover.speed.x = 0;
-//                }
-
-                // push out the way we're inputting
-//                facing = input;
-//                mover.speed.x += input * 50;
-            }
-
-            // do a wall jump!
-            {
-                walljumpFacingChangeTimer -= dt;
-                if (walljumpFacingChangeTimer < 0) {
-                    walljumpFacingChangeTimer = 0;
-                }
-
-                if (tryWallJump()) {
-                    // set a timer and ignore input for a brief period so facing stays in jump direction
-                    walljumpFacingChangeTimer = walljump_facing_change_duration;
-                }
-            }
-
-            // if we didn't jump this frame, clear the state anyways so we don't jump automatically when we land next
-            jumpButton.clearPressBuffer();
-        }
-
-        // ducking
-        {
-            boolean wasDucking = ducking;
-            ducking = grounded && duckButton.down();
-
-            // stopped ducking, squash and stretch
-            if (wasDucking && !ducking) {
-                anim.scale.set(0.7f, 1.2f);
-            }
-        }
-
-        // running
-        {
-            boolean wasRunning = running;
-            running = runButton.down();
-
-            // stopped running, trigger a skid effect
-            if (wasRunning && !running) {
-                anim.scale.set(1.3f, 1f);
-            }
-        }
-
-        // horizontal speed
-        {
-            // acceleration
-            var accel = (grounded) ? acceleration_ground : acceleration_air;
-            mover.speed.x += input * accel * dt;
-
-            // max speed
-            var max = (grounded) ? maxspeed_ground : maxspeed_air;
-            if (running) {
-                max = maxspeed_running;
-            }
-            if (Calc.abs(mover.speed.x) > max) {
-                mover.speed.x = Calc.approach(mover.speed.x, Calc.sign(mover.speed.x) * max, 2000 * dt);
-            }
-
-            // friction
-            if (input == 0 && grounded) {
-                mover.speed.x = Calc.approach(mover.speed.x, 0, friction_ground * dt);
-            }
-
-            // facing
-            if (input != 0 && !wallsliding && walljumpFacingChangeTimer <= 0) {
-                facing = input;
-            }
-        }
-
-        if (trySlash()) {
-            state = State.slash;
-            slashCooldownTimer = slash_duration;
-
-            if (attackEntity == null) {
-                attackEntity = world().addEntity();
-                attackEntity.position.set(entity.position);
-                // entity position gets updated during attack state based of facing
-
-                attackCollider = attackEntity.add(Collider.makeRect(new RectI()), Collider.class);
-                attackCollider.mask = Collider.Mask.player_attack;
-                // the rect for this collider is updated during attack state based on what frame is active
-
-                attackEffectAnim = attackEntity.add(new Animator("hero", "attack-effect"), Animator.class);
-                attackEffectAnim.mode = Animator.LoopMode.none;
-                attackEffectAnim.depth = 2;
             }
         }
     }
@@ -586,6 +452,173 @@ public class Player extends Component {
         }
 
         shapes.set(shapeType);
+    }
+
+    // ------------------------------------------------------------------------
+    // State Machine
+    // ------------------------------------------------------------------------
+
+    static class NormalState extends State {
+        NormalState(Player player) {
+            super(player);
+        }
+
+        @Override
+        public void update(float dt, int input) {
+            var mover = player.get(Mover.class);
+            var anim = player.get(Animator.class);
+
+            player.wallsliding = false;
+            player.fastfalling = false;
+            player.running = false;
+
+            // vertical speed
+            {
+                // gravity
+                if (!player.grounded) {
+                    var gravityAmount = gravity;
+
+                    // slow gravity at peak of jump
+                    var peakJumpThreshold = 12;
+                    if (player.jumpButton.down() && Calc.abs(mover.speed.y) < peakJumpThreshold) {
+                        gravityAmount = gravity_peak;
+                    }
+
+                    // fast falling
+                    if (player.duckButton.down() && !player.jumpButton.down() && mover.speed.y < 0) {
+                        player.fastfalling = true;
+                        gravityAmount = gravity_fastfall;
+                    }
+                    // wall behavior
+                    else if (input != 0 && mover.collider.check(Collider.Mask.solid, Point.at(input, 0))) {
+                        // wall sliding
+                        if (mover.speed.y < 0) {
+                            player.wallsliding = true;
+                            player.facing = -input;
+                            gravityAmount = gravity_wallsliding;
+                        }
+                    }
+
+                    // apply gravity
+                    mover.speed.y += gravityAmount * dt;
+                }
+
+                // max falling
+                {
+                    var maxfallAmount = maxfall;
+
+                    if (player.fastfalling) {
+                        maxfallAmount = maxfall_fastfall;
+                    } else if (player.wallsliding) {
+                        maxfallAmount = maxfall_wallsliding;
+                    }
+
+                    // apply maxfall
+                    if (mover.speed.y < maxfallAmount) {
+                        mover.speed.y = maxfallAmount;
+                    }
+                }
+            }
+
+
+            // jumping
+            {
+                // invoke a ground jump
+                if (player.tryJump()) {
+                    // cancel backwards horizontal movement
+//                if (Calc.sign(mover.speed.x) == -input) {
+//                    mover.speed.x = 0;
+//                }
+
+                    // push out the way we're inputting
+//                facing = input;
+//                mover.speed.x += input * 50;
+                }
+
+                // do a wall jump!
+                {
+                    player.walljumpFacingChangeTimer -= dt;
+                    if (player.walljumpFacingChangeTimer < 0) {
+                        player.walljumpFacingChangeTimer = 0;
+                    }
+
+                    if (player.tryWallJump()) {
+                        // set a timer and ignore input for a brief period so facing stays in jump direction
+                        player.walljumpFacingChangeTimer = walljump_facing_change_duration;
+                    }
+                }
+
+                // if we didn't jump this frame, clear the state anyways so we don't jump automatically when we land next
+                player.jumpButton.clearPressBuffer();
+            }
+
+            // ducking
+            {
+                boolean wasDucking = player.ducking;
+                player.ducking = player.grounded && player.duckButton.down();
+
+                // stopped ducking, squash and stretch
+                if (wasDucking && !player.ducking) {
+                    anim.scale.set(0.7f, 1.2f);
+                }
+            }
+
+            // running
+            {
+                boolean wasRunning = player.running;
+                player.running = player.runButton.down();
+
+                // stopped running, trigger a skid effect
+                if (wasRunning && !player.running) {
+                    anim.scale.set(1.3f, 1f);
+                }
+            }
+
+            // horizontal speed
+            {
+                // acceleration
+                var accel = (player.grounded) ? acceleration_ground : acceleration_air;
+                mover.speed.x += input * accel * dt;
+
+                // max speed
+                var max = (player.grounded) ? maxspeed_ground : maxspeed_air;
+                if (player.running) {
+                    max = maxspeed_running;
+                }
+                if (Calc.abs(mover.speed.x) > max) {
+                    mover.speed.x = Calc.approach(mover.speed.x, Calc.sign(mover.speed.x) * max, 2000 * dt);
+                }
+
+                // friction
+                if (input == 0 && player.grounded) {
+                    mover.speed.x = Calc.approach(mover.speed.x, 0, friction_ground * dt);
+                }
+
+                // facing
+                if (input != 0 && !player.wallsliding && player.walljumpFacingChangeTimer <= 0) {
+                    player.facing = input;
+                }
+            }
+
+            if (player.trySlash()) {
+                player.estate = EState.slash;
+                player.slashCooldownTimer = slash_duration;
+
+                if (player.attackEntity == null) {
+                    player.attackEntity = player.world().addEntity();
+                    player.attackEntity.position.set(player.entity.position);
+                    // entity position gets updated during attack state based of facing
+
+                    player.attackCollider = player.attackEntity.add(Collider.makeRect(new RectI()), Collider.class);
+                    player.attackCollider.mask = Collider.Mask.player_attack;
+                    // the rect for this collider is updated during attack state based on what frame is active
+
+                    player.attackEffectAnim = player.attackEntity.add(new Animator("hero", "attack-effect"), Animator.class);
+                    player.attackEffectAnim.mode = Animator.LoopMode.none;
+                    player.attackEffectAnim.depth = 2;
+                }
+            }
+        }
     }
 
 }
