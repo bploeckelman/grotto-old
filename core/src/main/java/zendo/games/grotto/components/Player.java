@@ -61,7 +61,6 @@ public class Player extends Component {
 
     // timers
     private float airTimer;
-    private float attackTimer;
     private float jumpforceTimer;
     private float invincibleTimer;
     private float runStartupTimer;
@@ -94,10 +93,6 @@ public class Player extends Component {
     private VirtualButton attackButton;
     private VirtualButton duckButton;
     private VirtualButton runButton;
-
-    private Entity attackEntity;
-    private Collider attackCollider;
-    private Animator attackEffectAnim;
 
     private int numCoins;
 
@@ -155,7 +150,6 @@ public class Player extends Component {
         airTimer = 0;
         jumpforceTimer = 0;
         jumpforceAmount = 0;
-        attackTimer = 0;
         invincibleTimer = 0;
         runStartupTimer = 0;
         walljumpFacingChangeTimer = 0;
@@ -169,9 +163,6 @@ public class Player extends Component {
         attackButton = null;
         duckButton = null;
         runButton = null;
-        attackEntity = null;
-        attackCollider = null;
-        attackEffectAnim = null;
         numCoins = 0;
     }
 
@@ -261,49 +252,6 @@ public class Player extends Component {
             }
             else if (state instanceof AttackState) {
                 anim.play("attack");
-
-                // TODO: move entity/collider stuff into AttackState
-
-                // trigger the slash animation
-                attackEffectAnim.play("attack-effect");
-
-                // setup collider based on what frame is currently activated in the attack animation
-                // assumes right facing, if left facing it gets flips after
-                if (attackTimer < 0.1f) {
-                    attackCollider.rect(-6, 1, 12, 9);
-                } else if (attackTimer < 0.2f) {
-                    attackCollider.rect(-8, 3, 15, 7);
-                } else if (attackTimer < 0.3f) {
-                    attackCollider.rect(-8, 8, 5, 4);
-                } else if (attackTimer < 0.4f) {
-                    attackCollider.rect(-8, 8, 3, 4);
-                }
-
-                // update animation and collider position/orientation based on facing direction
-                var collider = get(Collider.class);
-                if (attackEntity != null) {
-                    if (facing >= 0) {
-                        // update attack effect position
-                        attackEntity.position.x = entity.position.x + collider.rect().right() + 8;
-                        attackEntity.position.y = entity.position.y;
-                        // make sure animation points in the right direction
-                        if (attackEffectAnim.scale.x != 1) {
-                            attackEffectAnim.scale.x = 1;
-                        }
-                    } else if (facing < 0) {
-                        // update attack effect position
-                        attackEntity.position.x = entity.position.x - collider.rect().left() - 12;
-                        attackEntity.position.y = entity.position.y;
-                        // make sure animation points in the left direction
-                        if (attackEffectAnim.scale.x != -1) {
-                            attackEffectAnim.scale.x = -1;
-                        }
-                        // mirror the collider horizontally
-                        var rect = attackCollider.rect();
-                        rect.x = -(rect.x + rect.w);
-                        attackCollider.rect(rect);
-                    }
-                }
             }
             else if (state instanceof NormalState) {
                 if (grounded) {
@@ -577,6 +525,7 @@ public class Player extends Component {
 
             if (trySlash()) {
                 player.changeState(new AttackState(player));
+                return;
             }
         }
 
@@ -592,44 +541,100 @@ public class Player extends Component {
     // ------------------------------------------------------------------------
 
     static class AttackState extends State {
+
+        private float attackTimer;
         private float cooldownTimer;
+
+        private Entity attackEntity;
+        private Collider attackCollider;
+        private Animator attackEffectAnim;
+
         public AttackState(Player player) {
             super(player);
         }
+
         @Override
         public void enter() {
+            attackTimer = 0;
             cooldownTimer = slash_duration;
 
-            // TODO: move attack entity and components into this state?
-            if (player.attackEntity == null) {
-                player.attackEntity = player.world().addEntity();
-                player.attackEntity.position.set(player.entity.position);
-                // entity position gets updated during attack state based of facing
+            if (attackEntity != null) {
+                attackEntity.destroy();
+            }
 
-                player.attackCollider = player.attackEntity.add(Collider.makeRect(new RectI()), Collider.class);
-                player.attackCollider.mask = Collider.Mask.player_attack;
-                // the rect for this collider is updated during attack state based on what frame is active
+            // entity position gets updated during attack state based of facing
+            attackEntity = player.world().addEntity();
+            attackEntity.position.set(player.entity.position);
 
-                player.attackEffectAnim = player.attackEntity.add(new Animator("hero", "attack-effect"), Animator.class);
-                player.attackEffectAnim.mode = Animator.LoopMode.none;
-                player.attackEffectAnim.depth = 2;
+            // the rect for this collider is updated during attack state based on what frame is active
+            attackCollider = attackEntity.add(Collider.makeRect(new RectI()), Collider.class);
+            attackCollider.mask = Collider.Mask.player_attack;
+
+            // this is the actual weapon slashing animation, different from the player's 'attacking' animation
+            attackEffectAnim = attackEntity.add(new Animator("hero", "attack-effect"), Animator.class);
+            attackEffectAnim.mode = Animator.LoopMode.none;
+            attackEffectAnim.depth = 2;
+        }
+
+        @Override
+        public void exit() {
+            if (attackEntity != null) {
+                attackEntity.destroy();
+                attackEntity = null;
+                attackCollider = null;
+                attackEffectAnim = null;
             }
         }
+
         @Override
         public void update(float dt, int input) {
-            cooldownTimer -= dt;
             if (cooldownTimer < 0) {
                 cooldownTimer = 0;
-
-                // end the attack
-                if (player.attackEntity != null) {
-                    player.attackEntity.destroy();
-                    player.attackEntity = null;
-                    player.attackCollider = null;
-                    player.attackEffectAnim = null;
-                }
-
                 player.changeState(new NormalState(player));
+                return;
+            }
+            cooldownTimer -= dt;
+
+            // trigger the slash animation
+            attackEffectAnim.play("attack-effect");
+
+            // setup collider based on what frame is currently activated in the attack animation
+            // assumes right facing, if left facing it gets flips after
+            if (attackTimer < 0.1f) {
+                attackCollider.rect(-6, 1, 12, 9);
+            } else if (attackTimer < 0.2f) {
+                attackCollider.rect(-8, 3, 15, 7);
+            } else if (attackTimer < 0.3f) {
+                attackCollider.rect(-8, 8, 5, 4);
+            } else if (attackTimer < 0.4f) {
+                attackCollider.rect(-8, 8, 3, 4);
+            }
+            attackTimer += dt;
+
+            // update animation and collider position/orientation based on facing direction
+            var collider = player.get(Collider.class);
+            if (attackEntity != null) {
+                if (player.facing >= 0) {
+                    // update attack effect position
+                    attackEntity.position.x = player.entity.position.x + collider.rect().right() + 8;
+                    attackEntity.position.y = player.entity.position.y;
+                    // make sure animation points in the right direction
+                    if (attackEffectAnim.scale.x != 1) {
+                        attackEffectAnim.scale.x = 1;
+                    }
+                } else if (player.facing < 0) {
+                    // update attack effect position
+                    attackEntity.position.x = player.entity.position.x - collider.rect().left() - 12;
+                    attackEntity.position.y = player.entity.position.y;
+                    // make sure animation points in the left direction
+                    if (attackEffectAnim.scale.x != -1) {
+                        attackEffectAnim.scale.x = -1;
+                    }
+                    // mirror the collider horizontally
+                    var rect = attackCollider.rect();
+                    rect.x = -(rect.x + rect.w);
+                    attackCollider.rect(rect);
+                }
             }
         }
     }
