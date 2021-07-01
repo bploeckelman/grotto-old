@@ -513,8 +513,9 @@ public class Player extends Component {
                 }
 
                 // friction
-                if (input == 0 && player.grounded) {
-                    mover.speed.x = Calc.approach(mover.speed.x, 0, friction_ground * dt);
+                var friction = (player.grounded) ? friction_ground : friction_air;
+                if (input == 0) {
+                    mover.speed.x = Calc.approach(mover.speed.x, 0, friction * dt);
                 }
 
                 // facing
