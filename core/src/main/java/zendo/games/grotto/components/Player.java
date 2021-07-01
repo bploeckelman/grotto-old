@@ -1,5 +1,6 @@
 package zendo.games.grotto.components;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
@@ -14,18 +15,6 @@ import zendo.games.grotto.utils.Point;
 import zendo.games.grotto.utils.RectI;
 
 public class Player extends Component {
-
-    private enum EState { normal, slash, hurt }
-    static abstract class State {
-        final Player player;
-        State(Player player) {
-            this.player = player;
-            enter();
-        }
-        void enter() {}
-        void update(float dt, int input) {}
-        void exit() {}
-    }
 
     private static final float gravity = -500;
     private static final float gravity_peak = -100;
@@ -76,7 +65,6 @@ public class Player extends Component {
     private float jumpforceTimer;
     private float invincibleTimer;
     private float runStartupTimer;
-    private float slashCooldownTimer;
     private float walljumpFacingChangeTimer;
 
     // properties
@@ -99,7 +87,6 @@ public class Player extends Component {
     private boolean running;
     private boolean canJump;
 
-    private EState estate;
     private State state;
 
     private VirtualStick stick;
@@ -147,8 +134,8 @@ public class Player extends Component {
         conveyorVelocity = new Vector2();
         safePosition = new Vector2();
         canJump = true;
-        estate = EState.normal;
-        state = new NormalState(this);
+
+        changeState(new NormalState(this));
 
 //        var camera = world().first(CameraComponent.class);
 //        if (camera != null) {
@@ -171,13 +158,11 @@ public class Player extends Component {
         attackTimer = 0;
         invincibleTimer = 0;
         runStartupTimer = 0;
-        slashCooldownTimer = 0;
         walljumpFacingChangeTimer = 0;
         canJump = false;
         grounded = false;
         ducking = false;
         turning = false;
-        estate = null;
         state = null;
         stick = null;
         jumpButton = null;
@@ -250,29 +235,6 @@ public class Player extends Component {
             }
         }
 
-        // update attack
-        {
-            if (slashCooldownTimer < 0) {
-                slashCooldownTimer = 0;
-
-                // end the attack
-                if (attackEntity != null) {
-                    attackEntity.destroy();
-                    attackEntity = null;
-                    attackCollider = null;
-                    attackEffectAnim = null;
-                }
-
-                estate = EState.normal;
-
-                if (state != null) {
-                    state.exit();
-                }
-                state = new NormalState(this);
-            }
-            slashCooldownTimer -= dt;
-        }
-
         // update state machine
         {
             if (state != null) {
@@ -291,11 +253,16 @@ public class Player extends Component {
 
         // set animation based on state and other stuff
         {
-            if (estate == EState.hurt) {
+            if (state == null) {
+                Gdx.app.log("player", "invalid state");
+            }
+            else if (state instanceof HurtState) {
                 anim.play("hurt");
             }
-            else if (estate == EState.slash) {
+            else if (state instanceof AttackState) {
                 anim.play("attack");
+
+                // TODO: move entity/collider stuff into AttackState
 
                 // trigger the slash animation
                 attackEffectAnim.play("attack-effect");
@@ -338,30 +305,29 @@ public class Player extends Component {
                     }
                 }
             }
-            else if (grounded) {
-                if (Calc.abs(mover.speed.x) > 4) {
-                    anim.play("run");
-                }
-                else {
-                    anim.play("idle");
-                }
-            }
-            else if (wallsliding) {
-                anim.play("slide");
-            }
-            else {
-                if (mover.speed.y > 10) {
-                    anim.play("jump");
-                }
+            else if (state instanceof NormalState) {
+                if (grounded) {
+                    if (Calc.abs(mover.speed.x) > 4) {
+                        anim.play("run");
+                    } else {
+                        anim.play("idle");
+                    }
+                } else if (wallsliding) {
+                    anim.play("slide");
+                } else {
+                    if (mover.speed.y > 10) {
+                        anim.play("jump");
+                    }
 //                    else if (airTimer > 0.1f) {
 //                        anim.play("air");
 //                    }
-                else {// if (mover.speed.y > maxfall_fastfall - 5) {
-                    anim.play("fall");
-                }
+                    else {// if (mover.speed.y > maxfall_fastfall - 5) {
+                        anim.play("fall");
+                    }
 //                    else {
 //                        anim.play("fastfall");
 //                    }
+                }
             }
         }
     }
@@ -425,17 +391,6 @@ public class Player extends Component {
         return false;
     }
 
-    private boolean trySlash() {
-        if (attackButton.pressed() && slashCooldownTimer <= 0) {
-            attackButton.clearPressBuffer();
-            // TODO: if we change to a state machine interface with enter/update/exit methods, set cooldown timer in attack.enter()
-//            slashCooldownTimer = slash_cooldown;
-//            state = State.slash;
-            return true;
-        }
-        return false;
-    }
-
     @Override
     public void render(ShapeRenderer shapes) {
         var shapeType = shapes.getCurrentType();
@@ -456,6 +411,26 @@ public class Player extends Component {
 
     // ------------------------------------------------------------------------
     // State Machine
+    // ------------------------------------------------------------------------
+
+    private void changeState(State newState) {
+        if (state != null) {
+            state.exit();
+        }
+        state = newState;
+        state.enter();
+    }
+
+    static abstract class State {
+        final Player player;
+        State(Player player) {
+            this.player = player;
+        }
+        void enter() {}
+        void update(float dt, int input) {}
+        void exit() {}
+    }
+
     // ------------------------------------------------------------------------
 
     static class NormalState extends State {
@@ -600,24 +575,74 @@ public class Player extends Component {
                 }
             }
 
-            if (player.trySlash()) {
-                player.estate = EState.slash;
-                player.slashCooldownTimer = slash_duration;
-
-                if (player.attackEntity == null) {
-                    player.attackEntity = player.world().addEntity();
-                    player.attackEntity.position.set(player.entity.position);
-                    // entity position gets updated during attack state based of facing
-
-                    player.attackCollider = player.attackEntity.add(Collider.makeRect(new RectI()), Collider.class);
-                    player.attackCollider.mask = Collider.Mask.player_attack;
-                    // the rect for this collider is updated during attack state based on what frame is active
-
-                    player.attackEffectAnim = player.attackEntity.add(new Animator("hero", "attack-effect"), Animator.class);
-                    player.attackEffectAnim.mode = Animator.LoopMode.none;
-                    player.attackEffectAnim.depth = 2;
-                }
+            if (trySlash()) {
+                player.changeState(new AttackState(player));
             }
+        }
+
+        private boolean trySlash() {
+            if (player.attackButton.pressed()) {
+                player.attackButton.clearPressBuffer();
+                return true;
+            }
+            return false;
+        }
+    }
+
+    // ------------------------------------------------------------------------
+
+    static class AttackState extends State {
+        private float cooldownTimer;
+        public AttackState(Player player) {
+            super(player);
+        }
+        @Override
+        public void enter() {
+            cooldownTimer = slash_duration;
+
+            // TODO: move attack entity and components into this state?
+            if (player.attackEntity == null) {
+                player.attackEntity = player.world().addEntity();
+                player.attackEntity.position.set(player.entity.position);
+                // entity position gets updated during attack state based of facing
+
+                player.attackCollider = player.attackEntity.add(Collider.makeRect(new RectI()), Collider.class);
+                player.attackCollider.mask = Collider.Mask.player_attack;
+                // the rect for this collider is updated during attack state based on what frame is active
+
+                player.attackEffectAnim = player.attackEntity.add(new Animator("hero", "attack-effect"), Animator.class);
+                player.attackEffectAnim.mode = Animator.LoopMode.none;
+                player.attackEffectAnim.depth = 2;
+            }
+        }
+        @Override
+        public void update(float dt, int input) {
+            cooldownTimer -= dt;
+            if (cooldownTimer < 0) {
+                cooldownTimer = 0;
+
+                // end the attack
+                if (player.attackEntity != null) {
+                    player.attackEntity.destroy();
+                    player.attackEntity = null;
+                    player.attackCollider = null;
+                    player.attackEffectAnim = null;
+                }
+
+                player.changeState(new NormalState(player));
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------------
+
+    static class HurtState extends State {
+        HurtState(Player player) {
+            super(player);
+        }
+        @Override
+        public void update(float dt, int input) {
+            // TODO
         }
     }
 
