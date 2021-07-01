@@ -595,6 +595,13 @@ public class Player extends Component {
             }
             cooldownTimer -= dt;
 
+            // apply friction to movement
+            if (input == 0) {
+                var mover = player.get(Mover.class);
+                var friction = (player.grounded) ? friction_ground : friction_air;
+                mover.speed.x = Calc.approach(mover.speed.x, 0, friction * dt);
+            }
+
             // trigger the slash animation
             attackEffectAnim.play("attack-effect");
 
