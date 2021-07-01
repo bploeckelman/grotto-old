@@ -449,13 +449,13 @@ public class Player extends Component {
                 // invoke a ground jump
                 if (player.tryJump()) {
                     // cancel backwards horizontal movement
-//                if (Calc.sign(mover.speed.x) == -input) {
-//                    mover.speed.x = 0;
-//                }
+                    if (Calc.sign(mover.speed.x) == -input) {
+                        mover.speed.x = 0;
+                    }
 
-                    // push out the way we're inputting
-//                facing = input;
-//                mover.speed.x += input * 50;
+                    // push out the way we're inputting for extra oomph in a turn/jump
+                    player.facing = input;
+                    mover.speed.x += input * 50;
                 }
 
                 // do a wall jump!
