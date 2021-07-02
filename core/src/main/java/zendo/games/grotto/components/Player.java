@@ -236,7 +236,7 @@ public class Player extends Component {
         // lerp scale back to normal
         {
             var sx = Calc.approach(Calc.abs(anim.scale.x), 1f, 4 * dt);
-            var sy = Calc.approach(anim.scale.y, Calc.sign(anim.scale.y), 4 * dt);
+            var sy = Calc.approach(Calc.abs(anim.scale.y), 1f, 4 * dt);
             anim.scale.set(facing * sx, sy);
 
             anim.setAlpha(Calc.approach(anim.getAlpha(), 1f, dt));
@@ -304,7 +304,7 @@ public class Player extends Component {
 
             // squash and stretch
             var anim = get(Animator.class);
-            anim.scale.set(0.8f, 1.4f);
+            anim.scale.set(0.8f, 1.6f);
 
             // TODO: trigger jump effect
             EffectFactory.spriteAnimOneShot(entity.world, entity.position, "coin", "pickup");
@@ -417,7 +417,9 @@ public class Player extends Component {
                         // wall sliding
                         if (mover.speed.y < 0) {
                             player.wallsliding = true;
-                            player.facing = -input;
+                            if (input != 0) {
+                                player.facing = -input;
+                            }
                             gravityAmount = gravity_wallsliding;
                         }
                     }
@@ -454,8 +456,10 @@ public class Player extends Component {
                     }
 
                     // push out the way we're inputting for extra oomph in a turn/jump
-                    player.facing = input;
-                    mover.speed.x += input * 50;
+                    if (input != 0) {
+                        player.facing = input;
+                        mover.speed.x += input * 50;
+                    }
                 }
 
                 // do a wall jump!
