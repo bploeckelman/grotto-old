@@ -13,6 +13,7 @@ import zendo.games.grotto.input.VirtualStick;
 import zendo.games.grotto.utils.Calc;
 import zendo.games.grotto.utils.Point;
 import zendo.games.grotto.utils.RectI;
+import zendo.games.grotto.utils.Time;
 
 public class Player extends Component {
 
@@ -39,8 +40,6 @@ public class Player extends Component {
 
     private static final float coyote_time = 0.1f;
 
-    private static final float jumpforce_min_duration = 0.10f;
-    private static final float jumpforce_max_duration = 0.25f;
     private static final float jumpforce_normaljump = 185;
     private static final float jumpforce_walljump = 200;
     private static final float jumpforce_walljump_horizontal = 100;
@@ -57,13 +56,12 @@ public class Player extends Component {
     private static final float slash_min_speed = 40;
     private static final float slash_running_min_speed = 80;
 
+    private static final float invincible_duration = 0.5f;
+
     private static final float run_startup_time = 0.30f;
 
     // timers
     private float airTimer;
-    private float jumpforceTimer;
-    private float invincibleTimer;
-    private float runStartupTimer;
     private float walljumpFacingChangeTimer;
 
     // properties
@@ -148,10 +146,7 @@ public class Player extends Component {
         groundedVelocity = null;
         conveyorVelocity = null;
         airTimer = 0;
-        jumpforceTimer = 0;
         jumpforceAmount = 0;
-        invincibleTimer = 0;
-        runStartupTimer = 0;
         walljumpFacingChangeTimer = 0;
         canJump = false;
         grounded = false;
@@ -226,6 +221,17 @@ public class Player extends Component {
             }
         }
 
+        // hurt check
+        {
+            if (!(state instanceof HurtState)) {
+                var collider = get(Collider.class);
+                var hitbox = collider.first(Collider.Mask.enemy);
+                if (hitbox != null) {
+                    changeState(new HurtState(this));
+                }
+            }
+        }
+
         // update state machine
         {
             if (state != null) {
@@ -285,7 +291,6 @@ public class Player extends Component {
             jumpButton.clearPressBuffer();
 
             jumpforceAmount = jumpforce_normaljump;
-            jumpforceTimer = jumpforce_max_duration;
 
             // check ground / platform speed
 //                if (groundedVelocity.y < 0) {
@@ -320,7 +325,6 @@ public class Player extends Component {
             jumpButton.clearPressBuffer();
 
             jumpforceAmount = jumpforce_walljump;
-            jumpforceTimer = jumpforce_max_duration;
 
             var mover = get(Mover.class);
             mover.speed.y = jumpforceAmount;
@@ -654,13 +658,34 @@ public class Player extends Component {
     // ------------------------------------------------------------------------
 
     static class HurtState extends State {
+
+        private float invincibleTimer;
+
         HurtState(Player player) {
             super(player);
+            invincibleTimer = 0;
         }
+
+        @Override
+        public void enter() {
+            Time.pause_for(0.1f);
+            invincibleTimer = invincible_duration;
+
+            // todo - lose health
+
+            // bounce back
+            player.get(Mover.class).speed.set(-player.facing * 100, 80);
+
+        }
+
         @Override
         public void update(float dt, int input) {
-            // TODO
+            invincibleTimer -= dt;
+            if (invincibleTimer <= 0) {
+                player.changeState(new NormalState(player));
+            }
         }
+
     }
 
 }
