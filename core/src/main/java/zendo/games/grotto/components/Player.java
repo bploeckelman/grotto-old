@@ -209,8 +209,7 @@ public class Player extends Component {
                 // just landed, squash and stretch
                 if (!wasGrounded) {
                     anim.scale.set(1.4f, 0.6f);
-                    // TODO: spawn 'landed' effect
-                    EffectFactory.spriteAnimOneShot(world(), entity.position, "vase", "break");
+                    EffectFactory.spriteAnimOneShot(world(), entity.position, "hero", "land");
                 }
 
                 groundedPosition.set(entity.position.x, entity.position.y);
