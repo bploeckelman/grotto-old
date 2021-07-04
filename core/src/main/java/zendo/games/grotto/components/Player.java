@@ -129,11 +129,6 @@ public class Player extends Component {
         canJump = true;
 
         changeState(new NormalState(this));
-
-//        var camera = world().first(CameraComponent.class);
-//        if (camera != null) {
-//            camera.follow(entity, Point.zero());
-//        }
     }
 
     @Override

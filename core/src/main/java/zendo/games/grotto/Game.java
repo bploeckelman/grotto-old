@@ -22,6 +22,7 @@ import zendo.games.grotto.editor.Level;
 import zendo.games.grotto.input.Input;
 import zendo.games.grotto.sprites.Sprite;
 import zendo.games.grotto.utils.Calc;
+import zendo.games.grotto.utils.Point;
 import zendo.games.grotto.utils.Time;
 
 import java.util.List;
@@ -82,14 +83,14 @@ public class Game extends ApplicationAdapter {
         frameBufferRegion.flip(false, true);
 
         world = new World();
-//        level = new Level(world, assets, "levels/ldtk-test.ldtk");
         level = new Level(world, assets, "levels/world-1.ldtk");
+
         player = level.spawnPlayer(world);
         enemies = level.spawnEnemies(world);
 
-        var camController = world.addEntity().add(new CameraController(worldCamera), CameraController.class);
-        camController.setTarget(player, true);
-        camController.level = level;
+        var camera = world.addEntity().add(new CameraController(worldCamera), CameraController.class);
+        camera.follow(player, Point.zero(), true);
+        camera.level = level;
 
         mode = Mode.play;
         worldMouse = new Vector3();
@@ -177,7 +178,7 @@ public class Game extends ApplicationAdapter {
 
             var camController = world.first(CameraController.class);
             camController.active = true;
-            camController.setTarget(player, true);
+            camController.follow(player, Point.zero(), true);
 
             inputMux.removeProcessor(editor.getStage());
 

@@ -45,11 +45,12 @@ public class CameraController extends Component {
         this.level = null;
     }
 
-    public void setTarget(Entity entity) {
-        setTarget(entity, false);
+    public void follow(Entity entity, Point offset) {
+        follow(entity, offset, false);
     }
 
-    public void setTarget(Entity entity, boolean immediate) {
+    public void follow(Entity entity, Point offset, boolean immediate) {
+        // TODO: wire up offset
         this.entity = entity;
         this.mode = TargetMode.entity;
         if (immediate) {
@@ -59,11 +60,11 @@ public class CameraController extends Component {
         }
     }
 
-    public void setTarget(Point point) {
-        setTarget(point, false);
+    public void target(Point point) {
+        target(point, false);
     }
 
-    public void setTarget(Point point, boolean immediate) {
+    public void target(Point point, boolean immediate) {
         this.point.set(point);
         this.mode = TargetMode.point;
         if (immediate) {
