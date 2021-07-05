@@ -30,6 +30,9 @@ public class Level {
         public int rows;
         public int tilesetUid;
         public int foregroundTilesetUid;
+        public int colliderSize;
+        public int colliderRows;
+        public int colliderCols;
         public int[] colliderCells;
         public Point[] tilemapCellTextures;
         public Point[] foregroundTilemapCellTextures;
@@ -221,16 +224,21 @@ public class Level {
         {
             // create components
             var tilemap = entity.add(new Tilemap(desc.tileSize, desc.cols, desc.rows), Tilemap.class);
-            var collider = entity.add(Collider.makeGrid(desc.tileSize, desc.cols, desc.rows), Collider.class);
+            var collider = entity.add(Collider.makeGrid(desc.colliderSize, desc.colliderCols, desc.colliderRows), Collider.class);
             collider.mask = Collider.Mask.solid;
 
-            // initialize component contents
+            // initialize tilemap component contents
             for (int x = 0; x < desc.cols; x++) {
                 for (int y = 0; y < desc.rows; y++) {
                     var point = desc.tilemapCellTextures[x + y * desc.cols];
                     tilemap.setCell(x, y, pointRegionMap.get(point));
+                }
+            }
 
-                    var value = (desc.colliderCells[x + y * desc.cols] == 1);
+            // initialize collider component contents
+            for (int x = 0; x < desc.colliderCols; x++) {
+                for (int y = 0; y < desc.colliderRows; y++) {
+                    var value = (desc.colliderCells[x + y * desc.colliderCols] == 1);
                     collider.setCell(x, y, value);
                 }
             }
@@ -378,6 +386,7 @@ public class Level {
         rooms.add(entity);
     }
 
+    /** @deprecated */
     public void save(String filename, Assets assets) {
         if (entity() == null) {
             throw new GdxRuntimeException("Can't save level, no level entity");
@@ -513,7 +522,10 @@ public class Level {
                 desc.rows = tileLayer.__cHei;
                 desc.tilesetUid = tileset.uid;
                 desc.foregroundTilesetUid = -1;
-                desc.colliderCells = new int[desc.cols * desc.rows];
+                desc.colliderSize = collisionLayer.__gridSize;
+                desc.colliderCols = collisionLayer.__cWid;
+                desc.colliderRows = collisionLayer.__cHei;
+                desc.colliderCells = new int[desc.colliderCols * desc.colliderRows];
                 desc.tilemapCellTextures = new Point[desc.cols * desc.rows];
                 desc.foregroundTilemapCellTextures = null;
 
@@ -533,14 +545,12 @@ public class Level {
                 }
 
                 // setup collision layer
-                for (int x = 0; x < desc.cols; x++) {
-                    for (int y = 0; y < desc.rows; y++) {
+                for (int x = 0; x < desc.colliderCols; x++) {
+                    for (int y = 0; y < desc.colliderRows; y++) {
                         // note: ldtk files are stored with origin = top left so we have to flip y
-                        int flipY = (desc.rows - 1) - y;
-                        var collisionValue = collisionLayer.intGridCsv[x + flipY * desc.cols];
-
-                        var value = collisionValue;
-                        desc.colliderCells[x + y * desc.cols] = value;
+                        int flipY = (desc.colliderRows - 1) - y;
+                        var collisionValue = collisionLayer.intGridCsv[x + flipY * desc.colliderCols];
+                        desc.colliderCells[x + y * desc.colliderCols] = collisionValue;
                     }
                 }
 

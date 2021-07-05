@@ -30,6 +30,9 @@ import java.util.List;
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Game extends ApplicationAdapter {
 
+//    private static final String level_path = "levels/world-1.ldtk";
+    private static final String level_path = "levels/ldtk-gridtest.ldtk";
+
     private Input input;
     private Assets assets;
     private SpriteBatch batch;
@@ -83,7 +86,7 @@ public class Game extends ApplicationAdapter {
         frameBufferRegion.flip(false, true);
 
         world = new World();
-        level = new Level(world, assets, "levels/world-1.ldtk");
+        level = new Level(world, assets, level_path);
 
         player = level.spawnPlayer(world);
         enemies = level.spawnEnemies(world);
@@ -114,11 +117,12 @@ public class Game extends ApplicationAdapter {
         if (Input.pressed(Input.Key.r)) {
             // clear and reload level
             level.clear();
-//            level.load(world, "levels/ldtk-test.ldtk");
-            level.load(world, "levels/world-1.ldtk");
+            level.load(world, level_path);
 
             // wire up camera controller
-            world.first(CameraController.class).level = level;
+            var camera = world.first(CameraController.class);
+            camera.follow(player, Point.zero(), true);
+            camera.level = level;
 
             // respawn player
             player = level.spawnPlayer(world);
