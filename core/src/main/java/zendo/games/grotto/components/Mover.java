@@ -99,7 +99,10 @@ public class Mover extends Component {
             var sign = Calc.sign(amount);
 
             while (amount != 0) {
-                if (collider.check(Collider.Mask.solid, Point.at(0, sign))) {
+                var isSolid = collider.check(Collider.Mask.solid, Point.at(0, sign));
+                var isJumpthru = collider.check(Collider.Mask.jumpthru, Point.at(0, sign));
+                var isMovingDown = sign < 0;
+                if (isSolid || (isJumpthru && isMovingDown)) {
                     if (onHitY != null) {
                         onHitY.hit(this);
                     } else {
@@ -141,8 +144,11 @@ public class Mover extends Component {
         }
 
         var hitSolid = collider.check(Collider.Mask.solid, Point.at(0, dist));
+        var isJumpthru = collider.check(Collider.Mask.jumpthru, Point.at(0, dist));
+        var isMovingDown = dist < 0;
+        var hitJumpthru = isJumpthru && isMovingDown;
 
-        return hitSolid;
+        return hitSolid || hitJumpthru;
     }
 
 }
