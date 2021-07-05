@@ -14,11 +14,12 @@ public class Collider extends Component {
 
     public static class Mask {
         public static final int solid         = 1 << 0;
-        public static final int player        = 1 << 1;
-        public static final int enemy         = 1 << 2;
-        public static final int player_attack = 1 << 3;
-        public static final int item          = 1 << 4;
-        public static final int room_bounds   = 1 << 5;
+        public static final int jumpthru      = 1 << 1;
+        public static final int player        = 1 << 2;
+        public static final int enemy         = 1 << 3;
+        public static final int player_attack = 1 << 4;
+        public static final int item          = 1 << 5;
+        public static final int room_bounds   = 1 << 6;
     }
 
     public enum Shape { none, rect, grid }
@@ -211,10 +212,15 @@ public class Collider extends Component {
     // ------------------------------------------------------------------------
 
     private final Color debugColor = new Color(1f, 0f, 0f, 0.75f);
+    private final Color debugJumpthruColor = new Color(0, 0.5f, 0.5f, 0.75f);
 
     @Override
     public void render(ShapeRenderer shapes) {
-        shapes.setColor(debugColor);
+        if (mask == Mask.jumpthru) {
+            shapes.setColor(debugJumpthruColor);
+        } else {
+            shapes.setColor(debugColor);
+        }
         if (shape == Shape.rect) {
             var x = entity.position.x + origin.x + rect.x;
             var y = entity.position.y + origin.y + rect.y;

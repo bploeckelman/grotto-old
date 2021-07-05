@@ -47,6 +47,13 @@ public class Level {
         }
     }
 
+    static class Jumpthru {
+        public RectI bounds;
+        Jumpthru(RectI bounds) {
+            this.bounds = bounds;
+        }
+    }
+
     static class Tileset {
         public int uid;
         public int gridSize;
@@ -57,6 +64,7 @@ public class Level {
 
     private final List<Entity> rooms;
     private final List<Spawner> spawners;
+    private final List<Jumpthru> jumpthrus;
     private final IntMap<Tileset> tilesets;
 
     private final Assets assets;
@@ -64,6 +72,7 @@ public class Level {
     public Level(World world, Assets assets, String filename) {
         rooms = new ArrayList<>();
         spawners = new ArrayList<>();
+        jumpthrus = new ArrayList<>();
         tilesets = new IntMap<>();
 
         this.assets = assets;
@@ -167,12 +176,22 @@ public class Level {
         return enemies;
     }
 
+    public void spawnJumpthrus(World world) {
+        // TODO: factory?
+        for (var jumpthru : jumpthrus) {
+            var entity = world.addEntity();
+            var collider = entity.add(Collider.makeRect(jumpthru.bounds), Collider.class);
+            collider.mask = Collider.Mask.jumpthru;
+        }
+    }
+
     public void clear() {
         for (var entity : rooms) {
             entity.destroy();
         }
         rooms.clear();
         spawners.clear();
+        jumpthrus.clear();
     }
 
     public void load(World world, String filename) {
@@ -529,8 +548,9 @@ public class Level {
                 desc.tilemapCellTextures = new Point[desc.cols * desc.rows];
                 desc.foregroundTilemapCellTextures = null;
 
-                // setup spawners
+                // setup entities
                 for (var entity : entityLayer.entityInstances) {
+                    // creature spawners
                     if ("Spawner".equals(entity.__identifier)) {
                         for (var field : entity.fieldInstances) {
                             if ("Type".equals(field.__identifier)) {
@@ -541,6 +561,15 @@ public class Level {
                                 spawners.add(new Spawner(type, x, y));
                             }
                         }
+                    }
+                    // jumpthru platforms
+                    else if ("Jumpthru".equals(entity.__identifier)) {
+                        var x = desc.position.x + entity.px[0];
+                        var flipY = level.pxHei - entity.px[1];
+                        var y = desc.position.y + flipY;
+                        var w = entity.width;
+                        var h = entity.height;
+                        jumpthrus.add(new Jumpthru(RectI.at(x, y, w, h)));
                     }
                 }
 

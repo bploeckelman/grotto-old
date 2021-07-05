@@ -90,6 +90,7 @@ public class Game extends ApplicationAdapter {
 
         player = level.spawnPlayer(world);
         enemies = level.spawnEnemies(world);
+        level.spawnJumpthrus(world);
 
         var camera = world.addEntity().add(new CameraController(worldCamera), CameraController.class);
         camera.follow(player, Point.zero(), true);
@@ -145,6 +146,10 @@ public class Game extends ApplicationAdapter {
             });
             enemies.clear();
             enemies = level.spawnEnemies(world);
+
+            // respawn jumpthrus
+            // TODO: destoy first?
+            level.spawnJumpthrus(world);
         }
 
         // update based on mode
