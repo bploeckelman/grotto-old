@@ -101,8 +101,9 @@ public class Mover extends Component {
             while (amount != 0) {
                 var isSolid = collider.check(Collider.Mask.solid, Point.at(0, sign));
                 var isJumpthru = collider.check(Collider.Mask.jumpthru, Point.at(0, sign));
+                var isInsideJumpthru = collider.check(Collider.Mask.jumpthru);
                 var isMovingDown = sign < 0;
-                if (isSolid || (isJumpthru && isMovingDown)) {
+                if (isSolid || (isJumpthru && !isInsideJumpthru && isMovingDown)) {
                     if (onHitY != null) {
                         onHitY.hit(this);
                     } else {
@@ -145,8 +146,9 @@ public class Mover extends Component {
 
         var hitSolid = collider.check(Collider.Mask.solid, Point.at(0, dist));
         var isJumpthru = collider.check(Collider.Mask.jumpthru, Point.at(0, dist));
+        var isInsideJumpthru = collider.check(Collider.Mask.jumpthru);
         var isMovingDown = dist < 0;
-        var hitJumpthru = isJumpthru && isMovingDown;
+        var hitJumpthru = isJumpthru && !isInsideJumpthru && isMovingDown;
 
         return hitSolid || hitJumpthru;
     }

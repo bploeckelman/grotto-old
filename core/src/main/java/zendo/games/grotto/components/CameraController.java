@@ -88,7 +88,7 @@ public class CameraController extends Component {
         }
 
         // update target
-        var speed = 50f;
+        var speed = 80f;
         dist.x = targetPoint.x - target.x;
         dist.y = targetPoint.y - target.y;
         var scaleX = Calc.abs(dist.x) < ((1f / 4f) * camera.viewportWidth)  ? 1 : 1.5f;
