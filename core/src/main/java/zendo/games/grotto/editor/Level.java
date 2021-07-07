@@ -30,6 +30,7 @@ public class Level {
         public int rows;
         public int tilesetUid;
         public int foregroundTilesetUid;
+        public int entityGridSize;
         public int colliderSize;
         public int colliderRows;
         public int colliderCols;
@@ -541,6 +542,7 @@ public class Level {
                 desc.rows = tileLayer.__cHei;
                 desc.tilesetUid = tileset.uid;
                 desc.foregroundTilesetUid = -1;
+                desc.entityGridSize = entityLayer.__gridSize;
                 desc.colliderSize = collisionLayer.__gridSize;
                 desc.colliderCols = collisionLayer.__cWid;
                 desc.colliderRows = collisionLayer.__cHei;

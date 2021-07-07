@@ -54,7 +54,7 @@
 			"identifier": "Entities",
 			"type": "Entities",
 			"uid": 5,
-			"gridSize": 16,
+			"gridSize": 8,
 			"displayOpacity": 0.5,
 			"pxOffsetX": 0,
 			"pxOffsetY": 0,
@@ -313,9 +313,9 @@
 				{
 					"__identifier": "Entities",
 					"__type": "Entities",
-					"__cWid": 37,
-					"__cHei": 21,
-					"__gridSize": 16,
+					"__cWid": 74,
+					"__cHei": 42,
+					"__gridSize": 8,
 					"__opacity": 0.5,
 					"__pxTotalOffsetX": 0,
 					"__pxTotalOffsetY": 0,
@@ -336,7 +336,7 @@
 					"entityInstances": [
 						{
 							"__identifier": "Spawner",
-							"__grid": [18,5],
+							"__grid": [37,11],
 							"__pivot": [0.5,0.5],
 							"__tile": null,
 							"width": 16,
@@ -356,7 +356,7 @@
 						},
 						{
 							"__identifier": "Jumpthru",
-							"__grid": [2,14],
+							"__grid": [4,29],
 							"__pivot": [0,1],
 							"__tile": null,
 							"width": 176,
@@ -367,7 +367,7 @@
 						},
 						{
 							"__identifier": "Jumpthru",
-							"__grid": [24,14],
+							"__grid": [48,29],
 							"__pivot": [0,1],
 							"__tile": null,
 							"width": 176,
@@ -378,7 +378,7 @@
 						},
 						{
 							"__identifier": "Jumpthru",
-							"__grid": [12,16],
+							"__grid": [24,33],
 							"__pivot": [0,1],
 							"__tile": null,
 							"width": 208,
@@ -389,7 +389,7 @@
 						},
 						{
 							"__identifier": "Jumpthru",
-							"__grid": [10,12],
+							"__grid": [20,25],
 							"__pivot": [0,1],
 							"__tile": null,
 							"width": 80,
@@ -400,7 +400,7 @@
 						},
 						{
 							"__identifier": "Jumpthru",
-							"__grid": [22,12],
+							"__grid": [44,25],
 							"__pivot": [0,1],
 							"__tile": null,
 							"width": 80,
@@ -411,7 +411,7 @@
 						},
 						{
 							"__identifier": "Jumpthru",
-							"__grid": [14,9],
+							"__grid": [28,19],
 							"__pivot": [0,1],
 							"__tile": null,
 							"width": 144,
