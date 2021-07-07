@@ -153,4 +153,21 @@ public class Mover extends Component {
         return hitSolid || hitJumpthru;
     }
 
+    public boolean onJumpthru() {
+        return onJumpthru(-1);
+    }
+
+    public boolean onJumpthru(int dist) {
+        if (collider == null) {
+            return false;
+        }
+
+        var isJumpthru = collider.check(Collider.Mask.jumpthru, Point.at(0, dist));
+        var isInsideJumpthru = collider.check(Collider.Mask.jumpthru);
+        var isMovingDown = dist < 0;
+        var onJumpthru = isJumpthru && !isInsideJumpthru && isMovingDown;
+
+        return onJumpthru;
+    }
+
 }

@@ -198,6 +198,19 @@ public class Player extends Component {
             var wasGrounded = grounded;
             grounded = mover.onGround();
 
+            // move down through jumpthru platforms
+            var onJumpthru = mover.onJumpthru();
+            if (onJumpthru) {
+                var inputDown = (stick.value().y >= 0.33f);
+                if (inputDown) {
+                    if (jumpButton.pressed()) {
+                        jumpButton.clearPressBuffer();
+                        entity.position.y -= 1;
+                        EffectFactory.spriteAnimOneShot(world(), entity.position, "hero", "land");
+                    }
+                }
+            }
+
             // reset air timer
             if (grounded) {
                 airTimer = 0;
