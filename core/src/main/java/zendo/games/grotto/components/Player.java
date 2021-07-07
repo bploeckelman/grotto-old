@@ -17,7 +17,7 @@ import zendo.games.grotto.utils.Time;
 
 public class Player extends Component {
 
-    private static final float gravity = -480;
+    private static final float gravity = -440;
     private static final float gravity_peak = -100;
     private static final float gravity_fastfall = -900;
     private static final float gravity_wallsliding = -200;
@@ -27,7 +27,7 @@ public class Player extends Component {
     private static final float maxfall_wallsliding = -15;
 
     private static final float friction_ground = 450;
-    private static final float friction_air = 200;
+    private static final float friction_air = 300;
 
     private static final float acceleration_ground = 700;
     private static final float acceleration_turnaround = 500;
