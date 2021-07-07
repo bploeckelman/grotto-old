@@ -186,8 +186,9 @@ public class Player extends Component {
             if (stick.pressed()) {
                 stick.clearPressBuffer();
                 var move = stick.value();
-                if      (move.x < 0) sign = -1;
-                else if (move.x > 0) sign = 1;
+                var epsilon = 0.33f;
+                if      (move.x < -epsilon) sign = -1;
+                else if (move.x > +epsilon) sign = 1;
             }
             moveDir = sign;
         }
