@@ -148,7 +148,12 @@ public class Game extends ApplicationAdapter {
             enemies = level.spawnEnemies(world);
 
             // respawn jumpthrus
-            // TODO: destoy first?
+            level.jumpthrus().forEach(jumpthru -> {
+                if (jumpthru.entity != null) {
+                    jumpthru.entity.destroy();
+                }
+            });
+            level.jumpthrus().clear();
             level.spawnJumpthrus(world);
         }
 

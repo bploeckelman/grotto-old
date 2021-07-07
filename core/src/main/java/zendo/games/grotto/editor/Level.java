@@ -48,10 +48,12 @@ public class Level {
         }
     }
 
-    static class Jumpthru {
+    public static class Jumpthru {
         public RectI bounds;
+        public Entity entity;
         Jumpthru(RectI bounds) {
             this.bounds = bounds;
+            this.entity = null;
         }
     }
 
@@ -78,6 +80,10 @@ public class Level {
 
         this.assets = assets;
         load(world, filename);
+    }
+
+    public List<Jumpthru> jumpthrus() {
+        return jumpthrus;
     }
 
     // TODO - removeme, only used in editor
@@ -183,6 +189,7 @@ public class Level {
             var entity = world.addEntity();
             var collider = entity.add(Collider.makeRect(jumpthru.bounds), Collider.class);
             collider.mask = Collider.Mask.jumpthru;
+            jumpthru.entity = entity;
         }
     }
 
