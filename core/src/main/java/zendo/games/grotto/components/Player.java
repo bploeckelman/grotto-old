@@ -381,15 +381,15 @@ public class Player extends Component {
         state.enter();
     }
 
-    abstract class State {
-        void enter() {}
-        void update(float dt, int input) {}
-        void exit() {}
+    interface State {
+        default void enter() {}
+        default void update(float dt, int input) {}
+        default void exit() {}
     }
 
     // ------------------------------------------------------------------------
 
-    class NormalState extends State {
+    class NormalState implements State {
 
         @Override
         public void update(float dt, int input) {
@@ -547,7 +547,7 @@ public class Player extends Component {
 
     // ------------------------------------------------------------------------
 
-    class AttackState extends State {
+    class AttackState implements State {
 
         private float attackTimer;
         private float cooldownTimer;
@@ -702,7 +702,7 @@ public class Player extends Component {
 
     // ------------------------------------------------------------------------
 
-    class HurtState extends State {
+    class HurtState implements State {
 
         private float invincibleTimer = 0;
 
