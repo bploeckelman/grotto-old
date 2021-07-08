@@ -429,9 +429,7 @@ public class Player extends Component {
                         // wall sliding
                         if (mover.speed.y < 0) {
                             player.wallsliding = true;
-                            if (input != 0) {
-                                player.facing = -input;
-                            }
+                            player.facing = -input;
                             gravityAmount = gravity_wallsliding;
                         }
                     }
@@ -456,7 +454,6 @@ public class Player extends Component {
                     }
                 }
             }
-
 
             // jumping
             {
@@ -605,12 +602,63 @@ public class Player extends Component {
 
         @Override
         public void update(float dt, int input) {
+            // change states if attack is complete
             if (cooldownTimer < 0) {
                 cooldownTimer = 0;
                 player.changeState(new NormalState(player));
                 return;
             }
             cooldownTimer -= dt;
+
+            // vertical speed
+            {
+                var mover = player.get(Mover.class);
+
+                // gravity
+                if (!player.grounded) {
+                    var gravityAmount = gravity;
+
+                    // slow gravity at peak of jump
+                    var peakJumpThreshold = 12;
+                    if (player.jumpButton.down() && Calc.abs(mover.speed.y) < peakJumpThreshold) {
+                        gravityAmount = gravity_peak;
+                    }
+
+                    // fast falling
+                    if (player.duckButton.down() && !player.jumpButton.down() && mover.speed.y < 0) {
+                        player.fastfalling = true;
+                        gravityAmount = gravity_fastfall;
+                    }
+                    // wall behavior
+                    else if (input != 0 && mover.collider.check(Collider.Mask.solid, Point.at(input, 0))) {
+                        // wall sliding
+                        if (mover.speed.y < 0) {
+                            player.wallsliding = true;
+                            player.facing = -input;
+                            gravityAmount = gravity_wallsliding;
+                        }
+                    }
+
+                    // apply gravity
+                    mover.speed.y += gravityAmount * dt;
+                }
+
+                // max falling
+                {
+                    var maxfallAmount = maxfall;
+
+                    if (player.fastfalling) {
+                        maxfallAmount = maxfall_fastfall;
+                    } else if (player.wallsliding) {
+                        maxfallAmount = maxfall_wallsliding;
+                    }
+
+                    // apply maxfall
+                    if (mover.speed.y < maxfallAmount) {
+                        mover.speed.y = maxfallAmount;
+                    }
+                }
+            }
 
             // apply friction to movement
             if (input == 0) {
