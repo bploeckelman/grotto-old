@@ -128,7 +128,7 @@ public class Player extends Component {
         safePosition = new Vector2();
         canJump = true;
 
-        changeState(new NormalState(this));
+        changeState(new NormalState());
     }
 
     @Override
@@ -235,7 +235,7 @@ public class Player extends Component {
                 var collider = get(Collider.class);
                 var hitbox = collider.first(Collider.Mask.enemy);
                 if (hitbox != null) {
-                    changeState(new HurtState(this));
+                    changeState(new HurtState());
                 }
             }
         }
@@ -381,11 +381,7 @@ public class Player extends Component {
         state.enter();
     }
 
-    static abstract class State {
-        final Player player;
-        State(Player player) {
-            this.player = player;
-        }
+    abstract class State {
         void enter() {}
         void update(float dt, int input) {}
         void exit() {}
@@ -393,43 +389,40 @@ public class Player extends Component {
 
     // ------------------------------------------------------------------------
 
-    static class NormalState extends State {
-        NormalState(Player player) {
-            super(player);
-        }
+    class NormalState extends State {
 
         @Override
         public void update(float dt, int input) {
-            var mover = player.get(Mover.class);
-            var anim = player.get(Animator.class);
+            var mover = get(Mover.class);
+            var anim = get(Animator.class);
 
-            player.wallsliding = false;
-            player.fastfalling = false;
-            player.running = false;
+            wallsliding = false;
+            fastfalling = false;
+            running = false;
 
             // vertical speed
             {
                 // gravity
-                if (!player.grounded) {
+                if (!grounded) {
                     var gravityAmount = gravity;
 
                     // slow gravity at peak of jump
                     var peakJumpThreshold = 12;
-                    if (player.jumpButton.down() && Calc.abs(mover.speed.y) < peakJumpThreshold) {
+                    if (jumpButton.down() && Calc.abs(mover.speed.y) < peakJumpThreshold) {
                         gravityAmount = gravity_peak;
                     }
 
                     // fast falling
-                    if (player.duckButton.down() && !player.jumpButton.down() && mover.speed.y < 0) {
-                        player.fastfalling = true;
+                    if (duckButton.down() && !jumpButton.down() && mover.speed.y < 0) {
+                        fastfalling = true;
                         gravityAmount = gravity_fastfall;
                     }
                     // wall behavior
                     else if (input != 0 && mover.collider.check(Collider.Mask.solid, Point.at(input, 0))) {
                         // wall sliding
                         if (mover.speed.y < 0) {
-                            player.wallsliding = true;
-                            player.facing = -input;
+                            wallsliding = true;
+                            facing = -input;
                             gravityAmount = gravity_wallsliding;
                         }
                     }
@@ -442,9 +435,9 @@ public class Player extends Component {
                 {
                     var maxfallAmount = maxfall;
 
-                    if (player.fastfalling) {
+                    if (fastfalling) {
                         maxfallAmount = maxfall_fastfall;
-                    } else if (player.wallsliding) {
+                    } else if (wallsliding) {
                         maxfallAmount = maxfall_wallsliding;
                     }
 
@@ -458,7 +451,7 @@ public class Player extends Component {
             // jumping
             {
                 // invoke a ground jump
-                if (player.tryJump()) {
+                if (tryJump()) {
                     // cancel backwards horizontal movement
                     if (Calc.sign(mover.speed.x) == -input) {
                         mover.speed.x = 0;
@@ -466,46 +459,46 @@ public class Player extends Component {
 
                     // push out the way we're inputting for extra oomph in a turn/jump
                     if (input != 0) {
-                        player.facing = input;
+                        facing = input;
                         mover.speed.x += input * 50;
                     }
                 }
 
                 // do a wall jump!
                 {
-                    player.walljumpFacingChangeTimer -= dt;
-                    if (player.walljumpFacingChangeTimer < 0) {
-                        player.walljumpFacingChangeTimer = 0;
+                    walljumpFacingChangeTimer -= dt;
+                    if (walljumpFacingChangeTimer < 0) {
+                        walljumpFacingChangeTimer = 0;
                     }
 
-                    if (player.tryWallJump()) {
+                    if (tryWallJump()) {
                         // set a timer and ignore input for a brief period so facing stays in jump direction
-                        player.walljumpFacingChangeTimer = walljump_facing_change_duration;
+                        walljumpFacingChangeTimer = walljump_facing_change_duration;
                     }
                 }
 
                 // if we didn't jump this frame, clear the state anyways so we don't jump automatically when we land next
-                player.jumpButton.clearPressBuffer();
+                jumpButton.clearPressBuffer();
             }
 
             // ducking
             {
-                boolean wasDucking = player.ducking;
-                player.ducking = player.grounded && player.duckButton.down();
+                boolean wasDucking = ducking;
+                ducking = grounded && duckButton.down();
 
                 // stopped ducking, squash and stretch
-                if (wasDucking && !player.ducking) {
+                if (wasDucking && !ducking) {
                     anim.scale.set(0.7f, 1.2f);
                 }
             }
 
             // running
             {
-                boolean wasRunning = player.running;
-                player.running = player.runButton.down();
+                boolean wasRunning = running;
+                running = runButton.down();
 
                 // stopped running, trigger a skid effect
-                if (wasRunning && !player.running) {
+                if (wasRunning && !running) {
                     anim.scale.set(1.3f, 1f);
                 }
             }
@@ -513,12 +506,12 @@ public class Player extends Component {
             // horizontal speed
             {
                 // acceleration
-                var accel = (player.grounded) ? acceleration_ground : acceleration_air;
+                var accel = (grounded) ? acceleration_ground : acceleration_air;
                 mover.speed.x += input * accel * dt;
 
                 // max speed
-                var max = (player.grounded) ? maxspeed_ground : maxspeed_air;
-                if (player.running) {
+                var max = (grounded) ? maxspeed_ground : maxspeed_air;
+                if (running) {
                     max = maxspeed_running;
                 }
                 if (Calc.abs(mover.speed.x) > max) {
@@ -526,26 +519,26 @@ public class Player extends Component {
                 }
 
                 // friction
-                var friction = (player.grounded) ? friction_ground : friction_air;
+                var friction = (grounded) ? friction_ground : friction_air;
                 if (input == 0) {
                     mover.speed.x = Calc.approach(mover.speed.x, 0, friction * dt);
                 }
 
                 // facing
-                if (input != 0 && !player.wallsliding && player.walljumpFacingChangeTimer <= 0) {
-                    player.facing = input;
+                if (input != 0 && !wallsliding && walljumpFacingChangeTimer <= 0) {
+                    facing = input;
                 }
             }
 
             if (trySlash()) {
-                player.changeState(new AttackState(player));
+                changeState(new AttackState());
                 return;
             }
         }
 
         private boolean trySlash() {
-            if (player.attackButton.pressed()) {
-                player.attackButton.clearPressBuffer();
+            if (attackButton.pressed()) {
+                attackButton.clearPressBuffer();
                 return true;
             }
             return false;
@@ -554,7 +547,7 @@ public class Player extends Component {
 
     // ------------------------------------------------------------------------
 
-    static class AttackState extends State {
+    class AttackState extends State {
 
         private float attackTimer;
         private float cooldownTimer;
@@ -562,10 +555,6 @@ public class Player extends Component {
         private Entity attackEntity;
         private Collider attackCollider;
         private Animator attackEffectAnim;
-
-        public AttackState(Player player) {
-            super(player);
-        }
 
         @Override
         public void enter() {
@@ -577,8 +566,8 @@ public class Player extends Component {
             }
 
             // entity position gets updated during attack state based of facing
-            attackEntity = player.world().addEntity();
-            attackEntity.position.set(player.entity.position);
+            attackEntity = world().addEntity();
+            attackEntity.position.set(entity.position);
 
             // the rect for this collider is updated during attack state based on what frame is active
             attackCollider = attackEntity.add(Collider.makeRect(new RectI()), Collider.class);
@@ -605,36 +594,36 @@ public class Player extends Component {
             // change states if attack is complete
             if (cooldownTimer < 0) {
                 cooldownTimer = 0;
-                player.changeState(new NormalState(player));
+                changeState(new NormalState());
                 return;
             }
             cooldownTimer -= dt;
 
             // vertical speed
             {
-                var mover = player.get(Mover.class);
+                var mover = get(Mover.class);
 
                 // gravity
-                if (!player.grounded) {
+                if (!grounded) {
                     var gravityAmount = gravity;
 
                     // slow gravity at peak of jump
                     var peakJumpThreshold = 12;
-                    if (player.jumpButton.down() && Calc.abs(mover.speed.y) < peakJumpThreshold) {
+                    if (jumpButton.down() && Calc.abs(mover.speed.y) < peakJumpThreshold) {
                         gravityAmount = gravity_peak;
                     }
 
                     // fast falling
-                    if (player.duckButton.down() && !player.jumpButton.down() && mover.speed.y < 0) {
-                        player.fastfalling = true;
+                    if (duckButton.down() && !jumpButton.down() && mover.speed.y < 0) {
+                        fastfalling = true;
                         gravityAmount = gravity_fastfall;
                     }
                     // wall behavior
                     else if (input != 0 && mover.collider.check(Collider.Mask.solid, Point.at(input, 0))) {
                         // wall sliding
                         if (mover.speed.y < 0) {
-                            player.wallsliding = true;
-                            player.facing = -input;
+                            wallsliding = true;
+                            facing = -input;
                             gravityAmount = gravity_wallsliding;
                         }
                     }
@@ -647,9 +636,9 @@ public class Player extends Component {
                 {
                     var maxfallAmount = maxfall;
 
-                    if (player.fastfalling) {
+                    if (fastfalling) {
                         maxfallAmount = maxfall_fastfall;
-                    } else if (player.wallsliding) {
+                    } else if (wallsliding) {
                         maxfallAmount = maxfall_wallsliding;
                     }
 
@@ -662,8 +651,8 @@ public class Player extends Component {
 
             // apply friction to movement
             if (input == 0) {
-                var mover = player.get(Mover.class);
-                var friction = (player.grounded) ? friction_ground : friction_air;
+                var mover = get(Mover.class);
+                var friction = (grounded) ? friction_ground : friction_air;
                 mover.speed.x = Calc.approach(mover.speed.x, 0, friction * dt);
             }
 
@@ -684,20 +673,20 @@ public class Player extends Component {
             attackTimer += dt;
 
             // update animation and collider position/orientation based on facing direction
-            var collider = player.get(Collider.class);
+            var collider = get(Collider.class);
             if (attackEntity != null) {
-                if (player.facing >= 0) {
+                if (facing >= 0) {
                     // update attack effect position
-                    attackEntity.position.x = player.entity.position.x + collider.rect().right() + 8;
-                    attackEntity.position.y = player.entity.position.y;
+                    attackEntity.position.x = entity.position.x + collider.rect().right() + 8;
+                    attackEntity.position.y = entity.position.y;
                     // make sure animation points in the right direction
                     if (attackEffectAnim.scale.x != 1) {
                         attackEffectAnim.scale.x = 1;
                     }
-                } else if (player.facing < 0) {
+                } else if (facing < 0) {
                     // update attack effect position
-                    attackEntity.position.x = player.entity.position.x - collider.rect().left() - 12;
-                    attackEntity.position.y = player.entity.position.y;
+                    attackEntity.position.x = entity.position.x - collider.rect().left() - 12;
+                    attackEntity.position.y = entity.position.y;
                     // make sure animation points in the left direction
                     if (attackEffectAnim.scale.x != -1) {
                         attackEffectAnim.scale.x = -1;
@@ -713,14 +702,9 @@ public class Player extends Component {
 
     // ------------------------------------------------------------------------
 
-    static class HurtState extends State {
+    class HurtState extends State {
 
-        private float invincibleTimer;
-
-        HurtState(Player player) {
-            super(player);
-            invincibleTimer = 0;
-        }
+        private float invincibleTimer = 0;
 
         @Override
         public void enter() {
@@ -730,7 +714,7 @@ public class Player extends Component {
             // todo - lose health
 
             // bounce back
-            player.get(Mover.class).speed.set(-player.facing * 100, 80);
+            get(Mover.class).speed.set(-facing * 100, 80);
 
         }
 
@@ -738,7 +722,7 @@ public class Player extends Component {
         public void update(float dt, int input) {
             invincibleTimer -= dt;
             if (invincibleTimer <= 0) {
-                player.changeState(new NormalState(player));
+                changeState(new NormalState());
             }
         }
 
