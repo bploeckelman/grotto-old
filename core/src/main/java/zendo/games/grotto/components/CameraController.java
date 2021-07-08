@@ -88,11 +88,13 @@ public class CameraController extends Component {
         }
 
         // update target
-        var speed = 80f;
+        var speed = 1f;//80f;
         dist.x = targetPoint.x - target.x;
         dist.y = targetPoint.y - target.y;
-        var scaleX = Calc.abs(dist.x) < ((1f / 4f) * camera.viewportWidth)  ? 1 : 1.5f;
-        var scaleY = Calc.abs(dist.y) < ((1f / 5f) * camera.viewportHeight) ? 1 : 5f;
+        var absDx = Calc.abs(dist.x);
+        var absDy = Calc.abs(dist.y);
+        var scaleX = (absDx > 80) ? 160 : 80f;
+        var scaleY = (absDy > 20) ? 200 : 100f;
         target.x = Calc.approach(target.x, targetPoint.x, scaleX * speed * dt);
         target.y = Calc.approach(target.y, targetPoint.y, scaleY * speed * dt);
 
@@ -123,6 +125,8 @@ public class CameraController extends Component {
     public void render(ShapeRenderer shapes) {
         var shapeType = shapes.getCurrentType();
         {
+//            Gdx.app.log("dist", "(" + (int) Calc.abs(dist.x) + ", " + (int) Calc.abs(dist.y) + ")");
+
             // entity position
             var x = entity.position.x;
             var y = entity.position.y;
