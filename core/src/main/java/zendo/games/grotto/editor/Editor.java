@@ -4,14 +4,11 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.kotcrab.vis.ui.widget.VisScrollPane;
 import com.kotcrab.vis.ui.widget.VisTable;
-import com.kotcrab.vis.ui.widget.VisTextButton;
 import com.kotcrab.vis.ui.widget.VisWindow;
 import zendo.games.grotto.Assets;
 import zendo.games.grotto.Game;
@@ -67,22 +64,10 @@ public class Editor {
         var level = game.getLevel();
         var camera = game.getWindowCamera();
 
-        var width = 250;
+        var width = 50;
         var window = new VisWindow("Editor");
         window.setSize(width, camera.viewportHeight);
         window.defaults().pad(1f);
-
-        // save / load buttons
-        var save = new VisTextButton("save");
-        save.setSize(width, 20);
-        save.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                level.save("levels/test.json", assets);
-            }
-        });
-        window.row();
-        window.add(save).growX();
 
         // scroll pane
         // TODO - scroll pane steals mouse wheel once it gets focus once, so wheel no longer works for zoom after that

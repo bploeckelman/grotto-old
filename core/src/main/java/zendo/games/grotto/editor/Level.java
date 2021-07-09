@@ -219,7 +219,7 @@ public class Level implements Disposable {
             }
 
             // load the room from the map descriptor
-            var room = createRoomEntityFromDesc(desc, assets, world);
+            var room = spawnRoom(desc, assets, world);
             rooms.add(room);
         } else if (filename.endsWith(".ldtk")) {
             // load ldtk file
@@ -227,19 +227,16 @@ public class Level implements Disposable {
             var ldtk = json.fromJson(Ldtk.class, Gdx.files.internal(filename));
 
             // load the level descriptors from the ldtk file data
-            var descs = loadDescsFromLdtk(ldtk);
+            var descs = parseLdtkMap(ldtk);
             for (var desc : descs) {
                 // load a room entity based on the level descriptor
-                var room = createRoomEntityFromDesc(desc, assets, world);
+                var room = spawnRoom(desc, assets, world);
                 rooms.add(room);
             }
         }
     }
 
-    public Entity createRoomEntityFromDesc(Desc desc, Assets assets, World world) {
-        // setup background
-        var background = desc.backgroundImage;
-
+    public Entity spawnRoom(Desc desc, Assets assets, World world) {
         // setup tileset
         var tileset = tilesets.get(desc.tilesetUid);
         var tilesetTexture = assets.tilesetAtlas.findRegion(tileset.name);
@@ -264,8 +261,9 @@ public class Level implements Disposable {
             var collider = entity.add(Collider.makeGrid(desc.colliderSize, desc.colliderCols, desc.colliderRows), Collider.class);
             collider.mask = Collider.Mask.solid;
 
-            if (background != null) {
-                var image = entity.add(new Image(background), Image.class);
+            // optional background image
+            if (desc.backgroundImage != null) {
+                var image = entity.add(new Image(desc.backgroundImage), Image.class);
                 image.depth = -1000;
             }
 
@@ -329,176 +327,7 @@ public class Level implements Disposable {
         return entity;
     }
 
-    public void createAndSaveTestFile(World world, Assets assets, String filename) {
-        var entity = world.addEntity();
-        {
-            /*
-            var tileSize = 16;
-            var cols = (Config.framebuffer_width + (Config.framebuffer_width / 2)) / tileSize;
-            var rows = (Config.framebuffer_height + (Config.framebuffer_height / 3)) / tileSize + 1;
-
-            var ul = assets.tilesetRegions[0][3];
-            var u = assets.tilesetRegions[0][4];
-            var ur = assets.tilesetRegions[0][5];
-
-            var uu = assets.tilesetRegions[4][10];
-
-            var l = assets.tilesetRegions[1][3];
-            var r = assets.tilesetRegions[1][5];
-
-            var dl = assets.tilesetRegions[2][3];
-            var d = assets.tilesetRegions[2][4];
-            var dr = assets.tilesetRegions[2][5];
-
-            var tilemap = entity.add(new Tilemap(tileSize, cols, rows), Tilemap.class);
-            // bottom row
-            tilemap.setCells(1, 0, cols - 2, 1, d);
-            // top rows
-            tilemap.setCells(0, rows - 1, cols, 1, uu);
-            tilemap.setCells(1, rows - 2, cols - 2, 1, u);
-            // left side
-            tilemap.setCells(0, 1, 1, rows - 2, l);
-            // right side
-            tilemap.setCells(cols - 1, 1, 1, rows - 2, r);
-            // corners
-            tilemap.setCell(0, 0, dl);
-            tilemap.setCell(0, rows - 2, ul);
-            tilemap.setCell(cols - 1, rows - 2, ur);
-            tilemap.setCell(cols - 1, 0, dr);
-
-            // platforms
-            tilemap.setCells(10, 2, 5, 1, d);
-            tilemap.setCells(15, 4, 5, 1, d);
-            tilemap.setCells(20, 6, 5, 1, d);
-            tilemap.setCells(15, 8, 5, 1, d);
-            tilemap.setCells(10, 10, 5, 1, d);
-
-            var collider = entity.add(Collider.makeGrid(tileSize, cols, rows), Collider.class);
-            collider.mask = Collider.Mask.solid;
-            collider.setCells(0, 0, cols, 1, true);
-            collider.setCells(0, rows - 1, cols, 1, true);
-            collider.setCells(0, rows - 2, cols, 1, true);
-            collider.setCells(0, 0, 1, rows - 1, true);
-            collider.setCells(cols - 1, 0, 1, rows - 1, true);
-
-            collider.setCells(10, 2, 5, 1, true);
-            collider.setCells(15, 4, 5, 1, true);
-            collider.setCells(20, 6, 5, 1, true);
-            collider.setCells(15, 8, 5, 1, true);
-            collider.setCells(10, 10, 5, 1, true);
-
-            // --------------------------------------------
-
-            // build the descriptor for json output
-            var desc = new Desc();
-            desc.position = Point.zero();
-            desc.tileSize = tileSize;
-            desc.cols = cols;
-            desc.rows = rows;
-            desc.tilesetUid = 5;
-            desc.colliderCells = new int[cols * rows];
-            desc.tilemapCellTextures = new Point[cols * rows];
-
-            // initialize tilemap cell textures and collider cells
-            for (int x = 0; x < cols; x++) {
-                for (int y = 0; y < rows; y++) {
-                    var collision = collider.getCell(x, y);
-                    desc.colliderCells[x + y * cols] = collision ? 1 : 0;
-
-                    var texture = tilemap.getCell(x, y);
-                    if      (texture == ul) desc.tilemapCellTextures[x + y * cols] = Point.at(3, 0);
-                    else if (texture == u)  desc.tilemapCellTextures[x + y * cols] = Point.at(4, 0);
-                    else if (texture == ur) desc.tilemapCellTextures[x + y * cols] = Point.at(5, 0);
-                    else if (texture == uu) desc.tilemapCellTextures[x + y * cols] = Point.at(10, 4);
-                    else if (texture == l)  desc.tilemapCellTextures[x + y * cols] = Point.at(3, 1);
-                    else if (texture == r)  desc.tilemapCellTextures[x + y * cols] = Point.at(5, 1);
-                    else if (texture == dl) desc.tilemapCellTextures[x + y * cols] = Point.at(3, 2);
-                    else if (texture == d)  desc.tilemapCellTextures[x + y * cols] = Point.at(4, 2);
-                    else if (texture == dr) desc.tilemapCellTextures[x + y * cols] = Point.at(5, 2);
-                    else                    desc.tilemapCellTextures[x + y * cols] = null;
-                }
-            }
-
-            var json = new Json();
-            var descJson = json.toJson(desc, Level.Desc.class);
-            var outFile = Gdx.files.local(filename);
-            outFile.writeString(descJson, false);
-            */
-        }
-        rooms.add(entity);
-    }
-
-    /** @deprecated */
-    public void save(String filename, Assets assets) {
-        if (entity() == null) {
-            throw new GdxRuntimeException("Can't save level, no level entity");
-        }
-        var tilemap = entity().get(Tilemap.class);
-        if (tilemap == null) {
-            throw new GdxRuntimeException("Can't save level, entity missing tilemap component");
-        }
-        var collider = entity().get(Collider.class);
-        if (collider == null) {
-            throw new GdxRuntimeException("Can't save level, entity missing collider component");
-        }
-        if (collider.grid() == null) {
-            throw new GdxRuntimeException("Can't save level, entity collider component is not a grid");
-        }
-
-        {
-            // build the descriptor for json output from the current entity state
-            var desc = new Desc();
-            desc.position = entity().position;
-            desc.tileSize = tilemap.tileSize();
-            desc.cols = tilemap.cols();
-            desc.rows = tilemap.rows();
-            desc.tilesetUid = 5;
-            desc.colliderCells = new int[desc.cols * desc.rows];
-            desc.tilemapCellTextures = new Point[desc.cols * desc.rows];
-
-            // populate desc arrays with data from entity components
-            for (int x = 0; x < desc.cols; x++) {
-                for (int y = 0; y < desc.rows; y++) {
-                    var collision = collider.getCell(x, y);
-                    desc.colliderCells[x + y * desc.cols] = collision ? 1 : 0;
-
-                    var tile = tilemap.getCell(x, y);
-                    if (tile != null) {
-                        desc.tilemapCellTextures[x + y * desc.cols] = findTilesetIndex(tile, assets);
-                    }
-                }
-            }
-
-            // write the output file
-            var json = new Json();
-            var descJson = json.toJson(desc, Level.Desc.class);
-            var outFile = Gdx.files.local(filename);
-            outFile.writeString(descJson, false);
-
-            Gdx.app.log("level", "saved level: " + filename);
-        }
-    }
-
-    private Point findTilesetIndex(TextureRegion tile, Assets assets) {
-        var index = Point.zero();
-        /*
-        var tiles = assets.tilesetRegions;
-        var rows = tiles.length;
-        var cols = tiles[0].length;
-        for (int x = 0; x < cols; x++) {
-            for (int y = 0; y < rows; y++) {
-                if (tile == tiles[y][x]) {
-                    index.set(x, y);
-                    return index;
-                }
-            }
-        }
-        Gdx.app.log("findTilesetIndex", "failed to find tile");
-        */
-        return index;
-    }
-
-    private List<Level.Desc> loadDescsFromLdtk(Ldtk ldtk) {
+    private List<Level.Desc> parseLdtkMap(Ldtk ldtk) {
         var descs = new ArrayList<Level.Desc>();
 
         // instantiate tilesets
