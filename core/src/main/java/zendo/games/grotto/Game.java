@@ -105,6 +105,7 @@ public class Game extends ApplicationAdapter {
     @Override
     public void dispose() {
         world.clear();
+        level.dispose();
         assets.dispose();
     }
 

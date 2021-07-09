@@ -63,6 +63,7 @@ public class Ldtk {
         public int pxHei;
         public int worldX;
         public int worldY;
+        public String bgRelPath;
         public List<LayerInstance> layerInstances;
     }
 

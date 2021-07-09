@@ -1,15 +1,14 @@
 package zendo.games.grotto.editor;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.badlogic.gdx.utils.IntMap;
 import com.badlogic.gdx.utils.Json;
 import zendo.games.grotto.Assets;
-import zendo.games.grotto.components.Collider;
-import zendo.games.grotto.components.Enemy;
-import zendo.games.grotto.components.Player;
-import zendo.games.grotto.components.Tilemap;
+import zendo.games.grotto.components.*;
 import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
 import zendo.games.grotto.factories.CreatureFactory;
@@ -21,7 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class Level {
+public class Level implements Disposable {
 
     static class Desc {
         public Point position;
@@ -35,6 +34,7 @@ public class Level {
         public int colliderRows;
         public int colliderCols;
         public int[] colliderCells;
+        public Texture backgroundImage;
         public Point[] tilemapCellTextures;
         public Point[] foregroundTilemapCellTextures;
     }
@@ -69,6 +69,7 @@ public class Level {
     private final List<Spawner> spawners;
     private final List<Jumpthru> jumpthrus;
     private final IntMap<Tileset> tilesets;
+    private final List<Texture> backgrounds;
 
     private final Assets assets;
 
@@ -77,9 +78,15 @@ public class Level {
         spawners = new ArrayList<>();
         jumpthrus = new ArrayList<>();
         tilesets = new IntMap<>();
+        backgrounds = new ArrayList<>();
 
         this.assets = assets;
         load(world, filename);
+    }
+
+    @Override
+    public void dispose() {
+        backgrounds.forEach(Texture::dispose);
     }
 
     public List<Jumpthru> jumpthrus() {
@@ -230,6 +237,9 @@ public class Level {
     }
 
     public Entity createRoomEntityFromDesc(Desc desc, Assets assets, World world) {
+        // setup background
+        var background = desc.backgroundImage;
+
         // setup tileset
         var tileset = tilesets.get(desc.tilesetUid);
         var tilesetTexture = assets.tilesetAtlas.findRegion(tileset.name);
@@ -253,6 +263,11 @@ public class Level {
             var tilemap = entity.add(new Tilemap(desc.tileSize, desc.cols, desc.rows), Tilemap.class);
             var collider = entity.add(Collider.makeGrid(desc.colliderSize, desc.colliderCols, desc.colliderRows), Collider.class);
             collider.mask = Collider.Mask.solid;
+
+            if (background != null) {
+                var image = entity.add(new Image(background), Image.class);
+                image.depth = -1000;
+            }
 
             // initialize tilemap component contents
             for (int x = 0; x < desc.cols; x++) {
@@ -508,6 +523,14 @@ public class Level {
             {
                 var level = ldtk.levels.get(levelNum);
 
+                // load background image (optionally)
+                Texture backgroundImage = null;
+                var backgroundImageRelPath = level.bgRelPath;
+                if (backgroundImageRelPath != null) {
+                    backgroundImage = new Texture("levels/" + backgroundImageRelPath);
+                    backgrounds.add(backgroundImage);
+                }
+
                 // find required layers
                 Ldtk.LayerInstance tileLayer = null;
                 Ldtk.LayerInstance collisionLayer = null;
@@ -553,6 +576,7 @@ public class Level {
                 desc.colliderSize = collisionLayer.__gridSize;
                 desc.colliderCols = collisionLayer.__cWid;
                 desc.colliderRows = collisionLayer.__cHei;
+                desc.backgroundImage = backgroundImage;
                 desc.colliderCells = new int[desc.colliderCols * desc.colliderRows];
                 desc.tilemapCellTextures = new Point[desc.cols * desc.rows];
                 desc.foregroundTilemapCellTextures = null;
