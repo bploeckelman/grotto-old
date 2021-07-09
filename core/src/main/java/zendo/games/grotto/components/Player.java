@@ -319,8 +319,7 @@ public class Player extends Component {
             var anim = get(Animator.class);
             anim.scale.set(0.8f, 1.6f);
 
-            // TODO: trigger jump effect
-            EffectFactory.spriteAnimOneShot(entity.world, entity.position, "coin", "pickup");
+            EffectFactory.spriteAnimOneShot(entity.world, entity.position, "hero", "land");
 
             return true;
         }
@@ -342,8 +341,7 @@ public class Player extends Component {
             var anim = get(Animator.class);
             anim.scale.set(1.4f, 0.8f);
 
-            // TODO: trigger jump effect
-            EffectFactory.spriteAnimOneShot(entity.world, entity.position, "coin", "pickup");
+            EffectFactory.spriteAnimOneShot(entity.world, entity.position, "hero", "land");
 
             return true;
         }
