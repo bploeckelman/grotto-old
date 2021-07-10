@@ -22,9 +22,9 @@ public class Player extends Component {
     private static final float gravity_fastfall = -900;
     private static final float gravity_wallsliding = -200;
 
-    private static final float maxfall = -140;
+    private static final float maxfall = -180;
     private static final float maxfall_fastfall = -200;
-    private static final float maxfall_wallsliding = -15;
+    private static final float maxfall_wallsliding = -20;
 
     private static final float friction_ground = 450;
     private static final float friction_air = 300;
