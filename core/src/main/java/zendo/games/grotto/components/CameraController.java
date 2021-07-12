@@ -11,6 +11,7 @@ import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.editor.Level;
 import zendo.games.grotto.utils.Calc;
 import zendo.games.grotto.utils.Point;
+import zendo.games.grotto.utils.RectI;
 
 public class CameraController extends Component {
 
@@ -24,6 +25,8 @@ public class CameraController extends Component {
     private TargetMode mode;
     private Vector3 target;
     private Vector2 dist;
+
+    private Entity lastRoom;
 
     public CameraController() {}
 
@@ -43,6 +46,7 @@ public class CameraController extends Component {
         this.mode = null;
         this.target = null;
         this.level = null;
+        this.lastRoom = null;
     }
 
     public void follow(Entity entity, Point offset) {
@@ -102,6 +106,21 @@ public class CameraController extends Component {
         if (level != null) {
             var room = level.room(targetPoint.x, targetPoint.y);
             if (room != null) {
+                RectI lastRoomBounds;
+                if (lastRoom != room) {
+                    // TODO: start transition to new room
+                    lastRoomBounds = level.getRoomBounds(room);
+                    if (lastRoomBounds != null) {
+                        // clamp the camera to within the current room's bounds
+                        var cameraHorzEdge = (int) (camera.viewportWidth / 2f);
+                        var cameraVertEdge = (int) (camera.viewportHeight / 2f);
+                        var left   = lastRoomBounds.x + cameraHorzEdge;
+                        var bottom = lastRoomBounds.y + cameraVertEdge;
+                        var right  = lastRoomBounds.x + lastRoomBounds.w - cameraHorzEdge;
+                        var top    = lastRoomBounds.y + lastRoomBounds.h - cameraVertEdge;
+                    }
+                    lastRoom = room;
+                }
                 var bounds = level.getRoomBounds(room);
                 if (bounds != null) {
                     // clamp the camera to within the current room's bounds
