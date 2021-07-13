@@ -121,13 +121,14 @@ public class Game extends ApplicationAdapter {
             level.clear();
             level.load(world, level_path);
 
-            // wire up camera controller
-            var camera = world.first(CameraController.class);
-            camera.follow(player, Point.zero(), true);
-            camera.level = level;
-
             // respawn player
             player = level.spawnPlayer(world);
+
+            // wire up camera controller
+            var camera = world.first(CameraController.class);
+            camera.level = level;
+            camera.follow(player, Point.zero(), true);
+            camera.resetRoom();
 
             // destroy items (will be respawned by level.spawnEnemies())
             var item = world.first(Item.class);

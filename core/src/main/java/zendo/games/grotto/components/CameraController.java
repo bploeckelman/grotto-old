@@ -68,11 +68,7 @@ public class CameraController extends Component {
             target.set(entity.position.x, entity.position.y, 0);
             camera.position.set(target);
             camera.update();
-
-            // update lastRoom reference
-            if (level != null) {
-                lastRoom = level.room((int) target.x, (int) target.y);
-            }
+            resetRoom();
         }
     }
 
@@ -87,11 +83,13 @@ public class CameraController extends Component {
             target.set(point.x, point.y, 0);
             camera.position.set(target);
             camera.update();
+            resetRoom();
+        }
+    }
 
-            // update lastRoom reference
-            if (level != null) {
-                lastRoom = level.room((int) target.x, (int) target.y);
-            }
+    public void resetRoom() {
+        if (level != null) {
+            lastRoom = level.room((int) target.x, (int) target.y);
         }
     }
 
@@ -167,7 +165,7 @@ public class CameraController extends Component {
 
                         // create a transition tween to move from last to next target
                         // TODO: could probably add a self-destruct into the TweenComponent, or a generic onComplete callback where we can self.destroy()
-                        float duration = 1.33f;
+                        float duration = 1.66f;
                         transition = entity.add(new TweenComponent(
                                 Tween.to(target, Vector3Accessor.XY, duration)
                                         .target(nextTargetX, nextTargetY)
