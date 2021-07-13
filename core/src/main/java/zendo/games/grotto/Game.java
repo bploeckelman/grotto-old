@@ -30,8 +30,8 @@ import java.util.List;
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Game extends ApplicationAdapter {
 
-//    private static final String level_path = "levels/world-1.ldtk";
-    private static final String level_path = "levels/ldtk-gridtest.ldtk";
+    private static final String level_path = "levels/world-1.ldtk";
+//    private static final String level_path = "levels/ldtk-gridtest.ldtk";
 
     private Input input;
     private Assets assets;
@@ -92,9 +92,9 @@ public class Game extends ApplicationAdapter {
         enemies = level.spawnEnemies(world);
         level.spawnJumpthrus(world);
 
-        var camera = world.addEntity().add(new CameraController(worldCamera), CameraController.class);
-        camera.follow(player, Point.zero(), true);
+        var camera = world.addEntity().add(new CameraController(worldCamera, assets.tween), CameraController.class);
         camera.level = level;
+        camera.follow(player, Point.zero(), true);
 
         mode = Mode.play;
         worldMouse = new Vector3();
