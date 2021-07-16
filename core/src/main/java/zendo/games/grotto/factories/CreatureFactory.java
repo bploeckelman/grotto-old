@@ -31,6 +31,30 @@ public class CreatureFactory {
         return entity;
     }
 
+    public static Entity eye(World world, Point position) {
+        var entity = world.addEntity();
+        {
+            entity.position.set(position);
+            entity.add(new Enemy(), Enemy.class);
+
+            var anim = entity.add(new Animator("eye", "attack"), Animator.class);
+            anim.mode = Animator.LoopMode.loop;
+
+            var bounds = RectI.at(-6, 0, 20, 20);
+            var collider = entity.add(Collider.makeRect(bounds), Collider.class);
+            collider.mask = Collider.Mask.enemy;
+
+            // mostly so gravity gets applied
+            var mover = entity.add(new Mover(), Mover.class);
+            mover.collider = collider;
+            mover.gravity = -300;
+
+            // TODO: add timer to trigger additional behavior (switch to warn animation when player gets close, then shoot)
+            //       facing, shot effect / behavior, etc...
+        }
+        return entity;
+    }
+
     public static Entity slime(Assets assets, World world, Point position) {
         var entity = world.addEntity();
         {

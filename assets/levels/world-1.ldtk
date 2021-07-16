@@ -369,7 +369,7 @@
 					"layerDefUid": 11,
 					"pxOffsetX": 0,
 					"pxOffsetY": 0,
-					"visible": true,
+					"visible": false,
 					"optionalRules": [],
 					"intGrid": [],
 					"intGridCsv": [],
@@ -418,6 +418,7 @@
 						{ "px": [288,64], "src": [176,144], "f": 0, "t": 587, "d": [98] },
 						{ "px": [304,64], "src": [192,144], "f": 0, "t": 588, "d": [99] },
 						{ "px": [48,80], "src": [0,0], "f": 0, "t": 0, "d": [103] },
+						{ "px": [224,80], "src": [0,0], "f": 0, "t": 0, "d": [114] },
 						{ "px": [160,112], "src": [0,0], "f": 0, "t": 0, "d": [150] },
 						{ "px": [256,112], "src": [48,224], "f": 0, "t": 899, "d": [156] },
 						{ "px": [272,112], "src": [64,224], "f": 0, "t": 900, "d": [157] },
@@ -489,21 +490,21 @@
 						},
 						{
 							"__identifier": "Spawner",
-							"__grid": [14,5],
+							"__grid": [15,6],
 							"__pivot": [0.5,0.5],
 							"__tile": null,
 							"width": 16,
 							"height": 16,
 							"defUid": 14,
-							"px": [232,88],
+							"px": [248,104],
 							"fieldInstances": [{
 								"__identifier": "Type",
-								"__value": "synechococcus",
+								"__value": "eye",
 								"__type": "String",
 								"defUid": 15,
 								"realEditorValues": [{
 									"id": "V_String",
-									"params": ["synechococcus"]
+									"params": ["eye"]
 								}]
 							}]
 						},
@@ -616,26 +617,6 @@
 							"height": 16,
 							"defUid": 14,
 							"px": [264,104],
-							"fieldInstances": [{
-								"__identifier": "Type",
-								"__value": "coin",
-								"__type": "String",
-								"defUid": 15,
-								"realEditorValues": [{
-									"id": "V_String",
-									"params": ["coin"]
-								}]
-							}]
-						},
-						{
-							"__identifier": "Spawner",
-							"__grid": [15,6],
-							"__pivot": [0.5,0.5],
-							"__tile": null,
-							"width": 16,
-							"height": 16,
-							"defUid": 14,
-							"px": [248,104],
 							"fieldInstances": [{
 								"__identifier": "Type",
 								"__value": "coin",
