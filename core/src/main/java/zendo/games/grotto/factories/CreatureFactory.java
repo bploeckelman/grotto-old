@@ -37,10 +37,9 @@ public class CreatureFactory {
             entity.position.set(position);
             entity.add(new Enemy(), Enemy.class);
 
-            var anim = entity.add(new Animator("eye", "attack"), Animator.class);
-            anim.mode = Animator.LoopMode.loop;
+            var anim = entity.add(new Animator("eye", "idle"), Animator.class);
 
-            var bounds = RectI.at(-6, 0, 20, 20);
+            var bounds = RectI.at(-6, 2, 20, 20);
             var collider = entity.add(Collider.makeRect(bounds), Collider.class);
             collider.mask = Collider.Mask.enemy;
 
@@ -49,8 +48,52 @@ public class CreatureFactory {
             mover.collider = collider;
             mover.gravity = -300;
 
-            // TODO: add timer to trigger additional behavior (switch to warn animation when player gets close, then shoot)
-            //       facing, shot effect / behavior, etc...
+            // TODO: add timer that changes collider orientation based on animation and facing
+
+            // add timer to trigger additional behavior
+            // TODO: probably need a stateful timer that updates regularly instead of this,
+            //       it will just act as an update loop and set animation based on current anim state
+            //       and relative player position
+            entity.add(new Timer(2f, (self) -> {
+                var player = self.world().first(Player.class);
+                if (player != null) {
+                    // TODO: add a raycast to check for line of sight with the player,
+                    //  rather than just relying on distance since player may be on a
+                    //  different platform
+
+                    var dist = player.entity().position.x - self.entity().position.x;
+
+                    // set facing
+                    var dir  = Calc.sign(dist);
+                    if (dir == 0) dir = 1;
+                    anim.scale.set(dir, 1);
+
+                    // perform action based on distance to player
+                    var abs = Calc.abs(dist);
+                    var closest = abs < 64;
+                    var close   = abs < 128;
+                    if (closest) {
+                        anim.play("attack");
+                        self.start(anim.duration());
+                        // TODO: spawn shot
+                    }
+                    else if (close) {
+                        anim.play("emerge");
+                        self.entity().add(new Timer(anim.duration(), (timer) -> {
+                            anim.play("warn");
+                            self.start(anim.duration());
+                            timer.destroy();
+                        }), Timer.class);
+                    }
+                    else {
+                        anim.play("idle");
+                        self.start(anim.duration());
+                    }
+                } else {
+                    anim.play("idle");
+                    self.start(anim.duration());
+                }
+            }), Timer.class);
         }
         return entity;
     }
