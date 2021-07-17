@@ -48,50 +48,109 @@ public class CreatureFactory {
             mover.collider = collider;
             mover.gravity = -300;
 
-            // TODO: add timer that changes collider orientation based on animation and facing
+            // TODO: change collider orientation based on animation and facing
+            entity.add(new Timer(0.1f, new Timer.OnEnd() {
+                enum State { idle, emerge, warn, attack, retreat }
 
-            // add timer to trigger additional behavior
-            // TODO: probably need a stateful timer that updates regularly instead of this,
-            //       it will just act as an update loop and set animation based on current anim state
-            //       and relative player position
-            entity.add(new Timer(2f, (self) -> {
-                var player = self.world().first(Player.class);
-                if (player != null) {
-                    // TODO: add a raycast to check for line of sight with the player,
-                    //  rather than just relying on distance since player may be on a
-                    //  different platform
+                private State state = State.idle;
+                private float stateTime = 0;
+                private boolean didShoot = false;
 
-                    var dist = player.entity().position.x - self.entity().position.x;
+                private void changeState(State state) {
+//                    Gdx.app.log("state", "from: " + this.state.name() + " to: " + state.name());
+                    this.state = state;
+                    this.stateTime = 0;
+                }
 
-                    // set facing
-                    var dir  = Calc.sign(dist);
-                    if (dir == 0) dir = 1;
-                    anim.scale.set(dir, 1);
+                // NOTE: not sure that the stateTime >= anim.duration() expressions are doing quite what we want here
+                // TODO: simplify transitions...
+                //   idle -> emerge (no loop, eye open) -> attack (blink once then shoot, looped) -> retreat -> idle
+                //   also simplify ranges, if within range (or in line of sight) then emerge, attack repeatedly until out of range, then retreat
+                @Override
+                public void run(Timer timer) {
+                    // repeat this timer indefinitely
+                    timer.start(0.1f);
 
-                    // perform action based on distance to player
-                    var abs = Calc.abs(dist);
-                    var closest = abs < 64;
-                    var close   = abs < 128;
-                    if (closest) {
-                        anim.play("attack");
-                        self.start(anim.duration());
-                        // TODO: spawn shot
+                    var player = timer.world().first(Player.class);
+                    if (player != null) {
+                        // get some info about relative player position
+                        var dist = player.entity().position.x - timer.entity().position.x;
+                        var sign = Calc.sign(dist);
+                        var absDist = Calc.abs(dist);
+
+                        // set facing
+                        var dir  = Calc.sign(dist);
+                        if (dir == 0) dir = 1;
+                        anim.scale.set(dir, 1);
+
+                        // switch to appropriate animation if current one is complete and criteria is met
+                        var far     = absDist >= 128;
+                        var close   = absDist < 128;
+                        var closest = absDist < 64;
+
+                        stateTime += Time.delta;
+                        switch (state) {
+                            case idle -> {
+                                anim.play("idle");
+                                anim.mode = Animator.LoopMode.loop;
+//                                Gdx.app.log("anim duration", String.format("%.2f", anim.duration()));
+                                if (close) {
+                                    changeState(State.emerge);
+                                }
+                            }
+                            case emerge -> {
+                                anim.play("emerge");
+                                anim.mode = Animator.LoopMode.none;
+//                                Gdx.app.log("anim duration", String.format("%.2f", anim.duration()));
+                                if (stateTime >= anim.duration()) {
+                                    if (closest) {
+                                        changeState(State.attack);
+                                    } else if (close) {
+                                        changeState(State.warn);
+                                    } else {
+                                        changeState(State.retreat);
+                                    }
+                                }
+                            }
+                            case warn -> {
+                                anim.play("warn");
+                                anim.mode = Animator.LoopMode.loop;
+//                                Gdx.app.log("anim duration", String.format("%.2f", anim.duration()));
+                                if (stateTime >= anim.duration()) {
+                                    if (closest) {
+                                        changeState(State.attack);
+                                    } else if (far) {
+                                        changeState(State.retreat);
+                                    }
+                                }
+                            }
+                            case attack -> {
+                                anim.play("attack");
+                                anim.mode = Animator.LoopMode.loop;
+//                                Gdx.app.log("anim duration", String.format("%.2f", anim.duration()));
+                                if (stateTime >= anim.duration()) {
+                                    didShoot = false;
+                                    if (close) {
+                                        changeState(State.warn);
+                                    } else {
+                                        changeState(State.retreat);
+                                    }
+                                } else if (stateTime >= 0.3f && !didShoot) {
+                                    didShoot = true;
+                                    // TODO: spawn bullet
+                                    EffectFactory.spriteAnimOneShot(world, position, "coin", "pickup");
+                                }
+                            }
+                            case retreat -> {
+                                anim.play("retreat");
+                                anim.mode = Animator.LoopMode.none;
+//                                Gdx.app.log("anim duration", String.format("%.2f", anim.duration()));
+                                if (stateTime >= anim.duration()) {
+                                    changeState(State.idle);
+                                }
+                            }
+                        }
                     }
-                    else if (close) {
-                        anim.play("emerge");
-                        self.entity().add(new Timer(anim.duration(), (timer) -> {
-                            anim.play("warn");
-                            self.start(anim.duration());
-                            timer.destroy();
-                        }), Timer.class);
-                    }
-                    else {
-                        anim.play("idle");
-                        self.start(anim.duration());
-                    }
-                } else {
-                    anim.play("idle");
-                    self.start(anim.duration());
                 }
             }), Timer.class);
         }
