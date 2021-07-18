@@ -712,12 +712,15 @@ public class Player extends Component {
             // todo - lose health
 
             // bounce back
-            get(Mover.class).speed.set(-facing * 100, 80);
-
+            // todo - use direction of attack rather than opposite of facing
+            get(Mover.class).speed.set(-facing * 120, 150);
         }
 
         @Override
         public void update(float dt, int input) {
+            // apply gravity
+            get(Mover.class).speed.y += gravity * dt;
+
             invincibleTimer -= dt;
             if (invincibleTimer <= 0) {
                 changeState(new NormalState());
