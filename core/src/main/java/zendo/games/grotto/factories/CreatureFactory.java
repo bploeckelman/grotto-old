@@ -51,6 +51,15 @@ public class CreatureFactory {
             mover.collider = collider;
             mover.gravity = -300;
 
+            var hurtable = entity.add(new Hurtable(), Hurtable.class);
+            hurtable.collider = collider;
+            hurtable.hurtBy = Collider.Mask.player_attack;
+            hurtable.onHurt = (self) -> {
+                Time.pause_for(0.2f);
+                EffectFactory.spriteAnimOneShot(world, position, "vase", "break");
+                entity.destroy();
+            };
+
             // add custom behavior
             entity.add(new EyeBehavior(), EyeBehavior.class);
         }
