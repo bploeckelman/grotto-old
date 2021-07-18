@@ -49,7 +49,6 @@ public class CreatureFactory {
             mover.collider = collider;
             mover.gravity = -300;
 
-            // TODO: change collider orientation based on animation and facing
             // add custom behavior
             entity.add(new Component() {
 
@@ -59,8 +58,8 @@ public class CreatureFactory {
                 private float stateTime = 0;
                 private boolean didShoot = false;
 
-                private final float threat_range = 128;
-                private final float secs_between_attacks = 1.5f;
+                private final float threat_range = 100;
+                private final float secs_between_attacks = 1f;
                 private final float secs_after_retreat = 1f;
 
                 private void changeState(State state) {
@@ -69,7 +68,6 @@ public class CreatureFactory {
                     this.stateTime = 0;
                 }
 
-                // TODO: update eyeball collider position/size based on state & stateTime
                 @Override
                 public void update(float dt) {
                     var player = world.first(Player.class);
@@ -97,6 +95,19 @@ public class CreatureFactory {
                             anim.play("idle");
                             anim.mode = Animator.LoopMode.loop;
 
+                            // update collider position (orientation based on facing happens after state updates)
+                            if (stateTime < 0.1f) {
+                                collider.rect(0, 0, 1, 1);
+                            } else if (stateTime < 0.3f) {
+                                collider.rect(-5, 2, 10, 4);
+                            } else if (stateTime < 0.6f) {
+                                collider.rect(-7, 1, 14, 10);
+                            } else if (stateTime < 0.8f) {
+                                collider.rect(-5, 2, 10, 4);
+                            } else if (stateTime < 0.9f) {
+                                collider.rect(0, 0, 1, 1);
+                            }
+
                             if (stateTime >= anim.duration()) {
                                 var nextState = (inRange) ? State.emerge : State.idle;
                                 changeState(nextState);
@@ -105,6 +116,21 @@ public class CreatureFactory {
                         case emerge -> {
                             anim.play("emerge");
                             anim.mode = Animator.LoopMode.none;
+
+                            // update collider position (orientation based on facing happens after state updates)
+                            if (stateTime < 0.1f) {
+                                collider.rect(0, 0, 1, 1);
+                            } else if (stateTime < 0.2f) {
+                                collider.rect(-5, 2, 10, 4);
+                            } else if (stateTime < 0.3f) {
+                                collider.rect(-7, 1, 14, 10);
+                            } else if (stateTime < 0.6f) {
+                                collider.rect(-4, 1, 15, 17);
+                            } else if (stateTime < 0.8f) {
+                                collider.rect(-4, 1, 15, 18);
+                            } else if (stateTime < 0.9f) {
+                                collider.rect(-5, 1, 15, 21);
+                            }
 
                             if (stateTime >= anim.duration()) {
                                 var nextState = (inRange) ? State.attack : State.retreat;
@@ -115,6 +141,15 @@ public class CreatureFactory {
                             anim.play("attack");
                             anim.mode = Animator.LoopMode.none;
 
+                            // update collider position (orientation based on facing happens after state updates)
+                            if (stateTime < 0.2f) {
+                                collider.rect(-6, 1, 18, 21);
+                            } else if (stateTime < 0.3f) {
+                                collider.rect(-5, 1, 15, 21);
+                            } else if (stateTime < 0.4f) {
+                                collider.rect(-4, 1, 15, 18);
+                            }
+
                             // shoot our shot
                             if (!didShoot) {
                                 didShoot = true;
@@ -123,8 +158,11 @@ public class CreatureFactory {
                             }
 
                             if (stateTime >= anim.duration()) {
+                                //
+                                collider.rect(-4, 1, 15, 18);
+
                                 // either start a new attack or retreat
-                                if (stateTime >= secs_between_attacks) {
+                                if (stateTime >= anim.duration() + secs_between_attacks) {
                                     didShoot = false;
 
                                     var nextState = (inRange) ? State.attack : State.retreat;
@@ -140,11 +178,33 @@ public class CreatureFactory {
                             anim.play("retreat");
                             anim.mode = Animator.LoopMode.none;
 
+                            // update collider position (orientation based on facing happens after state updates)
+                            if (stateTime < 0.1f) {
+                                collider.rect(-4, 1, 15, 18);
+                            } else if (stateTime < 0.3f) {
+                                collider.rect(-4, 1, 14, 17);
+                            } else if (stateTime < 0.4f) {
+                                collider.rect(-7, 1, 14, 10);
+                            } else if (stateTime < 0.5f) {
+                                collider.rect(-5, 2, 10, 4);
+                            } else if (stateTime < 0.6f) {
+                                collider.rect(0, 0, 1, 1);
+                            }
+
                             float endTime = anim.duration() + secs_after_retreat;
-                            if (stateTime >= endTime) {
-                                changeState(State.idle);
+                            if (stateTime > anim.duration()) {
+                                if (stateTime >= endTime) {
+                                    changeState(State.idle);
+                                }
                             }
                         }
+                    }
+
+                    // update collider orientation based on facing direction
+                    if (dir < 0) {
+                        var rect = collider.rect();
+                        rect.x = -(rect.x + rect.w);
+                        collider.rect(rect);
                     }
                 }
             }, Component.class);
