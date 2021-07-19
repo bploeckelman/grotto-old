@@ -12,10 +12,7 @@ import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisWindow;
 import zendo.games.grotto.Assets;
 import zendo.games.grotto.Game;
-import zendo.games.grotto.components.Collider;
-import zendo.games.grotto.components.Tilemap;
 import zendo.games.grotto.input.Input;
-import zendo.games.grotto.utils.Calc;
 import zendo.games.grotto.utils.Point;
 import zendo.games.grotto.utils.Time;
 
@@ -158,20 +155,20 @@ public class Editor {
             }
 
             // right mouse -------------------------------
-            if (Input.pressed(Input.MouseButton.right)) {
-                rightMousePressed = true;
-                lastPress.set((int) worldMouse.x, (int) worldMouse.y);
-                startPos.set(level.entity().position);
-
-                // deselect currently selected tile
-                if (selectedTileCoord != null) {
-                    selectedTileCoord = null;
-                }
-            }
-            if (Input.released(Input.MouseButton.right)) {
-                rightMousePressed = false;
-                lastPress.set(0, 0);
-            }
+//            if (Input.pressed(Input.MouseButton.right)) {
+//                rightMousePressed = true;
+//                lastPress.set((int) worldMouse.x, (int) worldMouse.y);
+//                startPos.set(level.entity().position);
+//
+//                // deselect currently selected tile
+//                if (selectedTileCoord != null) {
+//                    selectedTileCoord = null;
+//                }
+//            }
+//            if (Input.released(Input.MouseButton.right)) {
+//                rightMousePressed = false;
+//                lastPress.set(0, 0);
+//            }
 
             // middle mouse ------------------------------
             if (Input.pressed(Input.MouseButton.middle)) {
@@ -208,33 +205,33 @@ public class Editor {
             else if (rightMousePressed) {
                 mouseDelta.set((int) Input.mouse().x - lastPress.x, (int) Input.mouse().y - lastPress.y);
                 // erase tiles
-                if (selectedTileCoord == null) {
-                    var tilemap = level.entity().get(Tilemap.class);
-                    var collider = level.entity().get(Collider.class);
-
-                    var tileSize = tilemap.tileSize();
-                    var tileX = (int) Calc.floor((worldMouse.x - level.entity().position.x)  / tileSize);
-                    var tileY = (int) Calc.floor((worldMouse.y - level.entity().position.y)  / tileSize);
-
-                    if (tileX >= 0 && tileY >= 0 && tileX < tilemap.cols() && tileY < tilemap.rows()) {
-                        tilemap.setCell(tileX, tileY, null);
-                        // TODO - set collision layer separate from tilemap
-                        collider.setCell(tileX, tileY, false);
-                    }
-                }
+//                if (selectedTileCoord == null) {
+//                    var tilemap = level.entity().get(Tilemap.class);
+//                    var collider = level.entity().get(Collider.class);
+//
+//                    var tileSize = tilemap.tileSize();
+//                    var tileX = (int) Calc.floor((worldMouse.x - level.entity().position.x)  / tileSize);
+//                    var tileY = (int) Calc.floor((worldMouse.y - level.entity().position.y)  / tileSize);
+//
+//                    if (tileX >= 0 && tileY >= 0 && tileX < tilemap.cols() && tileY < tilemap.rows()) {
+//                        tilemap.setCell(tileX, tileY, null);
+//                        // TODO - set collision layer separate from tilemap
+//                        collider.setCell(tileX, tileY, false);
+//                    }
+//                }
             }
             else if (middleMousePressed) {
-                if (Input.down(Input.Key.shift_left)) {
-                    // move level
-                    // TODO - should probably move this a tile at a time by default, allowing pixel movement with a modifier key
-                    mouseDelta.set((int) worldMouse.x - lastPress.x, (int) worldMouse.y - lastPress.y);
-                    level.entity().position.set(startPos.x + mouseDelta.x, startPos.y + mouseDelta.y);
-                } else {
+//                if (Input.down(Input.Key.shift_left)) {
+//                    // move level
+//                    // TODO - should probably move this a tile at a time by default, allowing pixel movement with a modifier key
+//                    mouseDelta.set((int) worldMouse.x - lastPress.x, (int) worldMouse.y - lastPress.y);
+//                    level.entity().position.set(startPos.x + mouseDelta.x, startPos.y + mouseDelta.y);
+//                } else {
                     // move camera
                     mouseDelta.set((int) Input.mouse().x - lastPress.x, (int) Input.mouse().y - lastPress.y);
                     worldCamera.translate((int) (-mouseDelta.x * dt), (int) (mouseDelta.y * dt), 0);
                     worldCamera.update();
-                }
+//                }
             }
         }
 
@@ -311,18 +308,18 @@ public class Editor {
         // skip this since we're not actually using this mode as an editor anymore
         if (true) return;
 
-        var level = game.getLevel();
-        var tilemap = level.entity().get(Tilemap.class);
-        var tileSize = tilemap.tileSize();
-        var rows = tilemap.rows();
-        var cols = tilemap.cols();
-        shapes.setColor(0.1f, 0.1f, 0.1f, 0.2f);
-        for (int x = 0; x < cols; x++) {
-            for (int y = 0; y < rows; y++) {
-                shapes.rect(level.entity().position.x + x * tileSize, level.entity().position.y + y * tileSize, tileSize, tileSize);
-            }
-        }
-        shapes.setColor(Color.WHITE);
+//        var level = game.getLevel();
+//        var tilemap = level.entity().get(Tilemap.class);
+//        var tileSize = tilemap.tileSize();
+//        var rows = tilemap.rows();
+//        var cols = tilemap.cols();
+//        shapes.setColor(0.1f, 0.1f, 0.1f, 0.2f);
+//        for (int x = 0; x < cols; x++) {
+//            for (int y = 0; y < rows; y++) {
+//                shapes.rect(level.entity().position.x + x * tileSize, level.entity().position.y + y * tileSize, tileSize, tileSize);
+//            }
+//        }
+//        shapes.setColor(Color.WHITE);
     }
 
 }

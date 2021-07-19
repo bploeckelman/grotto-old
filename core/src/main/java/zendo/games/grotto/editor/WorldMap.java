@@ -131,11 +131,6 @@ public class WorldMap implements Disposable {
         return jumpthrus;
     }
 
-    // TODO - removeme, only used in editor
-    public Entity entity() {
-        return rooms.get(0);
-    }
-
     // ------------------------------------------
     // Room lookup API
     // ------------------------------------------
