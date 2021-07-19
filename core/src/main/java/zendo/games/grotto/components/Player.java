@@ -235,7 +235,19 @@ public class Player extends Component {
                 var collider = get(Collider.class);
                 var hitbox = collider.first(Collider.Mask.enemy);
                 if (hitbox != null) {
-                    changeState(new HurtState());
+                    // TODO: this is a kludge, ideally there should be no special cases here
+                    //       but the shroom's hit here gets registered before a player stomp
+                    //       (see hurtable.hurtCheck in CreatureFactory.shroom())
+                    var getHurt = true;
+                    if (mover.speed.y < 0) {
+                        var enemy = hitbox.get(Enemy.class);
+                        if (enemy != null && enemy.tag.equals("shroom")) {
+                            getHurt = false;
+                        }
+                    }
+                    if (getHurt) {
+                        changeState(new HurtState());
+                    }
                 }
             }
         }
