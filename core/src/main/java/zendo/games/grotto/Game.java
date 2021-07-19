@@ -11,10 +11,7 @@ import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Align;
-import zendo.games.grotto.components.CameraController;
-import zendo.games.grotto.components.Enemy;
-import zendo.games.grotto.components.Item;
-import zendo.games.grotto.components.Player;
+import zendo.games.grotto.components.*;
 import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
 import zendo.games.grotto.editor.Editor;
@@ -87,6 +84,7 @@ public class Game extends ApplicationAdapter {
 
         world = new World();
         level = new Level(world, assets, level_path);
+        world.addEntity().add(new LevelContainer(level), LevelContainer.class);
 
         player = level.spawnPlayer(world);
         enemies = level.spawnEnemies(world);
