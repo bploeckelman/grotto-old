@@ -26,7 +26,7 @@ public class WorldMap implements Disposable {
     // Helper data structures
     // ------------------------------------------
 
-    static class RoomDesc {
+    static class RoomInfo {
         public Point position;
         public int tileSize;
         public int cols;
@@ -241,12 +241,10 @@ public class WorldMap implements Disposable {
             json.setIgnoreUnknownFields(true);
             var ldtk = json.fromJson(Ldtk.class, Gdx.files.internal(filename));
 
-            // load the room descriptors from the ldtk file data
-            var descs = parseLdtkMap(ldtk);
-            for (var desc : descs) {
-                // load a room entity based on the level descriptor
-                var room = createRoomEntity(desc, assets, world);
-                rooms.add(room);
+            // load room from the ldtk file data
+            var roomInfos = parseLdtkMap(ldtk);
+            for (var roomInfo : roomInfos) {
+                rooms.add(createRoomEntity(roomInfo, assets, world));
             }
         } else {
             Gdx.app.error("WorldMap", "Unable to load, unrecognized file type '" + filename + "'");
@@ -257,17 +255,17 @@ public class WorldMap implements Disposable {
     // Loading implementation details
     // ------------------------------------------
 
-    private Entity createRoomEntity(RoomDesc desc, Assets assets, World world) {
+    private Entity createRoomEntity(RoomInfo info, Assets assets, World world) {
         // setup tileset
-        var tileset = tilesets.get(desc.tilesetUid);
+        var tileset = tilesets.get(info.tilesetUid);
         var tilesetTexture = assets.tilesetAtlas.findRegion(tileset.name);
         var regions = tilesetTexture.split(tileset.gridSize, tileset.gridSize);
 
         // initialize a map between texture region array indices and the texture region they point to in the tileset
         var pointRegionMap = new HashMap<Point, TextureRegion>();
-        for (int x = 0; x < desc.cols; x++) {
-            for (int y = 0; y < desc.rows; y++) {
-                var point = desc.tilemapCellTextures[x + y * desc.cols];
+        for (int x = 0; x < info.cols; x++) {
+            for (int y = 0; y < info.rows; y++) {
+                var point = info.tilemapCellTextures[x + y * info.cols];
                 if (point != null) {
                     pointRegionMap.putIfAbsent(point, regions[point.y][point.x]);
                 }
@@ -278,44 +276,44 @@ public class WorldMap implements Disposable {
         var entity = world.addEntity();
         {
             // create components
-            var tilemap = entity.add(new Tilemap(desc.tileSize, desc.cols, desc.rows), Tilemap.class);
-            var collider = entity.add(Collider.makeGrid(desc.colliderSize, desc.colliderCols, desc.colliderRows), Collider.class);
+            var tilemap = entity.add(new Tilemap(info.tileSize, info.cols, info.rows), Tilemap.class);
+            var collider = entity.add(Collider.makeGrid(info.colliderSize, info.colliderCols, info.colliderRows), Collider.class);
             collider.mask = Collider.Mask.solid;
 
             // optional background image
-            if (desc.backgroundImage != null) {
-                var image = entity.add(new Image(desc.backgroundImage), Image.class);
+            if (info.backgroundImage != null) {
+                var image = entity.add(new Image(info.backgroundImage), Image.class);
                 image.depth = -1000;
             }
 
             // initialize tilemap component contents
-            for (int x = 0; x < desc.cols; x++) {
-                for (int y = 0; y < desc.rows; y++) {
-                    var point = desc.tilemapCellTextures[x + y * desc.cols];
+            for (int x = 0; x < info.cols; x++) {
+                for (int y = 0; y < info.rows; y++) {
+                    var point = info.tilemapCellTextures[x + y * info.cols];
                     tilemap.setCell(x, y, pointRegionMap.get(point));
                 }
             }
 
             // initialize collider component contents
-            for (int x = 0; x < desc.colliderCols; x++) {
-                for (int y = 0; y < desc.colliderRows; y++) {
-                    var value = (desc.colliderCells[x + y * desc.colliderCols] == 1);
+            for (int x = 0; x < info.colliderCols; x++) {
+                for (int y = 0; y < info.colliderRows; y++) {
+                    var value = (info.colliderCells[x + y * info.colliderCols] == 1);
                     collider.setCell(x, y, value);
                 }
             }
 
-            // add a foreground tile layer if one exists in the desc
-            if (desc.foregroundTilemapCellTextures != null && desc.foregroundTilesetUid != -1) {
+            // add a foreground tile layer if one exists in the info
+            if (info.foregroundTilemapCellTextures != null && info.foregroundTilesetUid != -1) {
                 // setup tileset
-                tileset = tilesets.get(desc.foregroundTilesetUid);
+                tileset = tilesets.get(info.foregroundTilesetUid);
                 tilesetTexture = assets.tilesetAtlas.findRegion(tileset.name);
                 regions = tilesetTexture.split(tileset.gridSize, tileset.gridSize);
 
                 // initialize a map between texture region array indices and the texture region they point to in the tileset
                 pointRegionMap.clear();
-                for (int x = 0; x < desc.cols; x++) {
-                    for (int y = 0; y < desc.rows; y++) {
-                        var point = desc.foregroundTilemapCellTextures[x + y * desc.cols];
+                for (int x = 0; x < info.cols; x++) {
+                    for (int y = 0; y < info.rows; y++) {
+                        var point = info.foregroundTilemapCellTextures[x + y * info.cols];
                         if (point != null) {
                             pointRegionMap.putIfAbsent(point, regions[point.y][point.x]);
                         }
@@ -323,11 +321,11 @@ public class WorldMap implements Disposable {
                 }
 
                 // create foreground tilemap component and set regions
-                var foreground = entity.add(new Tilemap(desc.tileSize, desc.cols, desc.rows), Tilemap.class);
+                var foreground = entity.add(new Tilemap(info.tileSize, info.cols, info.rows), Tilemap.class);
                 foreground.depth = 10;
-                for (int x = 0; x < desc.cols; x++) {
-                    for (int y = 0; y < desc.rows; y++) {
-                        var point = desc.foregroundTilemapCellTextures[x + y * desc.cols];
+                for (int x = 0; x < info.cols; x++) {
+                    for (int y = 0; y < info.rows; y++) {
+                        var point = info.foregroundTilemapCellTextures[x + y * info.cols];
                         foreground.setCell(x, y, pointRegionMap.get(point));
                     }
                 }
@@ -335,21 +333,21 @@ public class WorldMap implements Disposable {
 
             // setup a collider for quick lookup of the room's bounds
             collider = entity.add(Collider.makeRect(RectI.at(
-                    desc.position.x, desc.position.y,
-                    desc.tileSize * desc.cols,
-                    desc.tileSize * desc.rows
+                    info.position.x, info.position.y,
+                    info.tileSize * info.cols,
+                    info.tileSize * info.rows
             )), Collider.class);
             collider.mask = Collider.Mask.room_bounds;
-            collider.origin.set(-desc.position.x, -desc.position.y);
+            collider.origin.set(-info.position.x, -info.position.y);
             collider.depth = 100;
         }
-        entity.position.set(desc.position);
+        entity.position.set(info.position);
 
         return entity;
     }
 
-    private List<RoomDesc> parseLdtkMap(Ldtk ldtk) {
-        var descs = new ArrayList<RoomDesc>();
+    private List<RoomInfo> parseLdtkMap(Ldtk ldtk) {
+        var roomInfos = new ArrayList<RoomInfo>();
 
         // instantiate tilesets
         for (var def : ldtk.defs.tilesets) {
@@ -369,7 +367,7 @@ public class WorldMap implements Disposable {
 
         var numLevels = ldtk.levels.size();
         for (int levelNum = 0; levelNum < numLevels; levelNum++) {
-            var desc = new RoomDesc();
+            var info = new RoomInfo();
             {
                 var level = ldtk.levels.get(levelNum);
 
@@ -416,20 +414,20 @@ public class WorldMap implements Disposable {
                     throw new GdxRuntimeException("Failed to load ldtk file, missing tileset with uid " + tilesetUid + " in tile layer");
                 }
 
-                desc.position = Point.at(level.worldX, -(level.worldY + level.pxHei));
-                desc.tileSize = tileset.gridSize;
-                desc.cols = tileLayer.__cWid;
-                desc.rows = tileLayer.__cHei;
-                desc.tilesetUid = tileset.uid;
-                desc.foregroundTilesetUid = -1;
-                desc.entityGridSize = entityLayer.__gridSize;
-                desc.colliderSize = collisionLayer.__gridSize;
-                desc.colliderCols = collisionLayer.__cWid;
-                desc.colliderRows = collisionLayer.__cHei;
-                desc.backgroundImage = backgroundImage;
-                desc.colliderCells = new int[desc.colliderCols * desc.colliderRows];
-                desc.tilemapCellTextures = new Point[desc.cols * desc.rows];
-                desc.foregroundTilemapCellTextures = null;
+                info.position = Point.at(level.worldX, -(level.worldY + level.pxHei));
+                info.tileSize = tileset.gridSize;
+                info.cols = tileLayer.__cWid;
+                info.rows = tileLayer.__cHei;
+                info.tilesetUid = tileset.uid;
+                info.foregroundTilesetUid = -1;
+                info.entityGridSize = entityLayer.__gridSize;
+                info.colliderSize = collisionLayer.__gridSize;
+                info.colliderCols = collisionLayer.__cWid;
+                info.colliderRows = collisionLayer.__cHei;
+                info.backgroundImage = backgroundImage;
+                info.colliderCells = new int[info.colliderCols * info.colliderRows];
+                info.tilemapCellTextures = new Point[info.cols * info.rows];
+                info.foregroundTilemapCellTextures = null;
 
                 // setup entities
                 for (var entity : entityLayer.entityInstances) {
@@ -438,18 +436,18 @@ public class WorldMap implements Disposable {
                         for (var field : entity.fieldInstances) {
                             if ("Type".equals(field.__identifier)) {
                                 var type = field.__value;
-                                var x = desc.position.x + entity.px[0];
+                                var x = info.position.x + entity.px[0];
                                 var flipY = level.pxHei - entity.px[1];
-                                var y = desc.position.y + flipY;
+                                var y = info.position.y + flipY;
                                 spawners.add(new Spawner(type, x, y));
                             }
                         }
                     }
                     // jumpthru platforms
                     else if ("Jumpthru".equals(entity.__identifier)) {
-                        var x = desc.position.x + entity.px[0];
+                        var x = info.position.x + entity.px[0];
                         var flipY = level.pxHei - entity.px[1];
-                        var y = desc.position.y + flipY;
+                        var y = info.position.y + flipY;
                         var w = entity.width;
                         var h = entity.height;
                         jumpthrus.add(new Jumpthru(RectI.at(x, y, w, h)));
@@ -457,12 +455,12 @@ public class WorldMap implements Disposable {
                 }
 
                 // setup collision layer
-                for (int x = 0; x < desc.colliderCols; x++) {
-                    for (int y = 0; y < desc.colliderRows; y++) {
+                for (int x = 0; x < info.colliderCols; x++) {
+                    for (int y = 0; y < info.colliderRows; y++) {
                         // note: ldtk files are stored with origin = top left so we have to flip y
-                        int flipY = (desc.colliderRows - 1) - y;
-                        var collisionValue = collisionLayer.intGridCsv[x + flipY * desc.colliderCols];
-                        desc.colliderCells[x + y * desc.colliderCols] = collisionValue;
+                        int flipY = (info.colliderRows - 1) - y;
+                        var collisionValue = collisionLayer.intGridCsv[x + flipY * info.colliderCols];
+                        info.colliderCells[x + y * info.colliderCols] = collisionValue;
                     }
                 }
 
@@ -471,18 +469,18 @@ public class WorldMap implements Disposable {
                     var px = gridTileEntry.px;
                     var tile = Point.at(px[0] / tileset.gridSize, px[1] / tileset.gridSize);
                     // note: ldtk files are stored with origin = top left so we have to flip y
-                    tile.y = (desc.rows - 1) - tile.y;
+                    tile.y = (info.rows - 1) - tile.y;
 
                     var src = gridTileEntry.src;
                     var textureIndex = Point.at(src[0] / tileset.gridSize, src[1] / tileset.gridSize);
 
-                    desc.tilemapCellTextures[tile.x + tile.y * desc.cols] = textureIndex;
+                    info.tilemapCellTextures[tile.x + tile.y * info.cols] = textureIndex;
                 }
 
                 // setup foreground tilemap layer
                 if (foregroundLayer != null) {
                     var foregroundTilesetUid = foregroundLayer.__tilesetDefUid;
-                    desc.foregroundTilesetUid = foregroundTilesetUid;
+                    info.foregroundTilesetUid = foregroundTilesetUid;
 
                     var foregroundTileset = tilesets.get(foregroundTilesetUid, null);
                     if (foregroundTileset == null) {
@@ -490,24 +488,24 @@ public class WorldMap implements Disposable {
                     }
 
                     // setup foreground layer
-                    desc.foregroundTilemapCellTextures = new Point[desc.cols * desc.rows];
+                    info.foregroundTilemapCellTextures = new Point[info.cols * info.rows];
                     for (var gridTileEntry : foregroundLayer.gridTiles) {
                         var px = gridTileEntry.px;
                         var tile = Point.at(px[0] / foregroundTileset.gridSize, px[1] / foregroundTileset.gridSize);
                         // note: ldtk files are stored with origin = top left so we have to flip y
-                        tile.y = (desc.rows - 1) - tile.y;
+                        tile.y = (info.rows - 1) - tile.y;
 
                         var src = gridTileEntry.src;
                         var textureIndex = Point.at(src[0] / foregroundTileset.gridSize, src[1] / foregroundTileset.gridSize);
 
-                        desc.foregroundTilemapCellTextures[tile.x + tile.y * desc.cols] = textureIndex;
+                        info.foregroundTilemapCellTextures[tile.x + tile.y * info.cols] = textureIndex;
                     }
                 }
             }
-            descs.add(desc);
+            roomInfos.add(info);
         }
 
-        return descs;
+        return roomInfos;
     }
 
 }
