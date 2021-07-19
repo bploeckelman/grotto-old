@@ -15,7 +15,7 @@ import zendo.games.grotto.components.*;
 import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
 import zendo.games.grotto.editor.Editor;
-import zendo.games.grotto.editor.Level;
+import zendo.games.grotto.editor.WorldMap;
 import zendo.games.grotto.input.Input;
 import zendo.games.grotto.sprites.Sprite;
 import zendo.games.grotto.utils.Calc;
@@ -46,7 +46,7 @@ public class Game extends ApplicationAdapter {
     private Entity player;
     private List<Enemy> enemies;
 
-    private Level level;
+    private WorldMap worldMap;
     private Mode mode;
     private enum Mode {play, edit}
     private Vector3 worldMouse;
@@ -83,15 +83,15 @@ public class Game extends ApplicationAdapter {
         frameBufferRegion.flip(false, true);
 
         world = new World();
-        level = new Level(world, assets, level_path);
-        world.addEntity().add(new LevelContainer(level), LevelContainer.class);
+        worldMap = new WorldMap(world, assets, level_path);
+        world.addEntity().add(new WorldMapContainer(worldMap), WorldMapContainer.class);
 
-        player = level.spawnPlayer(world);
-        enemies = level.spawnEnemies(world);
-        level.spawnJumpthrus(world);
+        player = worldMap.spawnPlayer(world);
+        enemies = worldMap.spawnEnemies(world);
+        worldMap.spawnJumpthrus(world);
 
         var camera = world.addEntity().add(new CameraController(worldCamera, assets.tween), CameraController.class);
-        camera.level = level;
+        camera.worldMap = worldMap;
         camera.follow(player, Point.zero(), true);
 
         mode = Mode.play;
@@ -103,7 +103,7 @@ public class Game extends ApplicationAdapter {
     @Override
     public void dispose() {
         world.clear();
-        level.dispose();
+        worldMap.dispose();
         assets.dispose();
     }
 
@@ -116,15 +116,15 @@ public class Game extends ApplicationAdapter {
         // trigger a reload in current room
         if (Input.pressed(Input.Key.r)) {
             // clear and reload level
-            level.clear();
-            level.load(world, level_path);
+            worldMap.clear();
+            worldMap.load(world, level_path);
 
             // respawn player
-            player = level.spawnPlayer(world);
+            player = worldMap.spawnPlayer(world);
 
             // wire up camera controller
             var camera = world.first(CameraController.class);
-            camera.level = level;
+            camera.worldMap = worldMap;
             camera.follow(player, Point.zero(), true);
             camera.resetRoom();
 
@@ -145,16 +145,16 @@ public class Game extends ApplicationAdapter {
                 }
             });
             enemies.clear();
-            enemies = level.spawnEnemies(world);
+            enemies = worldMap.spawnEnemies(world);
 
             // respawn jumpthrus
-            level.jumpthrus().forEach(jumpthru -> {
+            worldMap.jumpthrus().forEach(jumpthru -> {
                 if (jumpthru.entity != null) {
                     jumpthru.entity.destroy();
                 }
             });
-            level.jumpthrus().clear();
-            level.spawnJumpthrus(world);
+            worldMap.jumpthrus().clear();
+            worldMap.spawnJumpthrus(world);
         }
 
         // update based on mode
@@ -243,7 +243,7 @@ public class Game extends ApplicationAdapter {
         {
             assets.tween.update(Time.delta);
             world.update(Time.delta);
-            level.update(Time.delta, world);
+            worldMap.update(Time.delta, world);
         }
     }
 
@@ -371,8 +371,8 @@ public class Game extends ApplicationAdapter {
         return windowCamera;
     }
 
-    public Level getLevel() {
-        return level;
+    public WorldMap getLevel() {
+        return worldMap;
     }
 
     public Vector3 getWorldMouse() {

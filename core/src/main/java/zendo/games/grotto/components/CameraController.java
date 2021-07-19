@@ -10,7 +10,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import zendo.games.grotto.ecs.Component;
 import zendo.games.grotto.ecs.Entity;
-import zendo.games.grotto.editor.Level;
+import zendo.games.grotto.editor.WorldMap;
 import zendo.games.grotto.utils.Calc;
 import zendo.games.grotto.utils.Point;
 import zendo.games.grotto.utils.accessors.Vector3Accessor;
@@ -22,7 +22,7 @@ public class CameraController extends Component {
     public OrthographicCamera camera;
     public Point point;
     public Entity entity;
-    public Level level;
+    public WorldMap worldMap;
 
     private TweenManager tween;
     private TargetMode mode;
@@ -51,7 +51,7 @@ public class CameraController extends Component {
         this.tween = null;
         this.mode = null;
         this.target = null;
-        this.level = null;
+        this.worldMap = null;
         this.lastRoom = null;
         this.transition = null;
     }
@@ -88,8 +88,8 @@ public class CameraController extends Component {
     }
 
     public void resetRoom() {
-        if (level != null) {
-            lastRoom = level.room((int) target.x, (int) target.y);
+        if (worldMap != null) {
+            lastRoom = worldMap.room((int) target.x, (int) target.y);
         }
     }
 
@@ -125,7 +125,7 @@ public class CameraController extends Component {
             target.y = Calc.approach(target.y, targetPoint.y, scaleY * speed * dt);
 
             // lookup the room that the target is currently in (if any)
-            var room = level.room(targetPoint.x, targetPoint.y);
+            var room = worldMap.room(targetPoint);
             if (room != null) {
                 // start a transition between rooms if we need to
                 if (lastRoom != null && lastRoom != room) {
@@ -136,8 +136,8 @@ public class CameraController extends Component {
                     float lastTargetX, lastTargetY;
                     float nextTargetX, nextTargetY;
 
-                    var lastBounds = level.getRoomBounds(lastRoom);
-                    var nextBounds = level.getRoomBounds(room);
+                    var lastBounds = worldMap.getRoomBounds(lastRoom);
+                    var nextBounds = worldMap.getRoomBounds(room);
                     if (lastBounds != null && nextBounds != null) {
                         // clamp the camera to within the last room's bounds
                         var lastLeft   = lastBounds.x + cameraHorzEdge;
@@ -156,7 +156,6 @@ public class CameraController extends Component {
                         nextTargetY = MathUtils.clamp(target.y, nextBottom, nextTop);
 
                         // pause the player for the duration of the transition
-                        // TODO: may want to pause other creatures and such during the transition as well
                         var player = world().first(Player.class);
                         player.entity().active = false;
 
@@ -183,7 +182,7 @@ public class CameraController extends Component {
                     }
                 } else {
                     // keep the camera inside the room's bounds
-                    var bounds = level.getRoomBounds(room);
+                    var bounds = worldMap.getRoomBounds(room);
                     if (bounds != null) {
                         // clamp the camera to within the current room's bounds
                         var left = bounds.x + cameraHorzEdge;

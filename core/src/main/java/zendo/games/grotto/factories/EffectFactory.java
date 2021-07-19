@@ -27,13 +27,13 @@ public class EffectFactory {
             mover.speed.y = 0;
 
             // bullet lifetime
-            var levelContainer = world.first(LevelContainer.class);
-            if (levelContainer != null) {
+            var worldMap = world.first(WorldMapContainer.class);
+            if (worldMap != null) {
                 // destroy the bullet when it moves out of the room it starts in
-                final var startingRoom = levelContainer.getLevel().room(position);
+                final var startingRoom = worldMap.get().room(position);
                 float roomCheckInterval = 0.1f;
                 entity.add(new Timer(roomCheckInterval, (timer) -> {
-                    var currentRoom = levelContainer.getLevel().room(timer.entity().position);
+                    var currentRoom = worldMap.get().room(timer.entity().position);
                     var stillInRoom = (currentRoom != null) && (currentRoom.equals(startingRoom));
                     if (stillInRoom) {
                         timer.start(roomCheckInterval);

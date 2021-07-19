@@ -20,9 +20,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class Level implements Disposable {
+public class WorldMap implements Disposable {
 
-    static class Desc {
+    // ------------------------------------------
+    // Helper data structures
+    // ------------------------------------------
+
+    static class RoomDesc {
         public Point position;
         public int tileSize;
         public int cols;
@@ -65,6 +69,10 @@ public class Level implements Disposable {
         public String name;
     }
 
+    // ------------------------------------------
+    // Member data
+    // ------------------------------------------
+
     private final List<Entity> rooms;
     private final List<Spawner> spawners;
     private final List<Jumpthru> jumpthrus;
@@ -73,7 +81,11 @@ public class Level implements Disposable {
 
     private final Assets assets;
 
-    public Level(World world, Assets assets, String filename) {
+    // ------------------------------------------
+    // Constructor and interface implementations
+    // ------------------------------------------
+
+    public WorldMap(World world, Assets assets, String filename) {
         rooms = new ArrayList<>();
         spawners = new ArrayList<>();
         jumpthrus = new ArrayList<>();
@@ -89,6 +101,32 @@ public class Level implements Disposable {
         backgrounds.forEach(Texture::dispose);
     }
 
+    public void update(float dt, World world) {
+        // only enemies in the same room as the player are active
+        var player = world.first(Player.class);
+        var playerRoom = room(player.entity().position);
+        var enemy = world.first(Enemy.class);
+        while (enemy != null) {
+            if (enemy.entity() == null) continue;
+            var enemyRoom = room(enemy.entity().position);
+            enemy.entity().active = (enemyRoom == playerRoom);
+            enemy = (Enemy) enemy.next;
+        }
+    }
+
+    public void clear() {
+        for (var entity : rooms) {
+            entity.destroy();
+        }
+        rooms.clear();
+        spawners.clear();
+        jumpthrus.clear();
+    }
+
+    // ------------------------------------------
+    // Getters and setters
+    // ------------------------------------------
+
     public List<Jumpthru> jumpthrus() {
         return jumpthrus;
     }
@@ -97,6 +135,10 @@ public class Level implements Disposable {
     public Entity entity() {
         return rooms.get(0);
     }
+
+    // ------------------------------------------
+    // Room lookup API
+    // ------------------------------------------
 
     public Entity room(Point position) {
         return room(position.x, position.y);
@@ -132,6 +174,10 @@ public class Level implements Disposable {
         return collider.rect();
     }
 
+    // ------------------------------------------
+    // Spawning API
+    // ------------------------------------------
+
     public Entity spawnPlayer(World world) {
         // clear existing player
         var p = world.first(Player.class);
@@ -148,18 +194,6 @@ public class Level implements Disposable {
             }
         }
         return player;
-    }
-
-    public void update(float dt, World world) {
-        var player = world.first(Player.class);
-        var playerRoom = room(player.entity().position);
-        var enemy = world.first(Enemy.class);
-        while (enemy != null) {
-            if (enemy.entity() == null) continue;
-            var enemyRoom = room(enemy.entity().position);
-            enemy.entity().active = (enemyRoom == playerRoom);
-            enemy = (Enemy) enemy.next;
-        }
     }
 
     public List<Enemy> spawnEnemies(World world) {
@@ -201,43 +235,34 @@ public class Level implements Disposable {
         }
     }
 
-    public void clear() {
-        for (var entity : rooms) {
-            entity.destroy();
-        }
-        rooms.clear();
-        spawners.clear();
-        jumpthrus.clear();
-    }
+    // ------------------------------------------
+    // Loading API
+    // ------------------------------------------
 
     public void load(World world, String filename) {
         var json = new Json();
-        if (filename.endsWith(".json")) {
-            // load the map descriptor from the specified json file
-            var desc = json.fromJson(Level.Desc.class, Gdx.files.local(filename));
-            if (desc == null) {
-                throw new GdxRuntimeException("Unable to load level file: '" + filename + "'");
-            }
-
-            // load the room from the map descriptor
-            var room = spawnRoom(desc, assets, world);
-            rooms.add(room);
-        } else if (filename.endsWith(".ldtk")) {
+        if (filename.endsWith(".ldtk")) {
             // load ldtk file
             json.setIgnoreUnknownFields(true);
             var ldtk = json.fromJson(Ldtk.class, Gdx.files.internal(filename));
 
-            // load the level descriptors from the ldtk file data
+            // load the room descriptors from the ldtk file data
             var descs = parseLdtkMap(ldtk);
             for (var desc : descs) {
                 // load a room entity based on the level descriptor
-                var room = spawnRoom(desc, assets, world);
+                var room = createRoomEntity(desc, assets, world);
                 rooms.add(room);
             }
+        } else {
+            Gdx.app.error("WorldMap", "Unable to load, unrecognized file type '" + filename + "'");
         }
     }
 
-    public Entity spawnRoom(Desc desc, Assets assets, World world) {
+    // ------------------------------------------
+    // Loading implementation details
+    // ------------------------------------------
+
+    private Entity createRoomEntity(RoomDesc desc, Assets assets, World world) {
         // setup tileset
         var tileset = tilesets.get(desc.tilesetUid);
         var tilesetTexture = assets.tilesetAtlas.findRegion(tileset.name);
@@ -328,8 +353,8 @@ public class Level implements Disposable {
         return entity;
     }
 
-    private List<Level.Desc> parseLdtkMap(Ldtk ldtk) {
-        var descs = new ArrayList<Level.Desc>();
+    private List<RoomDesc> parseLdtkMap(Ldtk ldtk) {
+        var descs = new ArrayList<RoomDesc>();
 
         // instantiate tilesets
         for (var def : ldtk.defs.tilesets) {
@@ -349,7 +374,7 @@ public class Level implements Disposable {
 
         var numLevels = ldtk.levels.size();
         for (int levelNum = 0; levelNum < numLevels; levelNum++) {
-            var desc = new Level.Desc();
+            var desc = new RoomDesc();
             {
                 var level = ldtk.levels.get(levelNum);
 
