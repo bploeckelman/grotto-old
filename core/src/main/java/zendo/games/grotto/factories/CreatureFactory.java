@@ -36,7 +36,7 @@ public class CreatureFactory {
         var entity = world.addEntity();
         {
             entity.position.set(position);
-            entity.add(new Enemy(), Enemy.class);
+            entity.add(new Enemy("eye"), Enemy.class);
 
             var anim = entity.add(new Animator("eye", "idle"), Animator.class);
             anim.mode = Animator.LoopMode.none;
@@ -70,7 +70,7 @@ public class CreatureFactory {
         var entity = world.addEntity();
         {
             entity.position.set(position);
-            entity.add(new Enemy(), Enemy.class);
+            entity.add(new Enemy("slime"), Enemy.class);
 
             var anim = entity.add(new Animator("slime", "idle"), Animator.class);
 
@@ -147,7 +147,7 @@ public class CreatureFactory {
         var entity = world.addEntity();
         {
             entity.position.set(position);
-            entity.add(new Enemy(), Enemy.class);
+            entity.add(new Enemy("goblin"), Enemy.class);
 
             var anim = entity.add(new Animator("goblin", "idle"), Animator.class);
 
@@ -234,7 +234,7 @@ public class CreatureFactory {
         var entity = world.addEntity();
         {
             entity.position.set(position);
-            entity.add(new Enemy(), Enemy.class);
+            entity.add(new Enemy("shroom"), Enemy.class);
 
             var anim = entity.add(new Animator("shroom", "idle"), Animator.class);
 

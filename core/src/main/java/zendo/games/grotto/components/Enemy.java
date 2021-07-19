@@ -8,6 +8,12 @@ public class Enemy extends Component {
 
     // mostly a tag class
 
+    public Enemy() {}
+
+    public Enemy(String tag) {
+        this.tag = tag;
+    }
+
     @Override
     public void render(ShapeRenderer shapes) {
         var shapeType = shapes.getCurrentType();
