@@ -2,6 +2,7 @@ package zendo.games.grotto.components.creatures;
 
 import zendo.games.grotto.components.Animator;
 import zendo.games.grotto.components.Collider;
+import zendo.games.grotto.components.Mover;
 import zendo.games.grotto.components.Player;
 import zendo.games.grotto.ecs.Component;
 import zendo.games.grotto.factories.EffectFactory;
@@ -123,7 +124,11 @@ public class EyeBehavior extends Component {
                 if (!didShoot) {
                     didShoot = true;
                     var shotPosition = Point.at(entity.position.x + dir * 7, entity.position.y + 11);
-                    EffectFactory.bullet(world(), shotPosition, dir);
+                    var bullet = EffectFactory.bullet(world(), shotPosition, dir);
+                    // move the bullet along an arc
+                    var bmov = bullet.get(Mover.class);
+                    bmov.speed.y = 40;
+                    bmov.gravity = -120;
                 }
 
                 if (stateTime >= anim.duration()) {
