@@ -73,16 +73,11 @@ public class EyeBehavior extends Component {
 
         // has player crossed the line of sight ray to trigger an attack
         var playerCollider = player.entity().get(Collider.class);
-        var playerPos = player.entity().position;
-        var playerRect = playerCollider.rect();
+        var pos = player.entity().position;
+        var rect = playerCollider.rect();
         playerBounds.set(
-                playerBoundsMin.set(
-                        playerPos.x + playerRect.x,
-                        playerPos.y + playerRect.y, -1),
-                playerBoundsMax.set(
-                        playerPos.x + playerRect.x + playerRect.w,
-                        playerPos.y + playerRect.y + playerRect.h, 1)
-        );
+                playerBoundsMin.set(pos.x + rect.x, pos.y + rect.y, -1),
+                playerBoundsMax.set(pos.x + rect.x + rect.w, pos.y + rect.y + rect.h, 1));
 
         var eyePos = entity().position;
         lineOfSight.set(eyePos.x, eyePos.y + 11, 0, dir, 0, 0);
