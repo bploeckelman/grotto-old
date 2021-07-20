@@ -210,7 +210,7 @@ public class EyeBehavior extends Component {
 
         // update collider orientation based on facing direction
         if (dir < 0) {
-            var rect = collider.rect();
+            rect = collider.rect();
             rect.x = -(rect.x + rect.w);
             collider.rect(rect);
         }
