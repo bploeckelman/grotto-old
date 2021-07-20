@@ -1,5 +1,11 @@
 package zendo.games.grotto.components.creatures;
 
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Intersector;
+import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.collision.BoundingBox;
+import com.badlogic.gdx.math.collision.Ray;
 import zendo.games.grotto.components.Animator;
 import zendo.games.grotto.components.Collider;
 import zendo.games.grotto.components.Mover;
@@ -20,9 +26,16 @@ public class EyeBehavior extends Component {
     private State state;
     private float stateTime;
     private boolean didShoot;
+    private boolean emerge;
+    private Ray lineOfSight;
+    private BoundingBox playerBounds;
+    private final Vector3 playerBoundsMin = new Vector3();
+    private final Vector3 playerBoundsMax = new Vector3();
 
     public EyeBehavior() {
         state = State.idle;
+        lineOfSight = new Ray();
+        playerBounds = new BoundingBox();
     }
 
     @Override
@@ -31,6 +44,9 @@ public class EyeBehavior extends Component {
         this.state = null;
         this.stateTime = 0;
         this.didShoot = false;
+        this.emerge = false;
+        this.lineOfSight = null;
+        this.playerBounds = null;
     }
 
     @Override
@@ -55,7 +71,26 @@ public class EyeBehavior extends Component {
         if (dir == 0) dir = 1;
         anim.scale.set(dir, 1);
 
-        // is the player within range to trigger an attack
+        // has player crossed the line of sight ray to trigger an attack
+        var playerCollider = player.entity().get(Collider.class);
+        var playerPos = player.entity().position;
+        var playerRect = playerCollider.rect();
+        playerBounds.set(
+                playerBoundsMin.set(
+                        playerPos.x + playerRect.x,
+                        playerPos.y + playerRect.y, -1),
+                playerBoundsMax.set(
+                        playerPos.x + playerRect.x + playerRect.w,
+                        playerPos.y + playerRect.y + playerRect.h, 1)
+        );
+
+        var eyePos = entity().position;
+        lineOfSight.set(eyePos.x, eyePos.y + 11, 0, dir, 0, 0);
+        var inLineOfSight = Intersector.intersectRayBoundsFast(lineOfSight, playerBounds);
+
+        emerge |= inLineOfSight;
+
+        // is the player within range to continue an attack
         boolean inRange = (absDist <= threat_range);
 
         // state specific updates
@@ -79,8 +114,9 @@ public class EyeBehavior extends Component {
                 }
 
                 if (stateTime >= anim.duration()) {
-                    var nextState = (inRange) ? State.emerge : State.idle;
+                    var nextState = (emerge) ? State.emerge : State.idle;
                     changeState(nextState);
+                    emerge = false;
                 }
             }
             case emerge -> {
@@ -103,7 +139,8 @@ public class EyeBehavior extends Component {
                 }
 
                 if (stateTime >= anim.duration()) {
-                    var nextState = (inRange) ? State.attack : State.retreat;
+                    // always attack after being triggered to emerge
+                    var nextState = State.attack;
                     changeState(nextState);
                 }
             }
@@ -169,6 +206,8 @@ public class EyeBehavior extends Component {
                 if (stateTime > anim.duration()) {
                     if (stateTime >= endTime) {
                         changeState(State.idle);
+                        // reset emergence flag
+                        emerge = false;
                     }
                 }
             }
@@ -186,6 +225,27 @@ public class EyeBehavior extends Component {
 //        Gdx.app.log("state", "eye changed state from: " + this.state.name() + " to: " + state.name());
         this.state = state;
         this.stateTime = 0;
+    }
+
+    @Override
+    public void render(ShapeRenderer shapes) {
+        var shapeType = shapes.getCurrentType();
+
+        // entity position
+        {
+            var length = 400f;
+            shapes.set(ShapeRenderer.ShapeType.Filled);
+            shapes.setColor(Color.WHITE);
+            shapes.rectLine(
+                    lineOfSight.origin.x, lineOfSight.origin.y,
+                    lineOfSight.origin.x + lineOfSight.direction.x * length,
+                    lineOfSight.origin.y + lineOfSight.direction.y * length,
+                    1, Color.LIME, Color.RED
+            );
+            shapes.setColor(Color.WHITE);
+        }
+
+        shapes.set(shapeType);
     }
 
 }
