@@ -67,7 +67,7 @@ public class EyeBehavior extends Component {
         var absDist = Calc.abs(dist);
 
         // set facing
-        var dir  = Calc.sign(dist);
+        var dir  = sign;
         if (dir == 0) dir = 1;
         anim.scale.set(dir, 1);
 
