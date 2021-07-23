@@ -96,15 +96,15 @@ public class EyeBehavior extends Component {
                 anim.mode = Animator.LoopMode.loop;
 
                 // update collider position (orientation based on facing happens after state updates)
-                if (stateTime < 0.1f) {
+                if (stateTime < 0.2f) {
                     collider.rect(0, 0, 1, 1);
-                } else if (stateTime < 0.3f) {
+                } else if (stateTime < 0.25f) {
                     collider.rect(-5, 2, 10, 4);
-                } else if (stateTime < 0.6f) {
+                } else if (stateTime < 0.5f) {
                     collider.rect(-7, 1, 14, 10);
-                } else if (stateTime < 0.8f) {
+                } else if (stateTime < 0.55f) {
                     collider.rect(-5, 2, 10, 4);
-                } else if (stateTime < 0.9f) {
+                } else if (stateTime < 0.65f) {
                     collider.rect(0, 0, 1, 1);
                 }
 
