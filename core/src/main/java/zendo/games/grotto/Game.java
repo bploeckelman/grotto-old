@@ -88,6 +88,7 @@ public class Game extends ApplicationAdapter {
 
         player = worldMap.spawnPlayer(world);
         enemies = worldMap.spawnEnemies(world);
+        worldMap.spawnBarriers(world);
         worldMap.spawnJumpthrus(world);
 
         var camera = world.addEntity().add(new CameraController(worldCamera, assets.tween), CameraController.class);
@@ -146,6 +147,15 @@ public class Game extends ApplicationAdapter {
             });
             enemies.clear();
             enemies = worldMap.spawnEnemies(world);
+
+            // respawn barriers
+            worldMap.barriers().forEach(barrier -> {
+                if (barrier.entity != null) {
+                    barrier.entity.destroy();
+                }
+            });
+            worldMap.barriers().clear();
+            worldMap.spawnBarriers(world);
 
             // respawn jumpthrus
             worldMap.jumpthrus().forEach(jumpthru -> {

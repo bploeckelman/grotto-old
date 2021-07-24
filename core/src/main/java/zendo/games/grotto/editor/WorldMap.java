@@ -52,6 +52,15 @@ public class WorldMap implements Disposable {
         }
     }
 
+    public static class Barrier {
+        public RectI bounds;
+        public Entity entity;
+        Barrier(RectI bounds) {
+            this.bounds = bounds;
+            this.entity = null;
+        }
+    }
+
     public static class Jumpthru {
         public RectI bounds;
         public Entity entity;
@@ -75,6 +84,7 @@ public class WorldMap implements Disposable {
 
     private final List<Entity> rooms;
     private final List<Spawner> spawners;
+    private final List<Barrier> barriers;
     private final List<Jumpthru> jumpthrus;
     private final IntMap<Tileset> tilesets;
     private final List<Texture> backgrounds;
@@ -88,6 +98,7 @@ public class WorldMap implements Disposable {
     public WorldMap(World world, Assets assets, String filename) {
         rooms = new ArrayList<>();
         spawners = new ArrayList<>();
+        barriers = new ArrayList<>();
         jumpthrus = new ArrayList<>();
         tilesets = new IntMap<>();
         backgrounds = new ArrayList<>();
@@ -129,6 +140,10 @@ public class WorldMap implements Disposable {
 
     public List<Jumpthru> jumpthrus() {
         return jumpthrus;
+    }
+
+    public List<Barrier> barriers() {
+        return barriers;
     }
 
     // ------------------------------------------
@@ -218,6 +233,16 @@ public class WorldMap implements Disposable {
             }
         }
         return enemies;
+    }
+
+    public void spawnBarriers(World world) {
+        // TODO: factory?
+        for (var barrier : barriers) {
+            var entity = world.addEntity();
+            var collider = entity.add(Collider.makeRect(barrier.bounds), Collider.class);
+            collider.mask = Collider.Mask.solid;
+            barrier.entity = entity;
+        }
     }
 
     public void spawnJumpthrus(World world) {
@@ -442,6 +467,15 @@ public class WorldMap implements Disposable {
                                 spawners.add(new Spawner(type, x, y));
                             }
                         }
+                    }
+                    // barriers
+                    else if ("Barrier".equals(entity.__identifier)) {
+                        var x = info.position.x + entity.px[0];
+                        var flipY = level.pxHei - entity.px[1];
+                        var y = info.position.y + flipY;
+                        var w = entity.width;
+                        var h = entity.height;
+                        barriers.add(new Barrier(RectI.at(x, y, w, h)));
                     }
                     // jumpthru platforms
                     else if ("Jumpthru".equals(entity.__identifier)) {
