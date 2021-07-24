@@ -40,8 +40,8 @@ public class Player extends Component {
 
     private static final float coyote_time = 0.1f;
 
-    private static final float jumpforce_normaljump = 220;
-    private static final float jumpforce_walljump = 250;
+    private static final float jumpforce_normaljump = 120;
+    private static final float jumpforce_walljump = 150;
     private static final float jumpforce_walljump_horizontal = 120;
     private static final float walljump_facing_change_duration = 0.25f;
 
@@ -73,6 +73,7 @@ public class Player extends Component {
     Vector2 conveyorVelocity;
     Vector2 safePosition;
     float jumpforceAmount;
+    float variableJumpTimer;
 
     // flags
     private boolean dead;
@@ -142,6 +143,7 @@ public class Player extends Component {
         conveyorVelocity = null;
         airTimer = 0;
         jumpforceAmount = 0;
+        variableJumpTimer = 0;
         walljumpFacingChangeTimer = 0;
         canJump = false;
         grounded = false;
@@ -259,6 +261,20 @@ public class Player extends Component {
             }
         }
 
+        // handle variable jumping
+        {
+            if (variableJumpTimer > 0) {
+                variableJumpTimer -= dt;
+
+                // TODO: jumpforceAmount should be set at this point I think
+                mover.speed.y = jumpforceAmount;
+
+                if (!jumpButton.down()) {
+                    variableJumpTimer = 0;
+                }
+            }
+        }
+
         // lerp scale back to normal
         {
             var sx = Calc.approach(Calc.abs(anim.scale.x), 1f, 4 * dt);
@@ -310,6 +326,7 @@ public class Player extends Component {
         if (jumpButton.pressed() && airTimer < coyote_time) {
             jumpButton.clearPressBuffer();
 
+            variableJumpTimer = 0.15f;
             jumpforceAmount = jumpforce_normaljump;
 
             // check ground / platform speed
@@ -343,6 +360,7 @@ public class Player extends Component {
         if (jumpButton.pressed() && wallsliding) {
             jumpButton.clearPressBuffer();
 
+            variableJumpTimer = 0.15f;
             jumpforceAmount = jumpforce_walljump;
 
             var mover = get(Mover.class);
