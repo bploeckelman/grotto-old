@@ -376,11 +376,8 @@ public class WorldMap implements Disposable {
 
         // instantiate tilesets
         for (var def : ldtk.defs.tilesets) {
+            var nameBeginIndex = 0;
             var nameEndIndex = def.relPath.lastIndexOf(".png");
-            var nameBeginIndex = def.relPath.lastIndexOf("/");
-            if (nameBeginIndex == -1) {
-                nameBeginIndex = 0;
-            }
             var tileset = new Tileset();
             tileset.uid = def.uid;
             tileset.rows = def.__cHei;
