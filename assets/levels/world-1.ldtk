@@ -9,7 +9,7 @@
 		"url": "https://ldtk.io"
 	},
 	"jsonVersion": "0.9.3",
-	"nextUid": 23,
+	"nextUid": 28,
 	"worldLayout": "Free",
 	"worldGridWidth": 256,
 	"worldGridHeight": 256,
@@ -202,6 +202,118 @@
 			"pivotX": 0,
 			"pivotY": 1,
 			"fieldDefs": []
+		},
+		{
+			"identifier": "Solid",
+			"uid": 23,
+			"tags": [],
+			"width": 8,
+			"height": 8,
+			"resizableX": true,
+			"resizableY": true,
+			"keepAspectRatio": false,
+			"fillOpacity": 1,
+			"lineOpacity": 1,
+			"hollow": false,
+			"color": "#FFFF00",
+			"renderMode": "Rectangle",
+			"showName": true,
+			"tilesetId": null,
+			"tileId": null,
+			"tileRenderMode": "FitInside",
+			"maxCount": 0,
+			"limitScope": "PerLevel",
+			"limitBehavior": "MoveLastOne",
+			"pivotX": 0,
+			"pivotY": 1,
+			"fieldDefs": [
+				{
+					"identifier": "id",
+					"__type": "String",
+					"uid": 24,
+					"type": "F_String",
+					"isArray": false,
+					"canBeNull": true,
+					"arrayMinLength": null,
+					"arrayMaxLength": null,
+					"editorDisplayMode": "ValueOnly",
+					"editorDisplayPos": "Above",
+					"editorAlwaysShow": false,
+					"editorCutLongValues": true,
+					"min": null,
+					"max": null,
+					"regex": null,
+					"acceptFileTypes": null,
+					"defaultOverride": null,
+					"textLanguageMode": null
+				}
+			]
+		},
+		{
+			"identifier": "Waypoint",
+			"uid": 25,
+			"tags": [],
+			"width": 8,
+			"height": 8,
+			"resizableX": false,
+			"resizableY": false,
+			"keepAspectRatio": false,
+			"fillOpacity": 1,
+			"lineOpacity": 1,
+			"hollow": false,
+			"color": "#FFFF99",
+			"renderMode": "Rectangle",
+			"showName": true,
+			"tilesetId": null,
+			"tileId": null,
+			"tileRenderMode": "FitInside",
+			"maxCount": 0,
+			"limitScope": "PerLevel",
+			"limitBehavior": "MoveLastOne",
+			"pivotX": 0,
+			"pivotY": 1,
+			"fieldDefs": [
+				{
+					"identifier": "SolidId",
+					"__type": "String",
+					"uid": 26,
+					"type": "F_String",
+					"isArray": false,
+					"canBeNull": true,
+					"arrayMinLength": null,
+					"arrayMaxLength": null,
+					"editorDisplayMode": "ValueOnly",
+					"editorDisplayPos": "Above",
+					"editorAlwaysShow": false,
+					"editorCutLongValues": true,
+					"min": null,
+					"max": null,
+					"regex": null,
+					"acceptFileTypes": null,
+					"defaultOverride": null,
+					"textLanguageMode": null
+				},
+				{
+					"identifier": "Sequence",
+					"__type": "Int",
+					"uid": 27,
+					"type": "F_Int",
+					"isArray": false,
+					"canBeNull": false,
+					"arrayMinLength": null,
+					"arrayMaxLength": null,
+					"editorDisplayMode": "ValueOnly",
+					"editorDisplayPos": "Center",
+					"editorAlwaysShow": true,
+					"editorCutLongValues": true,
+					"min": null,
+					"max": null,
+					"regex": null,
+					"acceptFileTypes": null,
+					"defaultOverride": null,
+					"textLanguageMode": null
+				}
+			]
 		}
 	], "tilesets": [
 		{
@@ -649,6 +761,84 @@
 							"defUid": 18,
 							"px": [192,64],
 							"fieldInstances": []
+						},
+						{
+							"__identifier": "Solid",
+							"__grid": [13,15],
+							"__pivot": [0,1],
+							"__tile": null,
+							"width": 32,
+							"height": 8,
+							"defUid": 23,
+							"px": [104,128],
+							"fieldInstances": [{
+								"__identifier": "id",
+								"__value": "1",
+								"__type": "String",
+								"defUid": 24,
+								"realEditorValues": [{
+									"id": "V_String",
+									"params": ["1"]
+								}]
+							}]
+						},
+						{
+							"__identifier": "Waypoint",
+							"__grid": [13,15],
+							"__pivot": [0,1],
+							"__tile": null,
+							"width": 8,
+							"height": 8,
+							"defUid": 25,
+							"px": [104,128],
+							"fieldInstances": [
+								{
+									"__identifier": "SolidId",
+									"__value": "1",
+									"__type": "String",
+									"defUid": 26,
+									"realEditorValues": [{
+										"id": "V_String",
+										"params": ["1"]
+									}]
+								},
+								{
+									"__identifier": "Sequence",
+									"__value": 0,
+									"__type": "Int",
+									"defUid": 27,
+									"realEditorValues": [{ "id": "V_Int", "params": [0] }]
+								}
+							]
+						},
+						{
+							"__identifier": "Waypoint",
+							"__grid": [24,15],
+							"__pivot": [0,1],
+							"__tile": null,
+							"width": 8,
+							"height": 8,
+							"defUid": 25,
+							"px": [192,128],
+							"fieldInstances": [
+								{
+									"__identifier": "SolidId",
+									"__value": "1",
+									"__type": "String",
+									"defUid": 26,
+									"realEditorValues": [{
+										"id": "V_String",
+										"params": ["1"]
+									}]
+								},
+								{
+									"__identifier": "Sequence",
+									"__value": 1,
+									"__type": "Int",
+									"defUid": 27,
+									"realEditorValues": [{ "id": "V_Int", "params": [1] }]
+								}
+							]
 						}
 					]
 				},

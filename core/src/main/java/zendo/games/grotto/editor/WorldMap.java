@@ -43,6 +43,14 @@ public class WorldMap implements Disposable {
         public Point[] foregroundTilemapCellTextures;
     }
 
+    static class Tileset {
+        public int uid;
+        public int gridSize;
+        public int rows;
+        public int cols;
+        public String name;
+    }
+
     static class Spawner {
         public String type;
         public Point pos;
@@ -70,12 +78,24 @@ public class WorldMap implements Disposable {
         }
     }
 
-    static class Tileset {
-        public int uid;
-        public int gridSize;
-        public int rows;
-        public int cols;
-        public String name;
+    public static class SolidInfo {
+        public final int id;
+        public final RectI bounds;
+        SolidInfo(int id, RectI bounds) {
+            this.id = id;
+            this.bounds = bounds;
+        }
+    }
+
+    public static class WaypointInfo {
+        public final int solidId;
+        public final int sequence;
+        public final Point point;
+        WaypointInfo(int solidId, int sequence, Point point) {
+            this.solidId = solidId;
+            this.sequence = sequence;
+            this.point = point;
+        }
     }
 
     // ------------------------------------------
@@ -88,6 +108,9 @@ public class WorldMap implements Disposable {
     private final List<Jumpthru> jumpthrus;
     private final IntMap<Tileset> tilesets;
     private final List<Texture> backgrounds;
+
+    public final List<SolidInfo> solidInfos;
+    public final List<WaypointInfo> waypointInfos;
 
     private final Assets assets;
 
@@ -102,6 +125,8 @@ public class WorldMap implements Disposable {
         jumpthrus = new ArrayList<>();
         tilesets = new IntMap<>();
         backgrounds = new ArrayList<>();
+        solidInfos = new ArrayList<>();
+        waypointInfos = new ArrayList<>();
 
         this.assets = assets;
         load(world, filename);
@@ -144,6 +169,16 @@ public class WorldMap implements Disposable {
 
     public List<Barrier> barriers() {
         return barriers;
+    }
+
+    private List<WaypointInfo> getWaypointInfosForSolid(int solidId) {
+        var infos = new ArrayList<WaypointInfo>();
+        for (var info : waypointInfos) {
+            if (info.solidId == solidId) {
+                infos.add(info);
+            }
+        }
+        return infos;
     }
 
     // ------------------------------------------
@@ -252,6 +287,15 @@ public class WorldMap implements Disposable {
             var collider = entity.add(Collider.makeRect(jumpthru.bounds), Collider.class);
             collider.mask = Collider.Mask.jumpthru;
             jumpthru.entity = entity;
+        }
+    }
+
+    public void spawnSolids(World world) {
+        // TODO: factory?
+        for (var info : solidInfos) {
+            var entity = world.addEntity();
+            var waypoints = getWaypointInfosForSolid(info.id);
+            entity.add(new Solid(info, waypoints), Solid.class);
         }
     }
 
@@ -453,37 +497,45 @@ public class WorldMap implements Disposable {
 
                 // setup entities
                 for (var entity : entityLayer.entityInstances) {
+                    var x = info.position.x + entity.px[0];
+                    var flipY = level.pxHei - entity.px[1];
+                    var y = info.position.y + flipY;
+                    var w = entity.width;
+                    var h = entity.height;
+
                     // creature spawners
                     if ("Spawner".equals(entity.__identifier)) {
                         for (var field : entity.fieldInstances) {
                             if ("Type".equals(field.__identifier)) {
                                 var type = field.__value;
-                                var x = info.position.x + entity.px[0];
-                                var flipY = level.pxHei - entity.px[1];
-                                var y = info.position.y + flipY;
                                 spawners.add(new Spawner(type, x, y));
                             }
                         }
                     }
                     // barriers
                     else if ("Barrier".equals(entity.__identifier)) {
-                        var x = info.position.x + entity.px[0];
-                        var flipY = level.pxHei - entity.px[1];
-                        var y = info.position.y + flipY;
-                        var w = entity.width;
-                        var h = entity.height;
                         barriers.add(new Barrier(RectI.at(x, y, w, h)));
                     }
                     // jumpthru platforms
                     else if ("Jumpthru".equals(entity.__identifier)) {
-                        var x = info.position.x + entity.px[0];
-                        var flipY = level.pxHei - entity.px[1];
-                        var y = info.position.y + flipY;
-                        var w = entity.width;
-                        var h = entity.height;
                         jumpthrus.add(new Jumpthru(RectI.at(x, y, w, h)));
                     }
+                    // solids
+                    else if ("Solid".equals(entity.__identifier)) {
+                        // TODO: get additional data
+                        var id = 0;
+                        solidInfos.add(new SolidInfo(id, RectI.at(x, y, w, h)));
+                    }
+                    // waypoints
+                    else if ("Waypoint".equals(entity.__identifier)) {
+                        // TODO: get additional data
+                        var solidId = 0;
+                        var sequence = 0;
+                        waypointInfos.add(new WaypointInfo(solidId, sequence, Point.at(x, y)));
+                    }
                 }
+
+                // TODO: validate associations between solids and waypoints
 
                 // setup collision layer
                 for (int x = 0; x < info.colliderCols; x++) {

@@ -90,6 +90,7 @@ public class Game extends ApplicationAdapter {
         enemies = worldMap.spawnEnemies(world);
         worldMap.spawnBarriers(world);
         worldMap.spawnJumpthrus(world);
+        worldMap.spawnSolids(world);
 
         var camera = world.addEntity().add(new CameraController(worldCamera, assets.tween), CameraController.class);
         camera.worldMap = worldMap;
@@ -165,6 +166,16 @@ public class Game extends ApplicationAdapter {
             });
             worldMap.jumpthrus().clear();
             worldMap.spawnJumpthrus(world);
+
+            // respawn solids
+            var solid = world.first(Solid.class);
+            while (solid != null) {
+                if (solid.entity() != null) {
+                    solid.entity().destroy();
+                }
+                solid = (Solid) solid.next;
+            }
+            worldMap.spawnSolids(world);
         }
 
         // update based on mode
