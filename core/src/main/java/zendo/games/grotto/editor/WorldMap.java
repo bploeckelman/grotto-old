@@ -294,6 +294,7 @@ public class WorldMap implements Disposable {
         // TODO: factory?
         for (var info : solidInfos) {
             var entity = world.addEntity();
+            entity.add(new Animator("platform", "idle"), Animator.class);
             var waypoints = getWaypointInfosForSolid(info.id);
             entity.add(new Solid(info, waypoints), Solid.class);
         }
