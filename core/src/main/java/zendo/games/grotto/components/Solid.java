@@ -2,7 +2,6 @@ package zendo.games.grotto.components;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import zendo.games.grotto.ecs.Component;
 import zendo.games.grotto.editor.WorldMap;
@@ -21,10 +20,12 @@ public class Solid extends Component {
         Point point;
     }
 
+    public RectI bounds;
+    public Collider collider;
+
     private int id;
     private float t;
     private boolean forward;
-    private RectI bounds;
     private Vector2 remainder;
     private List<Waypoint> waypoints;
 
@@ -54,6 +55,7 @@ public class Solid extends Component {
         t = 0;
         forward = false;
         bounds = null;
+        collider = null;
         if (remainder != null) {
             VectorPool.dim2.free(remainder);
         }
@@ -70,8 +72,14 @@ public class Solid extends Component {
             if (t < 0) t = 0;
         }
 
+        // determine which Movers are 'riding' this solid
+        var riding = getRidingMovers();
+
         var interp = VectorPool.dim2.obtain();
         {
+            int startX = bounds.x;
+            int startY = bounds.y;
+
             // TODO: figure out which waypoints we're between based on t and the sequence numbers
             var start = waypoints.get(0);
             var end   = waypoints.get(waypoints.size() - 1);
@@ -80,6 +88,15 @@ public class Solid extends Component {
 
             var x = (int) interp.x;
             var y = (int) interp.y;
+
+            // move riders if needed
+            // TODO: still need to handle non-riders by pushing and potentially squishing
+            int moveX = x - startX;
+            int moveY = y - startY;
+            for (var rider : riding) {
+                rider.moveX(moveX);
+                rider.moveY(moveY);
+            }
 
             bounds.setPosition(x, y);
             entity.position.set(x, y);
@@ -91,7 +108,6 @@ public class Solid extends Component {
         t += dir * speed * dt;
 
         // TODO: check against actors to
-        //  - check for Actor isRiding status (maybe do this in the actor/player class?)
         //  - trigger OnSquish callbacks
     }
 
@@ -121,6 +137,19 @@ public class Solid extends Component {
             shapes.setColor(Color.WHITE);
         }
         shapes.set(shapeType);
+    }
+
+    private List<Mover> ridingMovers = new ArrayList<>();
+    private List<Mover> getRidingMovers() {
+        ridingMovers.clear();
+        var mover = world().first(Mover.class);
+        while (mover != null) {
+            if (mover.isRiding(this)) {
+                ridingMovers.add(mover);
+            }
+            mover = (Mover) mover.next;
+        }
+        return ridingMovers;
     }
 
 }
