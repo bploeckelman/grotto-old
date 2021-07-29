@@ -21,10 +21,11 @@ public class Solid extends Component {
         Point point;
     }
 
+    public float speed;
     public RectI bounds;
     public Collider collider;
 
-    private int id;
+    private String id;
     private float t;
     private Vector2 remainder;
 
@@ -39,6 +40,7 @@ public class Solid extends Component {
         waypointInfos.sort(Comparator.comparing(waypointInfo -> waypointInfo.sequence));
 
         this.id = info.id;
+        this.speed = info.speed;
         this.t = 0;
         this.forward = true;
         this.bounds = info.bounds;
@@ -55,7 +57,8 @@ public class Solid extends Component {
     @Override
     public void reset() {
         super.reset();
-        id = 0;
+        id = null;
+        speed = 0;
         t = 0;
         forward = false;
         bounds = null;
@@ -86,13 +89,13 @@ public class Solid extends Component {
             segment = Calc.min(segment, waypoints.size() - 2);
 
             // adjust main timer to move across current segment
-            float tt = t * (waypoints.size() - 1) - segment;
+            float tSegment = t * (waypoints.size() - 1) - segment;
 
             // interpolate across current segment
             var start = waypoints.get(segment);
             var end   = waypoints.get(segment + 1);
-            interp.x = (1f - tt) * start.point.x + (tt) * end.point.x;
-            interp.y = (1f - tt) * start.point.y + (tt) * end.point.y;
+            interp.x = (1f - tSegment) * start.point.x + (tSegment) * end.point.x;
+            interp.y = (1f - tSegment) * start.point.y + (tSegment) * end.point.y;
 
             // limit movement to integer intervals
             var x = (int) interp.x;
@@ -116,7 +119,6 @@ public class Solid extends Component {
 
         // increment the overall movement timer
         var dir = forward ? 1 : -1;
-        var speed = 0.4f;
         t += dir * speed * dt;
     }
 

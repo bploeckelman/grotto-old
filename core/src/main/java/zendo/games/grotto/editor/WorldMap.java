@@ -19,6 +19,7 @@ import zendo.games.grotto.utils.RectI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 public class WorldMap implements Disposable {
 
@@ -79,19 +80,21 @@ public class WorldMap implements Disposable {
     }
 
     public static class SolidInfo {
-        public final int id;
+        public final String id;
         public final RectI bounds;
-        SolidInfo(int id, RectI bounds) {
+        public final float speed;
+        SolidInfo(String id, RectI bounds, float speed) {
             this.id = id;
             this.bounds = bounds;
+            this.speed = speed;
         }
     }
 
     public static class WaypointInfo {
-        public final int solidId;
+        public final String solidId;
         public final int sequence;
         public final Point point;
-        WaypointInfo(int solidId, int sequence, Point point) {
+        WaypointInfo(String solidId, int sequence, Point point) {
             this.solidId = solidId;
             this.sequence = sequence;
             this.point = point;
@@ -171,10 +174,10 @@ public class WorldMap implements Disposable {
         return barriers;
     }
 
-    private List<WaypointInfo> getWaypointInfosForSolid(int solidId) {
+    private List<WaypointInfo> getWaypointInfosForSolid(String solidId) {
         var infos = new ArrayList<WaypointInfo>();
         for (var info : waypointInfos) {
-            if (info.solidId == solidId) {
+            if (info.solidId.equalsIgnoreCase(solidId)) {
                 infos.add(info);
             }
         }
@@ -530,16 +533,27 @@ public class WorldMap implements Disposable {
                     }
                     // solids
                     else if ("Solid".equals(entity.__identifier)) {
-                        // TODO: get additional data
-                        var id = 0;
-                        solidInfos.add(new SolidInfo(id, RectI.at(x, y, w, h)));
+                        var idField = findEntityField(entity, "string", "id");
+                        var speedField = findEntityField(entity, "float", "speed");
+                        if (idField.isPresent() && speedField.isPresent()) {
+                            var id = idField.get().__value;
+                            var speed = Float.parseFloat(speedField.get().__value);
+                            solidInfos.add(new SolidInfo(id, RectI.at(x, y, w, h), speed));
+                        } else {
+                            Gdx.app.error("WorldMap", "found solid but unable to read id or speed fields");
+                        }
                     }
                     // waypoints
                     else if ("Waypoint".equals(entity.__identifier)) {
-                        // TODO: get additional data
-                        var solidId = 0;
-                        var sequence = 0;
-                        waypointInfos.add(new WaypointInfo(solidId, sequence, Point.at(x, y)));
+                        var idField = findEntityField(entity, "string", "solid_id");
+                        var seqField = findEntityField(entity, "int", "sequence");
+                        if (idField.isPresent() && seqField.isPresent()) {
+                            var id = idField.get().__value;
+                            var seq = Integer.parseInt(seqField.get().__value, 10);
+                            waypointInfos.add(new WaypointInfo(id, seq, Point.at(x, y)));
+                        } else {
+                            Gdx.app.error("WorldMap", "found waypoint but unable to read id or sequence fields");
+                        }
                     }
                 }
 
@@ -597,6 +611,16 @@ public class WorldMap implements Disposable {
         }
 
         return roomInfos;
+    }
+
+    private static Optional<Ldtk.FieldInstance> findEntityField(Ldtk.EntityInstance entity, String type, String identifier) {
+        return entity.fieldInstances.stream()
+                .filter(field -> {
+                    var typeMatches       = type.equalsIgnoreCase(field.__type);
+                    var identifierMatches = identifier.equalsIgnoreCase(field.__identifier);
+                    return typeMatches && identifierMatches;
+                })
+                .findFirst();
     }
 
 }
