@@ -294,14 +294,16 @@ public class WorldMap implements Disposable {
         // TODO: factory?
         for (var info : solidInfos) {
             var entity = world.addEntity();
+
             entity.add(new Animator("platform", "idle"), Animator.class);
+
             var collider = entity.add(Collider.makeRect(RectI.zero()), Collider.class);
             collider.mask = Collider.Mask.solid;
+
             var waypoints = getWaypointInfosForSolid(info.id);
             var solid = entity.add(new Solid(info, waypoints), Solid.class);
             collider.rect().setSize(solid.bounds.w, solid.bounds.h);
             solid.collider = collider;
-
         }
     }
 

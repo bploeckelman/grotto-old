@@ -4,7 +4,6 @@ import com.badlogic.gdx.math.Vector2;
 import zendo.games.grotto.ecs.Component;
 import zendo.games.grotto.utils.Calc;
 import zendo.games.grotto.utils.Point;
-import zendo.games.grotto.utils.RectI;
 
 public class Mover extends Component {
 
@@ -42,20 +41,9 @@ public class Mover extends Component {
     public boolean isRiding(Solid solid) {
         var riding = false;
         if (collider != null) {
-            var rect = RectI.pool.obtain();
-            {
-                rect.set(
-                        entity.position.x + collider.origin.x + collider.rect().x,
-                        entity.position.y + collider.origin.y + collider.rect().y,
-                        collider.rect().w, collider.rect().h);
-                var isColliding = rect.overlaps(solid.bounds);
-
-                rect.y -= 1;
-                var isOnTop = rect.overlaps(solid.bounds);
-
-                riding = !isColliding && isOnTop;
-            }
-            RectI.pool.free(rect);
+            var isColliding  = collider.overlaps(solid.collider, Point.zero());
+            var isAboveSolid = collider.overlaps(solid.collider, Point.at(0, -1));
+            riding = !isColliding && isAboveSolid;
         }
         return riding;
     }

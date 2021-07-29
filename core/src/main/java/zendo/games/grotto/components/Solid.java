@@ -98,18 +98,15 @@ public class Solid extends Component {
             var x = (int) interp.x;
             var y = (int) interp.y;
 
-            // TODO: check against actors to
-            //  - trigger OnSquish callbacks
-
-            // move riders if needed
-            // TODO: still need to handle non-riders by pushing and potentially squishing
+            // how much will we move in this step
+            // TODO: since these are used to carry/push other entities,
+            //  need to track interp remainders so entities don't fall behind
+            //  (like currently with player being carried downwards)
             int moveX = x - bounds.x;
             int moveY = y - bounds.y;
-            var riding = getRidingMovers();
-            for (var rider : riding) {
-                rider.moveX(moveX);
-                rider.moveY(moveY);
-            }
+
+            // push or carry other movers
+            updateOtherMovers(moveX, moveY);
 
             // move to new position
             bounds.setPosition(x, y);
@@ -153,17 +150,83 @@ public class Solid extends Component {
 
     // ------------------------------------------------------------------------
 
-    private List<Mover> ridingMovers = new ArrayList<>();
-    private List<Mover> getRidingMovers() {
-        ridingMovers.clear();
-        var mover = world().first(Mover.class);
-        while (mover != null) {
-            if (mover.isRiding(this)) {
-                ridingMovers.add(mover);
+    private final List<Mover> allMovers = new ArrayList<>();
+    private final List<Mover> ridingMovers = new ArrayList<>();
+    private void updateOtherMovers(int moveX, int moveY) {
+        // update lists of other movers
+        {
+            allMovers.clear();
+            ridingMovers.clear();
+            var mover = world().first(Mover.class);
+            while (mover != null) {
+                allMovers.add(mover);
+                if (mover.isRiding(this)) {
+                    ridingMovers.add(mover);
+                }
+                mover = (Mover) mover.next;
             }
-            mover = (Mover) mover.next;
         }
-        return ridingMovers;
+
+        // apply movement to other movers, either pushing or carrying them
+        // TODO: pass OnSquish callbacks to moveX|Y when pushing
+
+        // check horizontal movement
+        if (moveX != 0) {
+            if (moveX > 0) {
+                for (var mover : allMovers) {
+                    if (mover.collider == null) continue;
+                    if (mover.collider.overlaps(this.collider, Point.zero())) {
+                        // push right
+                        var amount = this.collider.rect().right() - mover.collider.rect().left();
+                        mover.moveX(amount);
+                    } else if (ridingMovers.contains(mover)) {
+                        // carry right
+                        mover.moveX(moveX);
+                    }
+                }
+            } else {
+                for (var mover : allMovers) {
+                    if (mover.collider == null) continue;
+                    if (mover.collider.overlaps(this.collider, Point.zero())) {
+                        // push left
+                        var amount = this.collider.rect().left() - mover.collider.rect().right();
+                        mover.moveX(amount);
+                    } else if (ridingMovers.contains(mover)) {
+                        // carry left
+                        mover.moveX(moveX);
+                    }
+                }
+            }
+        }
+
+        // check vertical movement
+        if (moveY != 0) {
+            if (moveY > 0) {
+                for (var mover : allMovers) {
+                    if (mover.collider == null) continue;
+                    if (mover.collider.overlaps(this.collider, Point.zero())) {
+                        // push up
+                        var amount = this.collider.rect().top() - mover.collider.rect().bottom();
+                        mover.moveY(amount);
+                    } else if (ridingMovers.contains(mover)) {
+                        // carry up
+                        mover.moveY(moveY);
+                    }
+                }
+            } else {
+                for (var mover : allMovers) {
+                    if (mover.collider == null) continue;
+                    if (mover.collider.overlaps(this.collider, Point.zero())) {
+                        // push down
+                        var amount = this.collider.rect().bottom() - mover.collider.rect().top();
+                        mover.moveY(amount);
+                    } else if (ridingMovers.contains(mover)) {
+                        // carry down
+                        mover.moveY(moveY);
+                    }
+                }
+            }
+        }
     }
 
 }
