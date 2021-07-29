@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class WorldMap implements Disposable {
 
@@ -175,13 +176,9 @@ public class WorldMap implements Disposable {
     }
 
     private List<WaypointInfo> getWaypointInfosForSolid(String solidId) {
-        var infos = new ArrayList<WaypointInfo>();
-        for (var info : waypointInfos) {
-            if (info.solidId.equalsIgnoreCase(solidId)) {
-                infos.add(info);
-            }
-        }
-        return infos;
+        return waypointInfos.stream()
+                .filter(waypoint -> waypoint.solidId.equalsIgnoreCase(solidId))
+                .collect(Collectors.toList());
     }
 
     // ------------------------------------------

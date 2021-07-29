@@ -38,9 +38,12 @@ public class Collider extends Component {
     private RectI rect;
     private Grid grid;
 
+    private RectI worldRect;
+
     public Collider() {
         super();
         origin = Point.zero();
+        worldRect = RectI.zero();
     }
 
     @Override
@@ -51,6 +54,7 @@ public class Collider extends Component {
         origin = null;
         rect = null;
         grid = null;
+        worldRect = null;
     }
 
     // ------------------------------------------------------------------------
@@ -87,6 +91,13 @@ public class Collider extends Component {
             throw new GdxRuntimeException("Collider is not a Rectangle");
         }
         return rect;
+    }
+
+    public RectI worldRect() {
+        return worldRect.set(
+                entity.position.x + origin.x + rect.x,
+                entity.position.y + origin.y + rect.y,
+                rect.w, rect.h);
     }
 
     public Collider rect(RectI rect) {

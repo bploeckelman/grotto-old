@@ -171,6 +171,7 @@ public class Solid extends Component {
 
         // apply movement to other movers, either pushing or carrying them
         // TODO: pass OnSquish callbacks to moveX|Y when pushing
+        // TODO: when pushing off a ledge, the push completes before gravity takes effect
 
         // check horizontal movement
         if (moveX != 0) {
@@ -179,7 +180,9 @@ public class Solid extends Component {
                     if (mover.collider == null) continue;
                     if (mover.collider.overlaps(this.collider, Point.zero())) {
                         // push right
-                        var amount = this.collider.rect().right() - mover.collider.rect().left();
+                        var thisRect = this.collider.worldRect();
+                        var thatRect = mover.collider.worldRect();
+                        var amount = thisRect.right() - thatRect.left();
                         mover.moveX(amount);
                     } else if (ridingMovers.contains(mover)) {
                         // carry right
@@ -191,7 +194,9 @@ public class Solid extends Component {
                     if (mover.collider == null) continue;
                     if (mover.collider.overlaps(this.collider, Point.zero())) {
                         // push left
-                        var amount = this.collider.rect().left() - mover.collider.rect().right();
+                        var thisRect = this.collider.worldRect();
+                        var thatRect = mover.collider.worldRect();
+                        var amount = thisRect.left() - thatRect.right();
                         mover.moveX(amount);
                     } else if (ridingMovers.contains(mover)) {
                         // carry left
@@ -208,7 +213,9 @@ public class Solid extends Component {
                     if (mover.collider == null) continue;
                     if (mover.collider.overlaps(this.collider, Point.zero())) {
                         // push up
-                        var amount = this.collider.rect().top() - mover.collider.rect().bottom();
+                        var thisRect = this.collider.worldRect();
+                        var thatRect = mover.collider.worldRect();
+                        var amount = thisRect.top() - thatRect.bottom();
                         mover.moveY(amount);
                     } else if (ridingMovers.contains(mover)) {
                         // carry up
@@ -220,7 +227,9 @@ public class Solid extends Component {
                     if (mover.collider == null) continue;
                     if (mover.collider.overlaps(this.collider, Point.zero())) {
                         // push down
-                        var amount = this.collider.rect().bottom() - mover.collider.rect().top();
+                        var thisRect = this.collider.worldRect();
+                        var thatRect = mover.collider.worldRect();
+                        var amount = thisRect.bottom() - thatRect.top();
                         mover.moveY(amount);
                     } else if (ridingMovers.contains(mover)) {
                         // carry down
