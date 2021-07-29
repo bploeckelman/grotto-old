@@ -839,6 +839,64 @@
 									"realEditorValues": [{ "id": "V_Int", "params": [1] }]
 								}
 							]
+						},
+						{
+							"__identifier": "Waypoint",
+							"__grid": [24,10],
+							"__pivot": [0,1],
+							"__tile": null,
+							"width": 8,
+							"height": 8,
+							"defUid": 25,
+							"px": [192,88],
+							"fieldInstances": [
+								{
+									"__identifier": "SolidId",
+									"__value": "1",
+									"__type": "String",
+									"defUid": 26,
+									"realEditorValues": [{
+										"id": "V_String",
+										"params": ["1"]
+									}]
+								},
+								{
+									"__identifier": "Sequence",
+									"__value": 2,
+									"__type": "Int",
+									"defUid": 27,
+									"realEditorValues": [{ "id": "V_Int", "params": [2] }]
+								}
+							]
+						},
+						{
+							"__identifier": "Waypoint",
+							"__grid": [13,10],
+							"__pivot": [0,1],
+							"__tile": null,
+							"width": 8,
+							"height": 8,
+							"defUid": 25,
+							"px": [104,88],
+							"fieldInstances": [
+								{
+									"__identifier": "SolidId",
+									"__value": "1",
+									"__type": "String",
+									"defUid": 26,
+									"realEditorValues": [{
+										"id": "V_String",
+										"params": ["1"]
+									}]
+								},
+								{
+									"__identifier": "Sequence",
+									"__value": 3,
+									"__type": "Int",
+									"defUid": 27,
+									"realEditorValues": [{ "id": "V_Int", "params": [3] }]
+								}
+							]
 						}
 					]
 				},

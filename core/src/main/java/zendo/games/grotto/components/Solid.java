@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import zendo.games.grotto.ecs.Component;
 import zendo.games.grotto.editor.WorldMap;
+import zendo.games.grotto.utils.Calc;
 import zendo.games.grotto.utils.Point;
 import zendo.games.grotto.utils.RectI;
 import zendo.games.grotto.utils.VectorPool;
@@ -25,8 +26,10 @@ public class Solid extends Component {
 
     private int id;
     private float t;
-    private boolean forward;
     private Vector2 remainder;
+
+    private boolean forward;
+    private int currentWaypoint;
     private List<Waypoint> waypoints;
 
     public Solid() {}
@@ -46,6 +49,7 @@ public class Solid extends Component {
             waypoint.point = waypointInfo.point;
             this.waypoints.add(waypoint);
         }
+        this.currentWaypoint = 0;
     }
 
     @Override
@@ -60,6 +64,7 @@ public class Solid extends Component {
             VectorPool.dim2.free(remainder);
         }
         remainder = null;
+        currentWaypoint = -1;
         waypoints = null;
     }
 
@@ -72,43 +77,50 @@ public class Solid extends Component {
             if (t < 0) t = 0;
         }
 
-        // determine which Movers are 'riding' this solid
-        var riding = getRidingMovers();
-
+        // interpolate between waypoints
         var interp = VectorPool.dim2.obtain();
         {
-            int startX = bounds.x;
-            int startY = bounds.y;
+            // figure out which waypoints to transition between (assumes waypoints are in sequence order)
+            int segment = (int) Calc.floor(t * (waypoints.size() - 1));
+            segment = Calc.max(segment, 0);
+            segment = Calc.min(segment, waypoints.size() - 2);
 
-            // TODO: figure out which waypoints we're between based on t and the sequence numbers
-            var start = waypoints.get(0);
-            var end   = waypoints.get(waypoints.size() - 1);
-            interp.x = (1f - t) * start.point.x + t * end.point.x;
-            interp.y = (1f - t) * start.point.y + t * end.point.y;
+            // adjust main timer to move across current segment
+            float tt = t * (waypoints.size() - 1) - segment;
 
+            // interpolate across current segment
+            var start = waypoints.get(segment);
+            var end   = waypoints.get(segment + 1);
+            interp.x = (1f - tt) * start.point.x + (tt) * end.point.x;
+            interp.y = (1f - tt) * start.point.y + (tt) * end.point.y;
+
+            // limit movement to integer intervals
             var x = (int) interp.x;
             var y = (int) interp.y;
 
+            // TODO: check against actors to
+            //  - trigger OnSquish callbacks
+
             // move riders if needed
             // TODO: still need to handle non-riders by pushing and potentially squishing
-            int moveX = x - startX;
-            int moveY = y - startY;
+            int moveX = x - bounds.x;
+            int moveY = y - bounds.y;
+            var riding = getRidingMovers();
             for (var rider : riding) {
                 rider.moveX(moveX);
                 rider.moveY(moveY);
             }
 
+            // move to new position
             bounds.setPosition(x, y);
             entity.position.set(x, y);
         }
         VectorPool.dim2.free(interp);
 
+        // increment the overall movement timer
         var dir = forward ? 1 : -1;
         var speed = 0.4f;
         t += dir * speed * dt;
-
-        // TODO: check against actors to
-        //  - trigger OnSquish callbacks
     }
 
     @Override
@@ -132,12 +144,14 @@ public class Solid extends Component {
         shapeType = shapes.getCurrentType();
         {
             shapes.set(ShapeRenderer.ShapeType.Filled);
-            shapes.setColor(1f, 1f, 0f, 0.5f);
+            shapes.setColor(1f, 1f, 0f, 0.2f);
             shapes.rect(bounds.x, bounds.y, bounds.w, bounds.h);
             shapes.setColor(Color.WHITE);
         }
         shapes.set(shapeType);
     }
+
+    // ------------------------------------------------------------------------
 
     private List<Mover> ridingMovers = new ArrayList<>();
     private List<Mover> getRidingMovers() {
