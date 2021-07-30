@@ -83,6 +83,8 @@ public class Game extends ApplicationAdapter {
         frameBufferRegion.flip(false, true);
 
         world = new World();
+        world.addEntity().add(new GameContainer(this), GameContainer.class);
+
         worldMap = new WorldMap(world, assets, level_path);
         world.addEntity().add(new WorldMapContainer(worldMap), WorldMapContainer.class);
 
