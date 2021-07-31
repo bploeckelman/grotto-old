@@ -107,16 +107,17 @@ public class WorldMap implements Disposable {
     // ------------------------------------------
 
     private final List<Entity> rooms;
+    private final List<Entity> solids;
     private final List<Spawner> spawners;
     private final List<Barrier> barriers;
     private final List<Jumpthru> jumpthrus;
-    private final IntMap<Tileset> tilesets;
-    private final List<Texture> backgrounds;
 
     public final List<SolidInfo> solidInfos;
     public final List<WaypointInfo> waypointInfos;
 
     private final Assets assets;
+    private final IntMap<Tileset> tilesets;
+    private final List<Texture> backgrounds;
 
     // ------------------------------------------
     // Constructor and interface implementations
@@ -124,6 +125,7 @@ public class WorldMap implements Disposable {
 
     public WorldMap(World world, Assets assets, String filename) {
         rooms = new ArrayList<>();
+        solids = new ArrayList<>();
         spawners = new ArrayList<>();
         barriers = new ArrayList<>();
         jumpthrus = new ArrayList<>();
@@ -155,8 +157,12 @@ public class WorldMap implements Disposable {
     }
 
     public void clear() {
-        for (var entity : rooms) {
-            entity.destroy();
+        for (var solid : solids) {
+            solid.destroy();
+        }
+        solids.clear();
+        for (var room : rooms) {
+            room.destroy();
         }
         rooms.clear();
         spawners.clear();
@@ -294,16 +300,20 @@ public class WorldMap implements Disposable {
         // TODO: factory?
         for (var info : solidInfos) {
             var entity = world.addEntity();
+            {
+                entity.position.set(info.bounds.x, info.bounds.y);
 
-            entity.add(new Animator("platform", "idle"), Animator.class);
+                entity.add(new Animator("platform", "idle"), Animator.class);
 
-            var collider = entity.add(Collider.makeRect(RectI.zero()), Collider.class);
-            collider.mask = Collider.Mask.solid;
+                var collider = entity.add(Collider.makeRect(RectI.zero()), Collider.class);
+                collider.mask = Collider.Mask.solid;
 
-            var waypoints = getWaypointInfosForSolid(info.id);
-            var solid = entity.add(new Solid(info, waypoints), Solid.class);
-            collider.rect().setSize(solid.bounds.w, solid.bounds.h);
-            solid.collider = collider;
+                var waypoints = getWaypointInfosForSolid(info.id);
+                var solid = entity.add(new Solid(info, waypoints), Solid.class);
+                collider.rect().setSize(solid.bounds.w, solid.bounds.h);
+                solid.collider = collider;
+            }
+            solids.add(entity);
         }
     }
 

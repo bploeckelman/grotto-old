@@ -1,14 +1,13 @@
 package zendo.games.grotto.components;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import zendo.games.grotto.ecs.Component;
 import zendo.games.grotto.editor.WorldMap;
-import zendo.games.grotto.utils.Calc;
-import zendo.games.grotto.utils.Point;
-import zendo.games.grotto.utils.RectI;
-import zendo.games.grotto.utils.VectorPool;
+import zendo.games.grotto.factories.EffectFactory;
+import zendo.games.grotto.utils.*;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -154,6 +153,25 @@ public class Solid extends Component {
 
     private final List<Mover> allMovers = new ArrayList<>();
     private final List<Mover> ridingMovers = new ArrayList<>();
+    private final Mover.OnSquish onSquish = new Mover.OnSquish() {
+        boolean triggered = false;
+        @Override
+        public void squish(Mover mover) {
+            if (!triggered) {
+                triggered = true;
+                Time.pause_for(0.2f);
+                EffectFactory.squish(world(), mover.entity().position);
+                if (mover.get(Player.class) != null) {
+                    // TODO: execution of updateOtherMovers continues after triggering this
+                    //       need a better way to trigger a global state reload
+//                    world().first(GameContainer.class).game.reload();
+                    Gdx.app.log("player squished", "");
+                } else {
+                    mover.entity().destroy();
+                }
+            }
+        }
+    };
     private void updateOtherMovers(int moveX, int moveY) {
         // update lists of other movers
         {
@@ -183,10 +201,10 @@ public class Solid extends Component {
                         var thisRect = this.collider.worldRect();
                         var thatRect = mover.collider.worldRect();
                         var amount = thisRect.right() - thatRect.left();
-                        mover.moveX(amount);
+                        mover.moveX(amount, onSquish);
                     } else if (ridingMovers.contains(mover)) {
                         // carry right
-                        mover.moveX(moveX);
+                        mover.moveX(moveX, null);
                     }
                 }
             } else {
@@ -197,10 +215,10 @@ public class Solid extends Component {
                         var thisRect = this.collider.worldRect();
                         var thatRect = mover.collider.worldRect();
                         var amount = thisRect.left() - thatRect.right();
-                        mover.moveX(amount);
+                        mover.moveX(amount, onSquish);
                     } else if (ridingMovers.contains(mover)) {
                         // carry left
-                        mover.moveX(moveX);
+                        mover.moveX(moveX, null);
                     }
                 }
             }
@@ -216,10 +234,10 @@ public class Solid extends Component {
                         var thisRect = this.collider.worldRect();
                         var thatRect = mover.collider.worldRect();
                         var amount = thisRect.top() - thatRect.bottom();
-                        mover.moveY(amount);
+                        mover.moveY(amount, onSquish);
                     } else if (ridingMovers.contains(mover)) {
                         // carry up
-                        mover.moveY(moveY);
+                        mover.moveY(moveY, null);
                     }
                 }
             } else {
@@ -230,10 +248,10 @@ public class Solid extends Component {
                         var thisRect = this.collider.worldRect();
                         var thatRect = mover.collider.worldRect();
                         var amount = thisRect.bottom() - thatRect.top();
-                        mover.moveY(amount);
+                        mover.moveY(amount, onSquish);
                     } else if (ridingMovers.contains(mover)) {
                         // carry down
-                        mover.moveY(moveY);
+                        mover.moveY(moveY, null);
                     }
                 }
             }

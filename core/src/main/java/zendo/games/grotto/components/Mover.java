@@ -11,6 +11,10 @@ public class Mover extends Component {
         void hit(Mover mover);
     }
 
+    public interface OnSquish {
+        void squish(Mover mover);
+    }
+
     public Vector2 speed;
     public Collider collider;
     public OnHit onHitX;
@@ -74,11 +78,11 @@ public class Mover extends Component {
         remainder.y = totalMoveY - intMoveY;
 
         // move by the integer values
-        moveX(intMoveX);
-        moveY(intMoveY);
+        moveX(intMoveX, null);
+        moveY(intMoveY, null);
     }
 
-    public boolean moveX(int amount) {
+    public boolean moveX(int amount, OnSquish onSquish) {
         if (collider == null) {
             entity.position.x += amount;
         } else {
@@ -91,6 +95,9 @@ public class Mover extends Component {
                     } else {
                         stopX();
                     }
+                    if (onSquish != null) {
+                        onSquish.squish(this);
+                    }
                     return true;
                 }
 
@@ -102,7 +109,7 @@ public class Mover extends Component {
         return false;
     }
 
-    public boolean moveY(int amount) {
+    public boolean moveY(int amount, OnSquish onSquish) {
         if (collider == null) {
             entity.position.y += amount;
         } else {
@@ -118,6 +125,9 @@ public class Mover extends Component {
                         onHitY.hit(this);
                     } else {
                         stopY();
+                    }
+                    if (onSquish != null) {
+                        onSquish.squish(this);
                     }
                     return true;
                 }

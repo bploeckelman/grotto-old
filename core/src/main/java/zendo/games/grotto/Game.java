@@ -28,7 +28,7 @@ import java.util.List;
 public class Game extends ApplicationAdapter {
 
     private static final String level_path = "levels/world-1.ldtk";
-//    private static final String level_path = "levels/ldtk-gridtest.ldtk";
+//    private static final String level_path = "levels/ldtk-gridtest.ldtk"
 
     private Input input;
     private Assets assets;
@@ -118,66 +118,8 @@ public class Game extends ApplicationAdapter {
         worldCamera.unproject(worldMouse.set(Input.mouse().x, Input.mouse().y, 0));
 
         // trigger a reload in current room
-        if (Input.pressed(Input.Key.r)) {
-            // clear and reload level
-            worldMap.clear();
-            worldMap.load(world, level_path);
-
-            // respawn player
-            player = worldMap.spawnPlayer(world);
-
-            // wire up camera controller
-            var camera = world.first(CameraController.class);
-            camera.worldMap = worldMap;
-            camera.follow(player, Point.zero(), true);
-            camera.resetRoom();
-
-            // destroy items (will be respawned by level.spawnEnemies())
-            var item = world.first(Item.class);
-            while (item != null) {
-                var next = (Item) item.next;
-                if (item.entity() != null) {
-                    item.entity().destroy();
-                }
-                item = next;
-            }
-
-            // destroy and respawn enemies
-            enemies.forEach(enemy -> {
-                if (enemy.entity() != null) {
-                    enemy.entity().destroy();
-                }
-            });
-            enemies.clear();
-            enemies = worldMap.spawnEnemies(world);
-
-            // respawn barriers
-            worldMap.barriers().forEach(barrier -> {
-                if (barrier.entity != null) {
-                    barrier.entity.destroy();
-                }
-            });
-            worldMap.barriers().clear();
-            worldMap.spawnBarriers(world);
-
-            // respawn jumpthrus
-            worldMap.jumpthrus().forEach(jumpthru -> {
-                if (jumpthru.entity != null) {
-                    jumpthru.entity.destroy();
-                }
-            });
-            worldMap.jumpthrus().clear();
-            worldMap.spawnJumpthrus(world);
-
-            // respawn solids
-            var solid = world.first(Solid.class);
-            while (solid != null) {
-                if (solid.entity() != null) {
-                    solid.entity().destroy();
-                }
-                solid = (Solid) solid.next;
-            }
-            worldMap.spawnSolids(world);
+        if (Input.pressed(Input.Key.r) || world.first(Player.class).entity() == null) {
+            reload();
         }
 
         // update based on mode
@@ -224,6 +166,68 @@ public class Game extends ApplicationAdapter {
 
             // enemies get reactivated in Level.update() during play mode update loop
         }
+    }
+
+    public void reload() {
+        // clear and reload level
+        worldMap.clear();
+        worldMap.load(world, level_path);
+
+        // respawn player
+        player = worldMap.spawnPlayer(world);
+
+        // wire up camera controller
+        var camera = world.first(CameraController.class);
+        camera.worldMap = worldMap;
+        camera.follow(player, Point.zero(), true);
+        camera.resetRoom();
+
+        // destroy items (will be respawned by level.spawnEnemies())
+        var item = world.first(Item.class);
+        while (item != null) {
+            var next = (Item) item.next;
+            if (item.entity() != null) {
+                item.entity().destroy();
+            }
+            item = next;
+        }
+
+        // destroy and respawn enemies
+        enemies.forEach(enemy -> {
+            if (enemy.entity() != null) {
+                enemy.entity().destroy();
+            }
+        });
+        enemies.clear();
+        enemies = worldMap.spawnEnemies(world);
+
+        // respawn barriers
+        worldMap.barriers().forEach(barrier -> {
+            if (barrier.entity != null) {
+                barrier.entity.destroy();
+            }
+        });
+        worldMap.barriers().clear();
+        worldMap.spawnBarriers(world);
+
+        // respawn jumpthrus
+        worldMap.jumpthrus().forEach(jumpthru -> {
+            if (jumpthru.entity != null) {
+                jumpthru.entity.destroy();
+            }
+        });
+        worldMap.jumpthrus().clear();
+        worldMap.spawnJumpthrus(world);
+
+        // respawn solids
+        var solid = world.first(Solid.class);
+        while (solid != null) {
+            if (solid.entity() != null) {
+                solid.entity().destroy();
+            }
+            solid = (Solid) solid.next;
+        }
+        worldMap.spawnSolids(world);
     }
 
     private void updatePlayMode(float dt) {

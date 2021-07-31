@@ -62,4 +62,18 @@ public class EffectFactory {
         return entity;
     }
 
+    public static Entity squish(World world, Point position) {
+        var entity = world.addEntity();
+        {
+            entity.position.set(position);
+
+            // TODO: figure out which thing we're squishing and use the appropriate animation
+            var anim = entity.add(new Animator("hero", "death"), Animator.class);
+            anim.depth = 100;
+
+            entity.add(new Timer(anim.duration(), (self) -> self.entity().destroy()), Timer.class);
+        }
+        return entity;
+    }
+
 }
