@@ -40,7 +40,7 @@ public class Player extends Component {
 
     private static final float coyote_time = 0.1f;
 
-    private static final float jumpforce_normaljump = 120;
+    private static final float jumpforce_normaljump = 140;
     private static final float jumpforce_walljump = 150;
     private static final float jumpforce_walljump_horizontal = 120;
     private static final float walljump_facing_change_duration = 0.25f;
