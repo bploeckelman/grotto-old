@@ -107,7 +107,7 @@ public class WorldMap implements Disposable {
     // ------------------------------------------
 
     private final List<Entity> rooms;
-    private final List<Entity> solids;
+    private final List<Solid> solids;
     private final List<Spawner> spawners;
     private final List<Barrier> barriers;
     private final List<Jumpthru> jumpthrus;
@@ -157,16 +157,38 @@ public class WorldMap implements Disposable {
     }
 
     public void clear() {
-        for (var solid : solids) {
-            solid.destroy();
-        }
-        solids.clear();
-        for (var room : rooms) {
-            room.destroy();
-        }
-        rooms.clear();
         spawners.clear();
+
+        solids.forEach(solid -> {
+            if (solid.entity() != null) {
+                solid.entity().destroy();
+            }
+        });
+        solids.clear();
+
+        jumpthrus.forEach(jumpthru -> {
+            if (jumpthru.entity != null) {
+                jumpthru.entity.destroy();
+            }
+        });
         jumpthrus.clear();
+
+        barriers.forEach(barrier -> {
+            if (barrier.entity != null) {
+                barrier.entity.destroy();
+            }
+        });
+        barriers.clear();
+
+        rooms.forEach(room -> {
+            if (room != null) {
+                room.destroy();
+            }
+        });
+        rooms.clear();
+
+        solidInfos.clear();
+        waypointInfos.clear();
     }
 
     // ------------------------------------------
@@ -179,6 +201,10 @@ public class WorldMap implements Disposable {
 
     public List<Barrier> barriers() {
         return barriers;
+    }
+
+    public List<Solid> solids() {
+        return solids;
     }
 
     private List<WaypointInfo> getWaypointInfosForSolid(String solidId) {
@@ -312,8 +338,9 @@ public class WorldMap implements Disposable {
                 var solid = entity.add(new Solid(info, waypoints), Solid.class);
                 collider.rect().setSize(solid.bounds.w, solid.bounds.h);
                 solid.collider = collider;
+
+                solids.add(solid);
             }
-            solids.add(entity);
         }
     }
 

@@ -201,33 +201,12 @@ public class Game extends ApplicationAdapter {
         enemies.clear();
         enemies = worldMap.spawnEnemies(world);
 
-        // respawn barriers
-        worldMap.barriers().forEach(barrier -> {
-            if (barrier.entity != null) {
-                barrier.entity.destroy();
-            }
-        });
-        worldMap.barriers().clear();
+        // respawn other map entities
         worldMap.spawnBarriers(world);
-
-        // respawn jumpthrus
-        worldMap.jumpthrus().forEach(jumpthru -> {
-            if (jumpthru.entity != null) {
-                jumpthru.entity.destroy();
-            }
-        });
-        worldMap.jumpthrus().clear();
         worldMap.spawnJumpthrus(world);
-
-        // respawn solids
-        var solid = world.first(Solid.class);
-        while (solid != null) {
-            if (solid.entity() != null) {
-                solid.entity().destroy();
-            }
-            solid = (Solid) solid.next;
-        }
         worldMap.spawnSolids(world);
+
+        Gdx.app.log("reload", "World map reloaded");
     }
 
     private void updatePlayMode(float dt) {
