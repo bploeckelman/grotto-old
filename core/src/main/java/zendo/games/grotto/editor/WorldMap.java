@@ -112,8 +112,8 @@ public class WorldMap implements Disposable {
     private final List<Barrier> barriers;
     private final List<Jumpthru> jumpthrus;
 
-    public final List<SolidInfo> solidInfos;
-    public final List<WaypointInfo> waypointInfos;
+    private final List<SolidInfo> solidInfos;
+    private final List<WaypointInfo> waypointInfos;
 
     private final Assets assets;
     private final IntMap<Tileset> tilesets;
@@ -194,18 +194,6 @@ public class WorldMap implements Disposable {
     // ------------------------------------------
     // Getters and setters
     // ------------------------------------------
-
-    public List<Jumpthru> jumpthrus() {
-        return jumpthrus;
-    }
-
-    public List<Barrier> barriers() {
-        return barriers;
-    }
-
-    public List<Solid> solids() {
-        return solids;
-    }
 
     private List<WaypointInfo> getWaypointInfosForSolid(String solidId) {
         return waypointInfos.stream()
