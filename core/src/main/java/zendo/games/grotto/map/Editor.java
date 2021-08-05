@@ -1,4 +1,4 @@
-package zendo.games.grotto.editor;
+package zendo.games.grotto.map;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;

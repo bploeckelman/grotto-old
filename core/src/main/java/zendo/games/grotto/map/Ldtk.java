@@ -1,4 +1,4 @@
-package zendo.games.grotto.editor;
+package zendo.games.grotto.map;
 
 import java.util.List;
 

@@ -1,7 +1,7 @@
 package zendo.games.grotto.components;
 
 import zendo.games.grotto.ecs.Component;
-import zendo.games.grotto.editor.WorldMap;
+import zendo.games.grotto.map.WorldMap;
 
 /**
  * Provide a convenient way to get at the WorldMap from the ECS

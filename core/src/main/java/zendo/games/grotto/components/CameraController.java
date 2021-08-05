@@ -10,7 +10,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import zendo.games.grotto.ecs.Component;
 import zendo.games.grotto.ecs.Entity;
-import zendo.games.grotto.editor.WorldMap;
+import zendo.games.grotto.map.WorldMap;
 import zendo.games.grotto.utils.Calc;
 import zendo.games.grotto.utils.Point;
 import zendo.games.grotto.utils.accessors.Vector3Accessor;

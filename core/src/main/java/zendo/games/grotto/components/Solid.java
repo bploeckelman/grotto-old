@@ -5,7 +5,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import zendo.games.grotto.ecs.Component;
-import zendo.games.grotto.editor.WorldMap;
+import zendo.games.grotto.map.WorldMap;
 import zendo.games.grotto.factories.EffectFactory;
 import zendo.games.grotto.utils.*;
 
@@ -188,7 +188,6 @@ public class Solid extends Component {
         }
 
         // apply movement to other movers, either pushing or carrying them
-        // TODO: pass OnSquish callbacks to moveX|Y when pushing
         // TODO: when pushing off a ledge, the push completes before gravity takes effect
 
         // check horizontal movement
