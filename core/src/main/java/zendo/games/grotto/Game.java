@@ -10,13 +10,11 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.utils.Align;
 import zendo.games.grotto.components.*;
 import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
-import zendo.games.grotto.map.Editor;
-import zendo.games.grotto.map.WorldMap;
 import zendo.games.grotto.input.Input;
+import zendo.games.grotto.map.WorldMap;
 import zendo.games.grotto.sprites.Sprite;
 import zendo.games.grotto.utils.Calc;
 import zendo.games.grotto.utils.Point;
@@ -28,7 +26,6 @@ import java.util.List;
 public class Game extends ApplicationAdapter {
 
     private static final String level_path = "levels/world-1.ldtk";
-//    private static final String level_path = "levels/ldtk-gridtest.ldtk"
 
     private Input input;
     private Assets assets;
@@ -47,10 +44,7 @@ public class Game extends ApplicationAdapter {
     private List<Enemy> enemies;
 
     private WorldMap worldMap;
-    private Mode mode;
-    private enum Mode {play, edit}
     private Vector3 worldMouse;
-    private Editor editor;
     private InputMultiplexer inputMux;
 
     @Override
@@ -98,10 +92,7 @@ public class Game extends ApplicationAdapter {
         camera.worldMap = worldMap;
         camera.follow(player, Point.zero(), true);
 
-        mode = Mode.play;
         worldMouse = new Vector3();
-
-        editor = new Editor(this, assets);
     }
 
     @Override
@@ -122,50 +113,7 @@ public class Game extends ApplicationAdapter {
             reload();
         }
 
-        // update based on mode
-        switch (mode) {
-            case play -> updatePlayMode(Time.delta);
-            case edit -> editor.update(Time.delta);
-        }
-    }
-
-    public void toggleMode() {
-        if      (mode == Mode.play) mode = Mode.edit;
-        else if (mode == Mode.edit) mode = Mode.play;
-
-        DebugFlags.draw_world_origin = (mode == Mode.edit);
-
-        if (mode == Mode.edit) {
-            editor.lastZoom = worldCamera.zoom;
-
-            world.first(CameraController.class).active = false;
-
-            inputMux.addProcessor(0, editor.getStage());
-
-            // deactivate player
-            player.active = false;
-
-            // deactivate enemies
-            var enemy = world.first(Enemy.class);
-            while (enemy != null) {
-                enemy.entity().active = false;
-                enemy = (Enemy) enemy.next;
-            }
-        } else {
-            worldCamera.zoom = editor.lastZoom;
-            worldCamera.update();
-
-            var camController = world.first(CameraController.class);
-            camController.active = true;
-            camController.follow(player, Point.zero(), true);
-
-            inputMux.removeProcessor(editor.getStage());
-
-            // activate player
-            player.active = true;
-
-            // enemies get reactivated in Level.update() during play mode update loop
-        }
+        updatePlayMode(Time.delta);
     }
 
     public void reload() {
@@ -213,11 +161,6 @@ public class Game extends ApplicationAdapter {
         // process input
         {
             Input.frame();
-
-            if (Input.pressed(Input.Key.tab)) {
-                toggleMode();
-                return;
-            }
 
             if (Input.pressed(Input.Key.escape)) Gdx.app.exit();
             if (Input.pressed(Input.Key.f1)) DebugFlags.draw_entities = !DebugFlags.draw_entities;
@@ -279,10 +222,6 @@ public class Game extends ApplicationAdapter {
                 // in-world ui ------------------
 //                assets.layout.setText(assets.font, "Grotto", Color.WHITE, worldCamera.viewportWidth, Align.center, false);
 //                assets.font.draw(batch, assets.layout, 0, (3f / 4f) * worldCamera.viewportHeight + assets.layout.height);
-
-                if (mode == Mode.edit) {
-                    editor.renderWorld(batch);
-                }
             }
             batch.end();
 
@@ -292,10 +231,6 @@ public class Game extends ApplicationAdapter {
                 // world ------------------------
                 if (DebugFlags.draw_entities) {
                     world.render(shapes);
-                }
-
-                if (mode == Mode.edit) {
-                    editor.renderGrid(shapes);
                 }
 
                 // coord axis at origin
@@ -343,26 +278,11 @@ public class Game extends ApplicationAdapter {
     }
 
     private void renderWindowOverlay() {
-        if (mode == Mode.edit) {
-            editor.renderStage();
-        }
-
         // render hud
         batch.setProjectionMatrix(windowCamera.combined);
         batch.begin();
         {
-            if (mode == Mode.edit) {
-                editor.render(batch);
-            }
-
-            // current mode
-            {
-                var margin = 10;
-                var color = (mode == Mode.play) ? Color.LIME : Color.GOLDENROD;
-                var modeStr = mode.toString().toUpperCase();
-                assets.layout.setText(assets.font, modeStr, color, windowCamera.viewportWidth, Align.center, false);
-                assets.font.draw(batch, assets.layout, 0, windowCamera.viewportHeight - margin);
-            }
+            // TODO: add overlay components
         }
         batch.end();
     }
