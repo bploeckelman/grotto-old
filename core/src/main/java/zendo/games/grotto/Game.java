@@ -13,6 +13,7 @@ import com.badlogic.gdx.math.Vector3;
 import zendo.games.grotto.components.*;
 import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
+import zendo.games.grotto.factories.EffectFactory;
 import zendo.games.grotto.input.Input;
 import zendo.games.grotto.map.WorldMap;
 import zendo.games.grotto.sprites.Sprite;
@@ -92,6 +93,10 @@ public class Game extends ApplicationAdapter {
         camera.follow(player, Point.zero(), true);
 
         worldMouse = new Vector3();
+
+        // TEST
+        Time.set_timeout(3, () -> EffectFactory.squish(world, player.position));
+        Time.set_interval(0.33f, () -> EffectFactory.spriteAnimOneShot(world, player.position, "coin", "idle"));
     }
 
     @Override
@@ -151,6 +156,10 @@ public class Game extends ApplicationAdapter {
         worldMap.spawnBarriers(world);
         worldMap.spawnJumpthrus(world);
         worldMap.spawnSolids(world);
+
+        // TEST
+        Time.set_timeout(3, () -> EffectFactory.squish(world, player.position));
+        Time.set_interval(0.33f, () -> EffectFactory.spriteAnimOneShot(world, player.position, "coin", "idle"));
 
         Gdx.app.log("reload", "World map reloaded");
     }

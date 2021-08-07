@@ -1,9 +1,60 @@
 package zendo.games.grotto.utils;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.TimeUtils;
 
 public class Time {
+
+    public interface Callback {
+        void call();
+    }
+
+    private static class CallbackInfo {
+        private final Callback callback;
+        private float timer;
+
+        public float timeout = 0;
+        public float interval = 0;
+
+        CallbackInfo(Callback callback) {
+            this.callback = callback;
+            this.timer = 0;
+        }
+
+        boolean isInterval() {
+            return (interval > 0);
+        }
+
+        boolean isTimeout() {
+            return (timeout > 0);
+        }
+
+        boolean update(float dt) {
+            boolean called = false;
+
+            timer += dt;
+
+            if (interval > 0) {
+                if (timer >= interval) {
+                    timer -= interval;
+                    if (callback != null) {
+                        callback.call();
+                        called = true;
+                    }
+                }
+            } else {
+                if (timer >= timeout) {
+                    if (callback != null) {
+                        callback.call();
+                        called = true;
+                    }
+                }
+            }
+
+            return called;
+        }
+    }
 
     private static long start_millis = 0;
 
@@ -12,12 +63,35 @@ public class Time {
     public static float delta = 0;
     public static float pause_timer = 0;
 
+    private static Array<CallbackInfo> callbacks;
+
     public static void init() {
         start_millis = TimeUtils.millis();
+        callbacks = new Array<>();
     }
 
     public static void update() {
         Time.delta = Calc.min(1 / 30f, Gdx.graphics.getDeltaTime());
+
+        for (int i = callbacks.size - 1; i >= 0; i--) {
+            var info = callbacks.get(i);
+            var wasCalled = info.update(Time.delta);
+            if (wasCalled && info.isTimeout()) {
+                callbacks.removeIndex(i);
+            }
+        }
+    }
+
+    public static void set_timeout(float seconds, Callback callback) {
+        var info = new CallbackInfo(callback);
+        info.timeout = seconds;
+        callbacks.add(info);
+    }
+
+    public static void set_interval(float seconds, Callback callback) {
+        var info = new CallbackInfo(callback);
+        info.interval = seconds;
+        callbacks.add(info);
     }
 
     public static long elapsed_millis() {
