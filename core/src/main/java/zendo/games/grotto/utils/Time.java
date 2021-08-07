@@ -1,5 +1,6 @@
 package zendo.games.grotto.utils;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.utils.TimeUtils;
 
 public class Time {
@@ -13,6 +14,10 @@ public class Time {
 
     public static void init() {
         start_millis = TimeUtils.millis();
+    }
+
+    public static void update() {
+        Time.delta = Calc.min(1 / 30f, Gdx.graphics.getDeltaTime());
     }
 
     public static long elapsed_millis() {

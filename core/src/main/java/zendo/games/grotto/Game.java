@@ -16,7 +16,6 @@ import zendo.games.grotto.ecs.World;
 import zendo.games.grotto.input.Input;
 import zendo.games.grotto.map.WorldMap;
 import zendo.games.grotto.sprites.Sprite;
-import zendo.games.grotto.utils.Calc;
 import zendo.games.grotto.utils.Point;
 import zendo.games.grotto.utils.Time;
 
@@ -103,8 +102,7 @@ public class Game extends ApplicationAdapter {
     }
 
     public void update() {
-        // update global timer
-        Time.delta = Calc.min(1 / 30f, Gdx.graphics.getDeltaTime());
+        Time.update();
 
         worldCamera.unproject(worldMouse.set(Input.mouse().x, Input.mouse().y, 0));
 
