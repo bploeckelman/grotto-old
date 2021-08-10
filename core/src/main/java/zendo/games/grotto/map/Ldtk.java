@@ -64,7 +64,16 @@ public class Ldtk {
         public int worldX;
         public int worldY;
         public String bgRelPath;
+        public double bgPivotX;
+        public double bgPivotY;
+        public BackgroundInfo __bgPos;
         public List<LayerInstance> layerInstances;
+    }
+
+    public static class BackgroundInfo {
+        public int[] topLeftPx;
+        public double[] scale;
+        public int[] cropRect;
     }
 
     public static class LayerInstance {

@@ -40,9 +40,14 @@ public class WorldMap implements Disposable {
         public int colliderRows;
         public int colliderCols;
         public int[] colliderCells;
-        public Texture backgroundImage;
+        public BackgroundInfo backgroundInfo;
         public Point[] tilemapCellTextures;
         public Point[] foregroundTilemapCellTextures;
+    }
+
+    static class BackgroundInfo {
+        public Texture texture;
+        public RectI bounds = RectI.zero();
     }
 
     static class Tileset {
@@ -117,7 +122,7 @@ public class WorldMap implements Disposable {
 
     private final Assets assets;
     private final IntMap<Tileset> tilesets;
-    private final List<Texture> backgrounds;
+    private final List<BackgroundInfo> backgrounds;
 
     // ------------------------------------------
     // Constructor and interface implementations
@@ -140,7 +145,11 @@ public class WorldMap implements Disposable {
 
     @Override
     public void dispose() {
-        backgrounds.forEach(Texture::dispose);
+        backgrounds.forEach(info -> {
+            if (info.texture != null) {
+                info.texture.dispose();
+            }
+        });
     }
 
     public void update(float dt, World world) {
@@ -189,6 +198,13 @@ public class WorldMap implements Disposable {
 
         solidInfos.clear();
         waypointInfos.clear();
+
+        backgrounds.forEach(info -> {
+            if (info.texture != null) {
+                info.texture.dispose();
+            }
+        });
+        backgrounds.clear();
     }
 
     // ------------------------------------------
@@ -383,8 +399,12 @@ public class WorldMap implements Disposable {
             collider.mask = Collider.Mask.solid;
 
             // optional background image
-            if (info.backgroundImage != null) {
-                var image = entity.add(new Image(info.backgroundImage), Image.class);
+            if (info.backgroundInfo.texture != null) {
+                var image = entity.add(new Image(info.backgroundInfo.texture), Image.class);
+                image.xOffset = info.backgroundInfo.bounds.x;
+                image.yOffset = info.backgroundInfo.bounds.y;
+                image.width = info.backgroundInfo.bounds.w;
+                image.height = info.backgroundInfo.bounds.h;
                 image.depth = -1000;
             }
 
@@ -471,11 +491,16 @@ public class WorldMap implements Disposable {
                 var level = ldtk.levels.get(levelNum);
 
                 // load background image (optionally)
-                Texture backgroundImage = null;
+                var backgroundInfo = new BackgroundInfo();
                 var backgroundImageRelPath = level.bgRelPath;
                 if (backgroundImageRelPath != null) {
-                    backgroundImage = new Texture("levels/" + backgroundImageRelPath);
-                    backgrounds.add(backgroundImage);
+                    backgroundInfo.texture = new Texture("levels/" + backgroundImageRelPath);
+                    backgroundInfo.bounds.set(
+                            0, 0,
+                            level.__bgPos.cropRect[2],
+                            level.__bgPos.cropRect[3]
+                    );
+                    backgrounds.add(backgroundInfo);
                 }
 
                 // find required layers
@@ -523,7 +548,7 @@ public class WorldMap implements Disposable {
                 info.colliderSize = collisionLayer.__gridSize;
                 info.colliderCols = collisionLayer.__cWid;
                 info.colliderRows = collisionLayer.__cHei;
-                info.backgroundImage = backgroundImage;
+                info.backgroundInfo = backgroundInfo;
                 info.colliderCells = new int[info.colliderCols * info.colliderRows];
                 info.tilemapCellTextures = new Point[info.cols * info.rows];
                 info.foregroundTilemapCellTextures = null;
