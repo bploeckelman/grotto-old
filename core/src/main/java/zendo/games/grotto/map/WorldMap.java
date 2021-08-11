@@ -13,6 +13,7 @@ import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
 import zendo.games.grotto.factories.CreatureFactory;
 import zendo.games.grotto.factories.ItemFactory;
+import zendo.games.grotto.utils.Calc;
 import zendo.games.grotto.utils.Point;
 import zendo.games.grotto.utils.RectI;
 
@@ -495,11 +496,10 @@ public class WorldMap implements Disposable {
                 var backgroundImageRelPath = level.bgRelPath;
                 if (backgroundImageRelPath != null) {
                     backgroundInfo.texture = new Texture("levels/" + backgroundImageRelPath);
-                    backgroundInfo.bounds.set(
-                            0, 0,
-                            level.__bgPos.cropRect[2],
-                            level.__bgPos.cropRect[3]
-                    );
+                    var w = (int) Calc.floor(backgroundInfo.texture.getWidth()  * (float) level.__bgPos.scale[0]);
+                    var h = (int) Calc.floor(backgroundInfo.texture.getHeight() * (float) level.__bgPos.scale[1]);
+                    // x and y are offsets from entity position, which should be bottom left corner of level, so 0, 0 fits in most cases
+                    backgroundInfo.bounds.set(0, 0, w, h);
                     backgrounds.add(backgroundInfo);
                 }
 
