@@ -82,13 +82,14 @@ public class Solid extends Component {
         // interpolate between waypoints
         var interp = VectorPool.dim2.obtain();
         {
+            int lastWaypoint = (waypoints.size() - 1);
             // figure out which waypoints to transition between (assumes waypoints are in sequence order)
-            int segment = (int) Calc.floor(t * (waypoints.size() - 1));
+            int segment = (int) Calc.floor(t * lastWaypoint);
             segment = Calc.max(segment, 0);
-            segment = Calc.min(segment, waypoints.size() - 2);
+            segment = Calc.min(segment, lastWaypoint - 1);
 
             // adjust main timer to move across current segment
-            float tSegment = t * (waypoints.size() - 1) - segment;
+            float tSegment = t * lastWaypoint - segment;
 
             // interpolate across current segment
             var start = waypoints.get(segment);
