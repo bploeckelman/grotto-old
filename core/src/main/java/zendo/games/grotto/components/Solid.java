@@ -15,6 +15,38 @@ import java.util.List;
 
 public class Solid extends Component {
 
+    private static Color[] debug_colors = new Color[] {
+            Color.BLUE,
+            Color.GREEN,
+            Color.YELLOW,
+            Color.RED,
+            Color.VIOLET,
+            Color.NAVY,
+            Color.CHARTREUSE,
+            Color.GOLD,
+            Color.SCARLET,
+            Color.MAROON,
+            Color.ROYAL,
+            Color.LIME,
+            Color.GOLDENROD,
+            Color.CORAL,
+            Color.SLATE,
+            Color.FOREST,
+            Color.ORANGE,
+            Color.SALMON,
+            Color.SKY,
+            Color.OLIVE,
+            Color.BROWN,
+            Color.PINK,
+            Color.CYAN,
+            Color.TAN,
+            Color.MAGENTA,
+            Color.TEAL,
+            Color.FIREBRICK,
+            Color.PURPLE
+    };
+    private static int next_debug_color = 0;
+
     // TODO: additional info like interp method, speed, maybe other things
     static class Waypoint {
         Point point;
@@ -27,9 +59,9 @@ public class Solid extends Component {
     private String id;
     private float t;
     private Vector2 remainder;
+    private Color debugColor;
 
     private boolean forward;
-    private int currentWaypoint;
     private List<Waypoint> waypoints;
 
     public Solid() {}
@@ -39,6 +71,7 @@ public class Solid extends Component {
         waypointInfos.sort(Comparator.comparing(waypointInfo -> waypointInfo.sequence));
 
         this.id = info.id;
+        this.debugColor = debug_colors[next_debug_color++];
         this.speed = info.speed;
         this.t = 0;
         this.forward = true;
@@ -50,7 +83,6 @@ public class Solid extends Component {
             waypoint.point = waypointInfo.point;
             this.waypoints.add(waypoint);
         }
-        this.currentWaypoint = 0;
     }
 
     @Override
@@ -66,7 +98,6 @@ public class Solid extends Component {
             VectorPool.dim2.free(remainder);
         }
         remainder = null;
-        currentWaypoint = -1;
         waypoints = null;
     }
 
@@ -124,27 +155,25 @@ public class Solid extends Component {
 
     @Override
     public void render(ShapeRenderer shapes) {
-        // TODO: pick debug color based on id, color waypoints the same as solid
-
         var shapeType = shapes.getCurrentType();
         {
             shapes.set(ShapeRenderer.ShapeType.Line);
-            shapes.setColor(1f, 1f, 0.5f, 0.75f);
-            var radius = 2;
-            for (var waypoint : waypoints) {
-                var x = waypoint.point.x;
-                var y = waypoint.point.y;
-                shapes.circle(x, y, radius);
-            }
+            shapes.setColor(debugColor.r, debugColor.g, debugColor.b, 1);
+            shapes.rect(bounds.x, bounds.y, bounds.w, bounds.h);
             shapes.setColor(Color.WHITE);
         }
         shapes.set(shapeType);
 
         shapeType = shapes.getCurrentType();
         {
-            shapes.set(ShapeRenderer.ShapeType.Filled);
-            shapes.setColor(1f, 1f, 0f, 0.2f);
-            shapes.rect(bounds.x, bounds.y, bounds.w, bounds.h);
+            shapes.set(ShapeRenderer.ShapeType.Line);
+            shapes.setColor(debugColor.r, debugColor.g, debugColor.b, 0.75f);
+            var radius = 2;
+            for (var waypoint : waypoints) {
+                var x = waypoint.point.x;
+                var y = waypoint.point.y;
+                shapes.circle(x, y, radius);
+            }
             shapes.setColor(Color.WHITE);
         }
         shapes.set(shapeType);
