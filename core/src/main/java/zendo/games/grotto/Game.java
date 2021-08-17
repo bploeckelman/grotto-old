@@ -24,7 +24,7 @@ import java.util.List;
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Game extends ApplicationAdapter {
 
-    private static final String level_path = "levels/world-1.ldtk";
+    private static final String level_path = "levels/world-0.ldtk";
 
     private Input input;
     private Assets assets;

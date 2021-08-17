@@ -510,7 +510,7 @@ public class WorldMap implements Disposable {
                 Ldtk.LayerInstance foregroundLayer = null;
                 for (var layer : level.layerInstances) {
                     if ("Tiles".equals(layer.__type)) {
-                        if ("Tiles".equals(layer.__identifier)) {
+                        if ("Main".equals(layer.__identifier)) {
                             tileLayer = layer;
                         } else if ("Foreground".equals(layer.__identifier)) {
                             foregroundLayer = layer;
