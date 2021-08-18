@@ -36,6 +36,7 @@ public class WorldMap implements Disposable {
         public int rows;
         public int tilesetUid;
         public int foregroundTilesetUid;
+        public int backgroundTilesetUid;
         public int entityGridSize;
         public int colliderSize;
         public int colliderRows;
@@ -44,6 +45,7 @@ public class WorldMap implements Disposable {
         public BackgroundInfo backgroundInfo;
         public Point[] tilemapCellTextures;
         public Point[] foregroundTilemapCellTextures;
+        public Point[] backgroundTilemapCellTextures;
     }
 
     static class BackgroundInfo {
@@ -452,6 +454,36 @@ public class WorldMap implements Disposable {
                         foreground.setCell(x, y, pointRegionMap.get(point));
                     }
                 }
+
+                // add a foreground tile layer if one exists in the info
+                if (info.backgroundTilemapCellTextures != null && info.backgroundTilesetUid != -1) {
+                    // setup tileset
+                    tileset = tilesets.get(info.backgroundTilesetUid);
+                    tilesetTexture = assets.tilesetAtlas.findRegion(tileset.name);
+                    regions = tilesetTexture.split(tileset.gridSize, tileset.gridSize);
+
+                    // initialize a map between texture region array indices and the texture region they point to in the tileset
+                    pointRegionMap.clear();
+                    for (int x = 0; x < info.cols; x++) {
+                        for (int y = 0; y < info.rows; y++) {
+                            var point = info.backgroundTilemapCellTextures[x + y * info.cols];
+                            if (point != null) {
+                                pointRegionMap.putIfAbsent(point, regions[point.y][point.x]);
+                            }
+                        }
+                    }
+
+                    // create background tilemap component and set regions
+                    var background = entity.add(new Tilemap(info.tileSize, info.cols, info.rows), Tilemap.class);
+                    // TODO: need to make tilemap layer depths uniform
+                    background.depth = -10;
+                    for (int x = 0; x < info.cols; x++) {
+                        for (int y = 0; y < info.rows; y++) {
+                            var point = info.backgroundTilemapCellTextures[x + y * info.cols];
+                            background.setCell(x, y, pointRegionMap.get(point));
+                        }
+                    }
+                }
             }
 
             // setup a collider for quick lookup of the room's bounds
@@ -508,21 +540,24 @@ public class WorldMap implements Disposable {
                 Ldtk.LayerInstance collisionLayer = null;
                 Ldtk.LayerInstance entityLayer = null;
                 Ldtk.LayerInstance foregroundLayer = null;
+                Ldtk.LayerInstance backgroundLayer = null;
                 for (var layer : level.layerInstances) {
                     if ("Tiles".equals(layer.__type)) {
                         if ("Main".equals(layer.__identifier)) {
                             tileLayer = layer;
                         } else if ("Foreground".equals(layer.__identifier)) {
                             foregroundLayer = layer;
+                        } else if ("Background".equals(layer.__identifier)) {
+                            backgroundLayer = layer;
                         }
-                    } else if ("IntGrid".equals(layer.__type) && "Collision".equals(layer.__identifier)) {
+                } else if ("IntGrid".equals(layer.__type) && "Collision".equals(layer.__identifier)) {
                         collisionLayer = layer;
                     } else if ("Entities".equals(layer.__type) && "Entities".equals(layer.__identifier)) {
                         entityLayer = layer;
                     }
                 }
                 if (tileLayer == null) {
-                    throw new GdxRuntimeException("Failed to load ldtk file, no 'Tiles' layer found");
+                    throw new GdxRuntimeException("Failed to load ldtk file, no 'Main' tile layer found");
                 }
                 if (collisionLayer == null) {
                     throw new GdxRuntimeException("Failed to load ldtk file, no IntGrid 'Collision' layer found");
@@ -544,6 +579,7 @@ public class WorldMap implements Disposable {
                 info.rows = tileLayer.__cHei;
                 info.tilesetUid = tileset.uid;
                 info.foregroundTilesetUid = -1;
+                info.backgroundTilesetUid = -1;
                 info.entityGridSize = entityLayer.__gridSize;
                 info.colliderSize = collisionLayer.__gridSize;
                 info.colliderCols = collisionLayer.__cWid;
@@ -552,6 +588,7 @@ public class WorldMap implements Disposable {
                 info.colliderCells = new int[info.colliderCols * info.colliderRows];
                 info.tilemapCellTextures = new Point[info.cols * info.rows];
                 info.foregroundTilemapCellTextures = null;
+                info.backgroundTilemapCellTextures = null;
 
                 // setup entities
                 for (var entity : entityLayer.entityInstances) {
@@ -651,6 +688,31 @@ public class WorldMap implements Disposable {
                         var textureIndex = Point.at(src[0] / foregroundTileset.gridSize, src[1] / foregroundTileset.gridSize);
 
                         info.foregroundTilemapCellTextures[tile.x + tile.y * info.cols] = textureIndex;
+                    }
+                }
+
+                // setup background tilemap layer
+                if (backgroundLayer != null) {
+                    var backgroundTilesetUid = backgroundLayer.__tilesetDefUid;
+                    info.backgroundTilesetUid = backgroundTilesetUid;
+
+                    var backgroundTileset = tilesets.get(backgroundTilesetUid, null);
+                    if (backgroundTileset == null) {
+                        throw new GdxRuntimeException("Failed to load ldtk file, missing tileset with uid " + backgroundTilesetUid + " in background layer");
+                    }
+
+                    // setup background layer
+                    info.backgroundTilemapCellTextures = new Point[info.cols * info.rows];
+                    for (var gridTileEntry : backgroundLayer.gridTiles) {
+                        var px = gridTileEntry.px;
+                        var tile = Point.at(px[0] / backgroundTileset.gridSize, px[1] / backgroundTileset.gridSize);
+                        // note: ldtk files are stored with origin = top left so we have to flip y
+                        tile.y = (info.rows - 1) - tile.y;
+
+                        var src = gridTileEntry.src;
+                        var textureIndex = Point.at(src[0] / backgroundTileset.gridSize, src[1] / backgroundTileset.gridSize);
+
+                        info.backgroundTilemapCellTextures[tile.x + tile.y * info.cols] = textureIndex;
                     }
                 }
             }
