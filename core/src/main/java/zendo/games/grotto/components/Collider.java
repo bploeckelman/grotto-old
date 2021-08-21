@@ -20,6 +20,7 @@ public class Collider extends Component {
         public static final int player_attack = 1 << 4;
         public static final int item          = 1 << 5;
         public static final int room_bounds   = 1 << 6;
+        public static final int climbable     = 1 << 7;
     }
 
     public enum Shape { none, rect, grid }

@@ -88,6 +88,15 @@ public class WorldMap implements Disposable {
         }
     }
 
+    public static class Ladder {
+        public RectI bounds;
+        public Entity entity;
+        Ladder(RectI bounds) {
+            this.bounds = bounds;
+            this.entity = null;
+        }
+    }
+
     public static class SolidInfo {
         public final String id;
         public final RectI bounds;
@@ -119,6 +128,7 @@ public class WorldMap implements Disposable {
     private final List<Spawner> spawners;
     private final List<Barrier> barriers;
     private final List<Jumpthru> jumpthrus;
+    private final List<Ladder> ladders;
 
     private final List<SolidInfo> solidInfos;
     private final List<WaypointInfo> waypointInfos;
@@ -137,6 +147,7 @@ public class WorldMap implements Disposable {
         spawners = new ArrayList<>();
         barriers = new ArrayList<>();
         jumpthrus = new ArrayList<>();
+        ladders = new ArrayList<>();
         tilesets = new IntMap<>();
         backgrounds = new ArrayList<>();
         solidInfos = new ArrayList<>();
@@ -184,6 +195,13 @@ public class WorldMap implements Disposable {
             }
         });
         jumpthrus.clear();
+
+        ladders.forEach(ladder -> {
+            if (ladder.entity != null) {
+                ladder.entity.destroy();
+            }
+        });
+        ladders.clear();
 
         barriers.forEach(barrier -> {
             if (barrier.entity != null) {
@@ -316,6 +334,16 @@ public class WorldMap implements Disposable {
             var collider = entity.add(Collider.makeRect(barrier.bounds), Collider.class);
             collider.mask = Collider.Mask.solid;
             barrier.entity = entity;
+        }
+    }
+
+    public void spawnLadders(World world) {
+        // TODO: factory?
+        for (var ladder : ladders) {
+            var entity = world.addEntity();
+            var collider = entity.add(Collider.makeRect(ladder.bounds), Collider.class);
+            collider.mask = Collider.Mask.climbable;
+            ladder.entity = entity;
         }
     }
 
@@ -614,6 +642,10 @@ public class WorldMap implements Disposable {
                     // jumpthru platforms
                     else if ("Jumpthru".equals(entity.__identifier)) {
                         jumpthrus.add(new Jumpthru(RectI.at(x, y, w, h)));
+                    }
+                    // ladders
+                    else if ("Ladder".equals(entity.__identifier)) {
+                        ladders.add(new Ladder(RectI.at(x, y, w, h)));
                     }
                     // solids
                     else if ("Solid".equals(entity.__identifier)) {
