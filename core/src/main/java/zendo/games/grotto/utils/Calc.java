@@ -62,4 +62,11 @@ public class Calc {
         return (val < 0) ? -val : val;
     }
 
+    public static float pow(float base, int exponent) {
+        float r = base;
+        for (int i = 0; i < exponent; i++) {
+            r *= r;
+        }
+        return r;
+    }
 }
