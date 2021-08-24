@@ -1,8 +1,10 @@
 package zendo.games.grotto.factories;
 
+import com.badlogic.gdx.math.MathUtils;
 import zendo.games.grotto.Assets;
 import zendo.games.grotto.components.*;
 import zendo.games.grotto.components.creatures.EyeBehavior;
+import zendo.games.grotto.curves.CubicBezier;
 import zendo.games.grotto.ecs.Component;
 import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
@@ -28,6 +30,47 @@ public class CreatureFactory {
 
             var mover = entity.add(new Mover(), Mover.class);
             mover.collider = collider;
+        }
+        return entity;
+    }
+
+    public static Entity slider(World world, CubicBezier path) {
+        var entity = world.addEntity();
+        {
+            var pathStart = path.evaluate(0);
+            var position = Point.at((int) pathStart.x, (int) pathStart.y);
+            entity.position.set(position);
+            entity.add(new Enemy("slider"), Enemy.class);
+
+            var anim = entity.add(new Animator("shot", "idle"), Animator.class);
+            anim.depth = 10;
+
+            var bounds = RectI.at(-3, -3, 5, 5);
+            var collider = entity.add(Collider.makeRect(bounds), Collider.class);
+            collider.mask = Collider.Mask.enemy;
+
+            entity.add(new Component() {
+                float speed = 0.5f;
+                float t = 0;
+                int dir = 1;
+                @Override
+                public void update(float dt) {
+                    var pos = path.evaluate(t);
+                    entity.position.set((int) pos.x, (int) pos.y);
+
+                    t += speed * dir * dt;
+                    if (t > 1) {
+                        t -= 1;
+                        t = 1 - t;
+                        dir *= -1;
+                    }
+                    else if (t < 0) {
+                        t *= -1;
+                        dir *= -1;
+                    }
+                }
+            }, Component.class);
+
         }
         return entity;
     }

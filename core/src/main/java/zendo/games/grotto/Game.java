@@ -16,6 +16,7 @@ import zendo.games.grotto.components.*;
 import zendo.games.grotto.curves.CubicBezier;
 import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
+import zendo.games.grotto.factories.CreatureFactory;
 import zendo.games.grotto.input.Input;
 import zendo.games.grotto.map.WorldMap;
 import zendo.games.grotto.sprites.Sprite;
@@ -89,6 +90,9 @@ public class Game extends ApplicationAdapter {
         worldMap.spawnBarriers(world);
         worldMap.spawnJumpthrus(world);
         worldMap.spawnSolids(world);
+
+        // TEMP
+        CreatureFactory.slider(world, bezier);
 
         var camera = world.addEntity().add(new CameraController(worldCamera, assets.tween), CameraController.class);
         camera.worldMap = worldMap;
@@ -164,9 +168,10 @@ public class Game extends ApplicationAdapter {
             Input.frame();
 
             if (Input.pressed(Input.Key.escape)) Gdx.app.exit();
-            if (Input.pressed(Input.Key.f1)) DebugFlags.draw_entities = !DebugFlags.draw_entities;
-            if (Input.pressed(Input.Key.f2)) DebugFlags.draw_anim_bounds = !DebugFlags.draw_anim_bounds;
+            if (Input.pressed(Input.Key.f1)) DebugFlags.draw_entities     = !DebugFlags.draw_entities;
+            if (Input.pressed(Input.Key.f2)) DebugFlags.draw_anim_bounds  = !DebugFlags.draw_anim_bounds;
             if (Input.pressed(Input.Key.f3)) DebugFlags.draw_world_origin = !DebugFlags.draw_world_origin;
+            if (Input.pressed(Input.Key.f4)) DebugFlags.draw_temp_debug   = !DebugFlags.draw_temp_debug;
 
             if (Input.pressed(Input.Key.f6)) DebugFlags.frame_stepping_enabled = !DebugFlags.frame_stepping_enabled;
             if (DebugFlags.frame_stepping_enabled && !Input.pressed(Input.Key.f7)) {
@@ -208,8 +213,8 @@ public class Game extends ApplicationAdapter {
 
     // ------------------------------------------------------------------------
     /* NOTE: TEMP */
-    CubicBezier bezier = new CubicBezier(30, 30, 100, 150, 200, 150, 290, 30);
-//    CubicBezier bezier = new CubicBezier(30, 30, 30, 150, 70, -20, 270, 30);
+//    CubicBezier bezier = new CubicBezier(30, 30, 100, 150, 200, 150, 290, 30);
+    CubicBezier bezier = new CubicBezier(30, 30, 30, 150, 70, -20, 270, 30);
 //    CubicBezier bezier = new CubicBezier(30, 30, 160, 180, 70, -20, 270, 30);
     /* NOTE: TEMP */
 
@@ -251,7 +256,7 @@ public class Game extends ApplicationAdapter {
                     shapes.setColor(Color.WHITE);
                 }
 
-                {
+                if (DebugFlags.draw_temp_debug) {
                     bezier.draw(shapes);
                 }
             }
@@ -327,6 +332,7 @@ public class Game extends ApplicationAdapter {
         public static boolean draw_entities = false;
         public static boolean draw_anim_bounds = false;
         public static boolean frame_stepping_enabled = false;
+        public static boolean draw_temp_debug = false;
     }
 
 }
