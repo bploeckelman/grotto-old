@@ -50,7 +50,7 @@ public class CreatureFactory {
             collider.mask = Collider.Mask.enemy;
 
             entity.add(new Component() {
-                float speed = 0.5f;
+                float speed = 0.2f;
                 float t = 0;
                 int dir = 1;
                 @Override
