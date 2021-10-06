@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.math.Vector3;
 import zendo.games.grotto.components.*;
 import zendo.games.grotto.curves.CubicBezier;
@@ -97,6 +98,17 @@ public class Game extends ApplicationAdapter {
         camera.follow(player, Point.zero(), true);
 
         worldMouse = new Vector3();
+
+
+        // TEST -----------------------
+        var params = new TmxMapLoader.Parameters();
+        params.textureMinFilter = Texture.TextureFilter.Nearest;
+        params.textureMagFilter = Texture.TextureFilter.Nearest;
+        var loader = new TmxMapLoader();
+        var fileName = "levels/world-0.tmx";
+        var map = loader.load(fileName, params);
+        Gdx.app.log("tiled", "map loaded '" + fileName + "' + tilesets: " + map.getTileSets().toString());
+        // TEST -----------------------
     }
 
     @Override
