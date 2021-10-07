@@ -9,7 +9,10 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TiledMapRenderer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
+import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.Vector3;
 import zendo.games.grotto.components.*;
 import zendo.games.grotto.curves.CubicBezier;
@@ -105,11 +108,14 @@ public class Game extends ApplicationAdapter {
         params.textureMinFilter = Texture.TextureFilter.Nearest;
         params.textureMagFilter = Texture.TextureFilter.Nearest;
         var loader = new TmxMapLoader();
-        var fileName = "levels/world-0.tmx";
-        var map = loader.load(fileName, params);
+        var fileName = "levels/world-0/tiled/0001_Level_0.tmx";
+        map = loader.load(fileName, params);
+        tiledMapRenderer = new OrthogonalTiledMapRenderer(map, assets.batch);
         Gdx.app.log("tiled", "map loaded '" + fileName + "' + tilesets: " + map.getTileSets().toString());
         // TEST -----------------------
     }
+    TiledMap map;
+    TiledMapRenderer tiledMapRenderer;
 
     @Override
     public void dispose() {
@@ -239,13 +245,18 @@ public class Game extends ApplicationAdapter {
             batch.begin();
             {
                 // world ------------------------
-                world.render(batch);
+//                world.render(batch);
 
                 // in-world ui ------------------
 //                assets.layout.setText(assets.font, "Grotto", Color.WHITE, worldCamera.viewportWidth, Align.center, false);
 //                assets.font.draw(batch, assets.layout, 0, (3f / 4f) * worldCamera.viewportHeight + assets.layout.height);
             }
             batch.end();
+
+
+            // TESTING ------------------------------
+            tiledMapRenderer.render();
+            // TESTING ------------------------------
 
             shapes.setProjectionMatrix(worldCamera.combined);
             shapes.begin();
