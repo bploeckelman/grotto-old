@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="left-up" width="40" height="24" tilewidth="8" tileheight="8" infinite="0" nextlayerid="11" nextobjectid="2">
+ <tileset firstgid="1" source="tilesets/caves-of-gallet-full-8.tsx"/>
+ <group id="2" name="background">
+  <layer id="1" name="farthest" width="40" height="24">
+   <data encoding="base64" compression="zlib">
+   eJztwwEJAAAMBKH7/qXXYyi4aqqqqvr8ATgkA8E=
+  </data>
+  </layer>
+  <layer id="5" name="far" width="40" height="24">
+   <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjIJRMApGwSgYBaNg6AB2IGYBYraBdggOAHJbI5RmprFdYVBMCigD4n4grqa+czBAGhSTAmQZIO4Tob5zqAJsGSDuUyFTfygRctjU4NOHDCYC8SQgnkyKo+gIFgLxIiBePED2AwAKYQo2
+  </data>
+  </layer>
+ </group>
+ <group id="3" name="middle">
+  <layer id="7" name="main" width="40" height="24">
+   <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjIJRMApGwSgYBaNgFIyCUTAUgCAQC+HACiSopQUG2a8IxPo4sAGa+/CppQUG2Q8AmeQJZg==
+  </data>
+  </layer>
+  <layer id="6" name="collision" width="40" height="24" opacity="0.2">
+   <data encoding="base64" compression="zlib">
+   eJzt17EJAEAMw0DvP1DmywLfPILgQgfu1XqSTPla2cfYx9jH2MfYx9jH2MfYx9jH2Mf8fqe27/bqu7bTbFYH
+  </data>
+  </layer>
+  <objectgroup id="10" name="entity">
+   <object id="1" type="spawn" x="160" y="152">
+    <properties>
+     <property name="type" value="player"/>
+    </properties>
+    <point/>
+   </object>
+  </objectgroup>
+ </group>
+ <group id="4" name="foreground">
+  <layer id="8" name="near" width="40" height="24">
+   <data encoding="base64" compression="zlib">
+   eJztyzEKADAIA0D/5P//1qWDuFQ730GICIkAAACgy5vtpna/p/vXjz8HRBoBZg==
+  </data>
+  </layer>
+  <layer id="9" name="nearest" width="40" height="24">
+   <data encoding="base64" compression="zlib">
+   eJztwQENAAAAwqD3T20PBxQAAAD8Gw8AAAE=
+  </data>
+  </layer>
+ </group>
+</map>

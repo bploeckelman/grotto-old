@@ -3,6 +3,12 @@ package zendo.games.grotto.map;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.maps.MapGroupLayer;
+import com.badlogic.gdx.maps.MapLayer;
+import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
+import com.badlogic.gdx.maps.tiled.TmxMapLoader;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.badlogic.gdx.utils.IntMap;
@@ -43,6 +49,7 @@ public class WorldMap implements Disposable {
         public int colliderCols;
         public int[] colliderCells;
         public BackgroundInfo backgroundInfo;
+        public TextureRegion[] tilemapCellTextureRegions;
         public Point[] tilemapCellTextures;
         public Point[] foregroundTilemapCellTextures;
         public Point[] backgroundTilemapCellTextures;
@@ -386,12 +393,32 @@ public class WorldMap implements Disposable {
     public void load(World world, String filename) {
         var json = new Json();
         if (filename.endsWith(".ldtk")) {
+            Gdx.app.log("WorldMap", "Loading LDTK map: " + filename);
+
             // load ldtk file
             json.setIgnoreUnknownFields(true);
             var ldtk = json.fromJson(Ldtk.class, Gdx.files.internal(filename));
 
             // load room from the ldtk file data
             var roomInfos = parseLdtkMap(ldtk);
+            for (var roomInfo : roomInfos) {
+                rooms.add(createRoomEntity(roomInfo, assets, world));
+            }
+        } else if (filename.endsWith(".tmx")) {
+            Gdx.app.log("WorldMap", "Loading Tiled map: " + filename);
+
+            // TODO: determine how to layout rooms in world,
+            //  rather than just creating one room per map
+
+            // load the map
+            var params = new TmxMapLoader.Parameters();
+            params.textureMinFilter = Texture.TextureFilter.Nearest;
+            params.textureMagFilter = Texture.TextureFilter.Nearest;
+            var loader = new TmxMapLoader();
+            var map = loader.load(filename, params);
+
+            // load a room from the map
+            var roomInfos = parseTmxMap(filename, map);
             for (var roomInfo : roomInfos) {
                 rooms.add(createRoomEntity(roomInfo, assets, world));
             }
@@ -408,15 +435,17 @@ public class WorldMap implements Disposable {
         // setup tileset
         var tileset = tilesets.get(info.tilesetUid);
         var tilesetTexture = assets.tilesetAtlas.findRegion(tileset.name);
-        var regions = tilesetTexture.split(tileset.gridSize, tileset.gridSize);
+        var regions = (tilesetTexture == null) ? null : tilesetTexture.split(tileset.gridSize, tileset.gridSize);
 
         // initialize a map between texture region array indices and the texture region they point to in the tileset
         var pointRegionMap = new HashMap<Point, TextureRegion>();
-        for (int x = 0; x < info.cols; x++) {
-            for (int y = 0; y < info.rows; y++) {
-                var point = info.tilemapCellTextures[x + y * info.cols];
-                if (point != null) {
-                    pointRegionMap.putIfAbsent(point, regions[point.y][point.x]);
+        if (regions != null) {
+            for (int x = 0; x < info.cols; x++) {
+                for (int y = 0; y < info.rows; y++) {
+                    var point = info.tilemapCellTextures[x + y * info.cols];
+                    if (point != null) {
+                        pointRegionMap.putIfAbsent(point, regions[point.y][point.x]);
+                    }
                 }
             }
         }
@@ -442,8 +471,14 @@ public class WorldMap implements Disposable {
             // initialize tilemap component contents
             for (int x = 0; x < info.cols; x++) {
                 for (int y = 0; y < info.rows; y++) {
-                    var point = info.tilemapCellTextures[x + y * info.cols];
-                    tilemap.setCell(x, y, pointRegionMap.get(point));
+                    if (info.tilemapCellTextures != null) {
+                        var point = info.tilemapCellTextures[x + y * info.cols];
+                        tilemap.setCell(x, y, pointRegionMap.get(point));
+                    }
+                    else if (info.tilemapCellTextureRegions != null) {
+                        var region = info.tilemapCellTextureRegions[x + y * info.cols];
+                        tilemap.setCell(x, y, region);
+                    }
                 }
             }
 
@@ -762,6 +797,177 @@ public class WorldMap implements Disposable {
                     return typeMatches && identifierMatches;
                 })
                 .findFirst();
+    }
+
+    private List<RoomInfo> parseTmxMap(String filename, TiledMap map) {
+        var roomInfos = new ArrayList<RoomInfo>();
+
+        // instantiate tilesets
+        for (var mapTileset : map.getTileSets()) {
+            var props = mapTileset.getProperties();
+            var tileWidth   = (int) props.get("tilewidth", 0, Integer.class);
+            var tileHeight  = (int) props.get("tileheight", 0, Integer.class);
+            var imageWidth  = (int) props.get("imagewidth", 0, Integer.class);
+            var imageHeight = (int) props.get("imageheight", 0, Integer.class);
+            var spacing     = (int) props.get("spacing", 0, Integer.class);
+            var margin      = (int) props.get("margin", 0, Integer.class);
+
+            if (tileWidth != tileHeight) {
+                throw new GdxRuntimeException("Failed to load Tiled map '" + filename + "': tileset width and height must be equal");
+            }
+            if (spacing != 0) {
+                throw new GdxRuntimeException("Failed to load Tiled map '" + filename + "': tileset spacing not yet supported");
+            }
+            if (margin != 0) {
+                throw new GdxRuntimeException("Failed to load Tiled map '" + filename + "': tileset margin not yet supported");
+            }
+
+            var tileset = new Tileset();
+            tileset.uid = mapTileset.hashCode();
+            tileset.rows = imageHeight / tileHeight;
+            tileset.cols = imageWidth / tileWidth;
+            tileset.gridSize = tileWidth;
+            tileset.name = mapTileset.getName();
+            tilesets.put(tileset.uid, tileset);
+        }
+
+        var numLevels = 1; // TODO: support multiple levels per map, or possibly a world definition file listing levels and their corresponding tmx files
+        for (int levelNum = 0; levelNum < numLevels; levelNum++) {
+            var info = new RoomInfo();
+            {
+                // TODO: load background image (optional)
+
+                // find required layers
+                TiledMapTileLayer mainLayer = null;
+                TiledMapTileLayer collisionLayer = null;
+                MapLayer entityLayer = null;
+
+                // find groups for each plane
+                MapGroupLayer bgGroup = null;
+                MapGroupLayer fgGroup = null;
+                MapGroupLayer midGroup = null;
+                var groups = map.getLayers().getByType(MapGroupLayer.class);
+                for (var group : groups) {
+                    switch (group.getName()) {
+                        case "background" -> bgGroup = group;
+                        case "foreground" -> fgGroup = group;
+                        case "middle"     -> midGroup = group;
+                    }
+                }
+
+                // initialize background layers
+                if (bgGroup != null) {
+                    // TODO: integrate these layers
+                    TiledMapTileLayer far = null;
+                    TiledMapTileLayer farthest = null;
+                    for (var layer : bgGroup.getLayers()) {
+                        switch (layer.getName()) {
+                            case "far"      -> far      = (TiledMapTileLayer) layer;
+                            case "farthest" -> farthest = (TiledMapTileLayer) layer;
+                        }
+                    }
+                }
+
+                // initialize foreground layers
+                if (fgGroup != null) {
+                    // TODO: integrate these layers
+                    TiledMapTileLayer near = null;
+                    TiledMapTileLayer nearest = null;
+                    for (var layer : fgGroup.getLayers()) {
+                        switch (layer.getName()) {
+                            case "near"    -> near    = (TiledMapTileLayer) layer;
+                            case "nearest" -> nearest = (TiledMapTileLayer) layer;
+                        }
+                    }
+                }
+
+                // initialize middle layers
+                if (midGroup != null) {
+                    for (var layer : midGroup.getLayers()) {
+                        switch (layer.getName()) {
+                            case "main"      -> mainLayer      = (TiledMapTileLayer) layer;
+                            case "collision" -> collisionLayer = (TiledMapTileLayer) layer;
+                            case "entity"    -> entityLayer    = layer;
+                        }
+                    }
+                }
+
+                // validate that the required layers were found
+                if (mainLayer == null) {
+                    throw new GdxRuntimeException("Failed to load Tiled map '" + filename + "': missing layer 'main'");
+                }
+                if (collisionLayer == null) {
+                    throw new GdxRuntimeException("Failed to load Tiled map '" + filename + "': missing layer 'collision'");
+                }
+                if (entityLayer == null) {
+                    throw new GdxRuntimeException("Failed to load Tiled map '" + filename + "': missing layer 'entity'");
+                }
+
+                // lookup tileset
+                // TODO: support multiple tilesets per map
+                var tileset = tilesets.values().toArray().first();
+                if (tileset == null) {
+                    throw new GdxRuntimeException("Failed to load Tiled map '" + filename + "': no tileset found for map");
+                }
+
+                // populate RoomInfo
+                info.position = Point.zero();
+                info.tilesetUid = tileset.uid;
+                info.tileSize = tileset.gridSize;
+                info.cols = mainLayer.getWidth();
+                info.rows = mainLayer.getHeight();
+                info.foregroundTilesetUid = -1;
+                info.backgroundTilesetUid = -1;
+                info.entityGridSize = mainLayer.getWidth(); // entity layer doesn't have it's own grid
+                info.colliderSize = collisionLayer.getTileWidth();
+                info.colliderCols = collisionLayer.getWidth();
+                info.colliderRows = collisionLayer.getHeight();
+                info.backgroundInfo = new BackgroundInfo();
+                info.colliderCells = new int[info.colliderCols * info.colliderRows];
+                info.tilemapCellTextureRegions = new TextureRegion[info.cols * info.rows];
+                info.tilemapCellTextures = null;
+                info.foregroundTilemapCellTextures = null;
+                info.backgroundTilemapCellTextures = null;
+
+                // initialize entities
+                for (var object : entityLayer.getObjects()) {
+                    var props = object.getProperties();
+                    var id = props.get("id", -1, Integer.class);
+                    var type = props.get("type", "unknown", String.class);
+                    var x = MathUtils.round(props.get("x", 0f, Float.class)) + info.position.x;
+                    var y = MathUtils.round(props.get("y", 0f, Float.class)) + info.position.y;
+                    var w = MathUtils.round(props.get("width", 0f, Float.class));
+                    var h = MathUtils.round(props.get("height", 0f, Float.class));
+
+                    if ("player".equalsIgnoreCase(type)) {
+                        spawners.add(new Spawner(type, x, y));
+                    }
+                }
+
+                // initialize collision layer
+                for (int x = 0; x < info.colliderCols; x++) {
+                    for (int y = 0; y < info.colliderRows; y++) {
+                        var cell = collisionLayer.getCell(x, y);
+                        var value = (cell == null || cell.getTile() == null) ? 0 : 1;
+                        info.colliderCells[x + y * info.colliderCols] = value;
+                    }
+                }
+
+                // initialize main tile layer
+                for (int x = 0; x < mainLayer.getWidth(); x++) {
+                    for (int y =  0; y < mainLayer.getHeight(); y++) {
+                        var cell = mainLayer.getCell(x, y);
+                        var region = (cell == null || cell.getTile() == null) ? null : cell.getTile().getTextureRegion();
+                        info.tilemapCellTextureRegions[x + y * mainLayer.getWidth()] = region;
+                    }
+                }
+
+                // TODO: initialize other tile layers
+            }
+            roomInfos.add(info);
+        }
+
+        return roomInfos;
     }
 
 }

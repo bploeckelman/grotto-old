@@ -9,10 +9,6 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.maps.tiled.TiledMap;
-import com.badlogic.gdx.maps.tiled.TiledMapRenderer;
-import com.badlogic.gdx.maps.tiled.TmxMapLoader;
-import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.Vector3;
 import zendo.games.grotto.components.*;
 import zendo.games.grotto.curves.CubicBezier;
@@ -23,7 +19,6 @@ import zendo.games.grotto.input.Input;
 import zendo.games.grotto.map.WorldMap;
 import zendo.games.grotto.sprites.Sprite;
 import zendo.games.grotto.utils.Point;
-import zendo.games.grotto.utils.Text;
 import zendo.games.grotto.utils.Time;
 
 import java.util.List;
@@ -33,7 +28,8 @@ import static zendo.games.grotto.input.Input.Key.*;
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Game extends ApplicationAdapter {
 
-    private static final String level_path = "levels/world-0.ldtk";
+//    private static final String level_path = "levels/world-0.ldtk";
+    private static final String level_path = "levels/room-0.tmx";
 
     private Input input;
     private Assets assets;
@@ -104,22 +100,7 @@ public class Game extends ApplicationAdapter {
         camera.follow(player, Point.zero(), true);
 
         worldMouse = new Vector3();
-
-
-        // TEST -----------------------
-        var params = new TmxMapLoader.Parameters();
-        params.textureMinFilter = Texture.TextureFilter.Nearest;
-        params.textureMagFilter = Texture.TextureFilter.Nearest;
-        var loader = new TmxMapLoader();
-        var fileName = "levels/world-0/tiled/0001_Level_0.tmx";
-        map = loader.load(fileName, params);
-        tiledMapRenderer = new OrthogonalTiledMapRenderer(map, assets.batch);
-        tiledMapRenderer.setView(worldCamera);
-        Gdx.app.log("tiled", Text.fmt("map loaded '%s'", fileName));
-        // TEST -----------------------
     }
-    TiledMap map;
-    TiledMapRenderer tiledMapRenderer;
 
     @Override
     public void dispose() {
@@ -255,19 +236,13 @@ public class Game extends ApplicationAdapter {
             batch.begin();
             {
                 // world ------------------------
-//                world.render(batch);
+                world.render(batch);
 
                 // in-world ui ------------------
 //                assets.layout.setText(assets.font, "Grotto", Color.WHITE, worldCamera.viewportWidth, Align.center, false);
 //                assets.font.draw(batch, assets.layout, 0, (3f / 4f) * worldCamera.viewportHeight + assets.layout.height);
             }
             batch.end();
-
-
-            // TESTING ------------------------------
-            tiledMapRenderer.setView(worldCamera);
-            tiledMapRenderer.render();
-            // TESTING ------------------------------
 
             shapes.setProjectionMatrix(worldCamera.combined);
             shapes.begin();
