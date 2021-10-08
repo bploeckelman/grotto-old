@@ -9,7 +9,7 @@
   </layer>
   <layer id="5" name="far" width="40" height="24">
    <data encoding="base64" compression="zlib">
-   eJxjYBgFo2AUjIJRMApGwSgYBaNg6AB2IGYBYraBdggOAHJbI5RmprFdYVBMCigD4n4grqa+czBAGhSTAmQZIO4Tob5zqAJsGSDuUyFTfygRctjU4NOHDCYC8SQgnkyKo+gIFgLxIiBePED2AwAKYQo2
+   eJxjYBgFo2AUjIJRMApGwSgYBSMRhA20A5AANrek4VDLDsQsQMxGO+cQ7RZsAOS2RijNTBvnUATKgLgfiKsH2iE4gCwDxH0iA+0QIPgMxcjAlgHiPhU8epBpdDYxdhIjhgtMBOJJQDyZBD30BAuBeBEQLx4g+wHsyw+H
   </data>
   </layer>
  </group>
@@ -25,7 +25,7 @@
   </data>
   </layer>
   <objectgroup id="10" name="entity">
-   <object id="1" type="spawn" x="160" y="152">
+   <object id="1" name="player" type="spawn" x="160" y="176">
     <properties>
      <property name="type" value="player"/>
     </properties>
@@ -36,12 +36,12 @@
  <group id="4" name="foreground">
   <layer id="8" name="near" width="40" height="24">
    <data encoding="base64" compression="zlib">
-   eJztyzEKADAIA0D/5P//1qWDuFQ730GICIkAAACgy5vtpna/p/vXjz8HRBoBZg==
+   eJzt0bEJACAMBdFkC4sMENx/QAlqFwSxUPAepPnVQUQAAACAfxW9XbDm9B2JvvhxfajTtF+IPh99c7OkNduwrwHC4wHn
   </data>
   </layer>
   <layer id="9" name="nearest" width="40" height="24">
    <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAAD8Gw8AAAE=
+   eJztziESABAQAMDzCUkW/P+BiiAJijOz+4KNAAAAuFPL68FZX7+R/Ln/WvLrzyZYhgCy
   </data>
   </layer>
  </group>

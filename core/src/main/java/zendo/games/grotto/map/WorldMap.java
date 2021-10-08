@@ -50,6 +50,10 @@ public class WorldMap implements Disposable {
         public int[] colliderCells;
         public BackgroundInfo backgroundInfo;
         public TextureRegion[] tilemapCellTextureRegions;
+        public TextureRegion[] nearTilemapCellTextureRegions;
+        public TextureRegion[] nearestTilemapCellTextureRegions;
+        public TextureRegion[] farTilemapCellTextureRegions;
+        public TextureRegion[] farthestTilemapCellTextureRegions;
         public Point[] tilemapCellTextures;
         public Point[] foregroundTilemapCellTextures;
         public Point[] backgroundTilemapCellTextures;
@@ -491,19 +495,23 @@ public class WorldMap implements Disposable {
             }
 
             // add a foreground tile layer if one exists in the info
-            if (info.foregroundTilemapCellTextures != null && info.foregroundTilesetUid != -1) {
+            if ((info.foregroundTilemapCellTextures != null && info.foregroundTilesetUid != -1)
+             || (info.nearTilemapCellTextureRegions != null)) {
                 // setup tileset
                 tileset = tilesets.get(info.foregroundTilesetUid);
                 tilesetTexture = assets.tilesetAtlas.findRegion(tileset.name);
-                regions = tilesetTexture.split(tileset.gridSize, tileset.gridSize);
+                regions = (info.nearTilemapCellTextureRegions != null) ? null
+                        : tilesetTexture.split(tileset.gridSize, tileset.gridSize);
 
                 // initialize a map between texture region array indices and the texture region they point to in the tileset
-                pointRegionMap.clear();
-                for (int x = 0; x < info.cols; x++) {
-                    for (int y = 0; y < info.rows; y++) {
-                        var point = info.foregroundTilemapCellTextures[x + y * info.cols];
-                        if (point != null) {
-                            pointRegionMap.putIfAbsent(point, regions[point.y][point.x]);
+                if (regions != null) {
+                    pointRegionMap.clear();
+                    for (int x = 0; x < info.cols; x++) {
+                        for (int y = 0; y < info.rows; y++) {
+                            var point = info.foregroundTilemapCellTextures[x + y * info.cols];
+                            if (point != null) {
+                                pointRegionMap.putIfAbsent(point, regions[point.y][point.x]);
+                            }
                         }
                     }
                 }
@@ -513,38 +521,79 @@ public class WorldMap implements Disposable {
                 foreground.depth = 10;
                 for (int x = 0; x < info.cols; x++) {
                     for (int y = 0; y < info.rows; y++) {
-                        var point = info.foregroundTilemapCellTextures[x + y * info.cols];
-                        foreground.setCell(x, y, pointRegionMap.get(point));
+                        if (regions != null) {
+                            var point = info.foregroundTilemapCellTextures[x + y * info.cols];
+                            foreground.setCell(x, y, pointRegionMap.get(point));
+                        } else if (info.nearTilemapCellTextureRegions != null) {
+                            var region = info.nearTilemapCellTextureRegions[x + y * info.cols];
+                            foreground.setCell(x, y, region);
+                        } else if (info.nearestTilemapCellTextureRegions != null) {
+                            var region = info.nearestTilemapCellTextureRegions[x + y * info.cols];
+                            foreground.setCell(x, y, region);
+                        }
                     }
                 }
+            }
 
-                // add a foreground tile layer if one exists in the info
-                if (info.backgroundTilemapCellTextures != null && info.backgroundTilesetUid != -1) {
-                    // setup tileset
-                    tileset = tilesets.get(info.backgroundTilesetUid);
-                    tilesetTexture = assets.tilesetAtlas.findRegion(tileset.name);
-                    regions = tilesetTexture.split(tileset.gridSize, tileset.gridSize);
-
-                    // initialize a map between texture region array indices and the texture region they point to in the tileset
-                    pointRegionMap.clear();
-                    for (int x = 0; x < info.cols; x++) {
-                        for (int y = 0; y < info.rows; y++) {
-                            var point = info.backgroundTilemapCellTextures[x + y * info.cols];
-                            if (point != null) {
-                                pointRegionMap.putIfAbsent(point, regions[point.y][point.x]);
-                            }
-                        }
+            // add nearest tilemap layer if one exists in info
+            if (info.nearestTilemapCellTextureRegions != null) {
+                var nearest = entity.add(new Tilemap(info.tileSize, info.cols, info.rows), Tilemap.class);
+                nearest.depth = 20;
+                for (int x = 0; x < info.cols; x++) {
+                    for (int y = 0; y < info.rows; y++) {
+                        var region = info.nearestTilemapCellTextureRegions[x + y * info.cols];
+                        nearest.setCell(x, y, region);
                     }
+                }
+            }
 
-                    // create background tilemap component and set regions
-                    var background = entity.add(new Tilemap(info.tileSize, info.cols, info.rows), Tilemap.class);
-                    // TODO: need to make tilemap layer depths uniform
-                    background.depth = -10;
-                    for (int x = 0; x < info.cols; x++) {
-                        for (int y = 0; y < info.rows; y++) {
+            // add a background tile layer if one exists in the info
+            if ((info.backgroundTilemapCellTextures != null && info.backgroundTilesetUid != -1)
+             || (info.farTilemapCellTextureRegions != null)) {
+                // setup tileset
+                tileset = tilesets.get(info.backgroundTilesetUid);
+                tilesetTexture = assets.tilesetAtlas.findRegion(tileset.name);
+                regions = (info.farTilemapCellTextureRegions != null) ? null
+                        : tilesetTexture.split(tileset.gridSize, tileset.gridSize);
+
+                // initialize a map between texture region array indices and the texture region they point to in the tileset
+                if (regions != null) {
+                                 pointRegionMap.clear();
+                                 for (int x = 0; x < info.cols; x++) {
+                                 for (int y = 0; y < info.rows; y++) {
+                                 var point = info.backgroundTilemapCellTextures[x + y * info.cols];
+                                 if (point != null) {
+                                 pointRegionMap.putIfAbsent(point, regions[point.y][point.x]);
+                                 }
+                                 }
+                                 }
+                                 }
+
+                // TODO: need to make tilemap layer depths uniform
+                // create background tilemap component and set regions
+                var background = entity.add(new Tilemap(info.tileSize, info.cols, info.rows), Tilemap.class);
+                background.depth = -10;
+                for (int x = 0; x < info.cols; x++) {
+                    for (int y = 0; y < info.rows; y++) {
+                        if (regions != null) {
                             var point = info.backgroundTilemapCellTextures[x + y * info.cols];
                             background.setCell(x, y, pointRegionMap.get(point));
+                        } else if (info.farTilemapCellTextureRegions != null) {
+                            var region = info.farTilemapCellTextureRegions[x + y * info.cols];
+                            background.setCell(x, y, region);
                         }
+                    }
+                }
+            }
+
+            // add farthest tilemap layer if one exists in info
+            if (info.farthestTilemapCellTextureRegions != null) {
+                var farthest = entity.add(new Tilemap(info.tileSize, info.cols, info.rows), Tilemap.class);
+                farthest.depth = -20;
+                for (int x = 0; x < info.cols; x++) {
+                    for (int y = 0; y < info.rows; y++) {
+                        var region = info.farthestTilemapCellTextureRegions[x + y * info.cols];
+                        farthest.setCell(x, y, region);
                     }
                 }
             }
@@ -842,6 +891,12 @@ public class WorldMap implements Disposable {
                 TiledMapTileLayer collisionLayer = null;
                 MapLayer entityLayer = null;
 
+                // optional layers
+                TiledMapTileLayer near = null;
+                TiledMapTileLayer nearest = null;
+                TiledMapTileLayer far = null;
+                TiledMapTileLayer farthest = null;
+
                 // find groups for each plane
                 MapGroupLayer bgGroup = null;
                 MapGroupLayer fgGroup = null;
@@ -851,31 +906,14 @@ public class WorldMap implements Disposable {
                     switch (group.getName()) {
                         case "background" -> bgGroup = group;
                         case "foreground" -> fgGroup = group;
-                        case "middle"     -> midGroup = group;
+                        case "middle" -> midGroup = group;
                     }
                 }
-
-                // initialize background layers
-                if (bgGroup != null) {
-                    // TODO: integrate these layers
-                    TiledMapTileLayer far = null;
-                    TiledMapTileLayer farthest = null;
-                    for (var layer : bgGroup.getLayers()) {
-                        switch (layer.getName()) {
-                            case "far"      -> far      = (TiledMapTileLayer) layer;
-                            case "farthest" -> farthest = (TiledMapTileLayer) layer;
-                        }
-                    }
-                }
-
                 // initialize foreground layers
                 if (fgGroup != null) {
-                    // TODO: integrate these layers
-                    TiledMapTileLayer near = null;
-                    TiledMapTileLayer nearest = null;
                     for (var layer : fgGroup.getLayers()) {
                         switch (layer.getName()) {
-                            case "near"    -> near    = (TiledMapTileLayer) layer;
+                            case "near" -> near = (TiledMapTileLayer) layer;
                             case "nearest" -> nearest = (TiledMapTileLayer) layer;
                         }
                     }
@@ -885,9 +923,19 @@ public class WorldMap implements Disposable {
                 if (midGroup != null) {
                     for (var layer : midGroup.getLayers()) {
                         switch (layer.getName()) {
-                            case "main"      -> mainLayer      = (TiledMapTileLayer) layer;
+                            case "main" -> mainLayer = (TiledMapTileLayer) layer;
                             case "collision" -> collisionLayer = (TiledMapTileLayer) layer;
-                            case "entity"    -> entityLayer    = layer;
+                            case "entity" -> entityLayer = layer;
+                        }
+                    }
+                }
+
+                // initialize background layers
+                if (bgGroup != null) {
+                    for (var layer : bgGroup.getLayers()) {
+                        switch (layer.getName()) {
+                            case "far" -> far = (TiledMapTileLayer) layer;
+                            case "farthest" -> farthest = (TiledMapTileLayer) layer;
                         }
                     }
                 }
@@ -916,8 +964,8 @@ public class WorldMap implements Disposable {
                 info.tileSize = tileset.gridSize;
                 info.cols = mainLayer.getWidth();
                 info.rows = mainLayer.getHeight();
-                info.foregroundTilesetUid = -1;
-                info.backgroundTilesetUid = -1;
+                info.foregroundTilesetUid = tileset.uid; // all layers in a map share the same tileset (for now)
+                info.backgroundTilesetUid = tileset.uid; // all layers in a map share the same tileset (for now)
                 info.entityGridSize = mainLayer.getWidth(); // entity layer doesn't have it's own grid
                 info.colliderSize = collisionLayer.getTileWidth();
                 info.colliderCols = collisionLayer.getWidth();
@@ -925,6 +973,10 @@ public class WorldMap implements Disposable {
                 info.backgroundInfo = new BackgroundInfo();
                 info.colliderCells = new int[info.colliderCols * info.colliderRows];
                 info.tilemapCellTextureRegions = new TextureRegion[info.cols * info.rows];
+                info.nearTilemapCellTextureRegions = null;
+                info.nearestTilemapCellTextureRegions = null;
+                info.farTilemapCellTextureRegions = null;
+                info.farthestTilemapCellTextureRegions = null;
                 info.tilemapCellTextures = null;
                 info.foregroundTilemapCellTextures = null;
                 info.backgroundTilemapCellTextures = null;
@@ -955,10 +1007,58 @@ public class WorldMap implements Disposable {
 
                 // initialize main tile layer
                 for (int x = 0; x < mainLayer.getWidth(); x++) {
-                    for (int y =  0; y < mainLayer.getHeight(); y++) {
+                    for (int y = 0; y < mainLayer.getHeight(); y++) {
                         var cell = mainLayer.getCell(x, y);
                         var region = (cell == null || cell.getTile() == null) ? null : cell.getTile().getTextureRegion();
                         info.tilemapCellTextureRegions[x + y * mainLayer.getWidth()] = region;
+                    }
+                }
+
+                // initialize foreground layer(s)
+                if (near != null || nearest != null) {
+                    if (near != null) {
+                        info.nearTilemapCellTextureRegions = new TextureRegion[near.getWidth() * near.getHeight()];
+                        for (int x = 0; x < near.getWidth(); x++) {
+                            for (int y = 0; y < near.getHeight(); y++) {
+                                var cell = near.getCell(x, y);
+                                var region = (cell == null || cell.getTile() == null) ? null : cell.getTile().getTextureRegion();
+                                info.nearTilemapCellTextureRegions[x + y * near.getWidth()] = region;
+                            }
+                        }
+                    }
+                    if (nearest != null) {
+                        info.nearestTilemapCellTextureRegions = new TextureRegion[nearest.getWidth() * nearest.getHeight()];
+                        for (int x = 0; x < nearest.getWidth(); x++) {
+                            for (int y = 0; y < nearest.getHeight(); y++) {
+                                var cell = nearest.getCell(x, y);
+                                var region = (cell == null || cell.getTile() == null) ? null : cell.getTile().getTextureRegion();
+                                info.nearestTilemapCellTextureRegions[x + y * nearest.getWidth()] = region;
+                            }
+                        }
+                    }
+                }
+
+                // initialize background layer(s)
+                if (far != null || farthest != null) {
+                    if (far != null) {
+                        info.farTilemapCellTextureRegions = new TextureRegion[far.getWidth() * far.getHeight()];
+                        for (int x = 0; x < far.getWidth(); x++) {
+                            for (int y = 0; y < far.getHeight(); y++) {
+                                var cell = far.getCell(x, y);
+                                var region = (cell == null || cell.getTile() == null) ? null : cell.getTile().getTextureRegion();
+                                info.farTilemapCellTextureRegions[x + y * far.getWidth()] = region;
+                            }
+                        }
+                    }
+                    if (farthest != null) {
+                        info.farthestTilemapCellTextureRegions = new TextureRegion[farthest.getWidth() * farthest.getHeight()];
+                        for (int x = 0; x < farthest.getWidth(); x++) {
+                            for (int y = 0; y < farthest.getHeight(); y++) {
+                                var cell = farthest.getCell(x, y);
+                                var region = (cell == null || cell.getTile() == null) ? null : cell.getTile().getTextureRegion();
+                                info.farthestTilemapCellTextureRegions[x + y * farthest.getWidth()] = region;
+                            }
+                        }
                     }
                 }
 
