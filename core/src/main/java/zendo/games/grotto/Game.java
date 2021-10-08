@@ -23,9 +23,12 @@ import zendo.games.grotto.input.Input;
 import zendo.games.grotto.map.WorldMap;
 import zendo.games.grotto.sprites.Sprite;
 import zendo.games.grotto.utils.Point;
+import zendo.games.grotto.utils.Text;
 import zendo.games.grotto.utils.Time;
 
 import java.util.List;
+
+import static zendo.games.grotto.input.Input.Key.*;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Game extends ApplicationAdapter {
@@ -111,7 +114,8 @@ public class Game extends ApplicationAdapter {
         var fileName = "levels/world-0/tiled/0001_Level_0.tmx";
         map = loader.load(fileName, params);
         tiledMapRenderer = new OrthogonalTiledMapRenderer(map, assets.batch);
-        Gdx.app.log("tiled", "map loaded '" + fileName + "' + tilesets: " + map.getTileSets().toString());
+        tiledMapRenderer.setView(worldCamera);
+        Gdx.app.log("tiled", Text.fmt("map loaded '%s'", fileName));
         // TEST -----------------------
     }
     TiledMap map;
@@ -130,7 +134,7 @@ public class Game extends ApplicationAdapter {
         worldCamera.unproject(worldMouse.set(Input.mouse().x, Input.mouse().y, 0));
 
         // trigger a reload in current room
-        if (Input.pressed(Input.Key.r) || world.first(Player.class).entity() == null) {
+        if (Input.pressed(r) || world.first(Player.class).entity() == null) {
             reload();
         }
 
@@ -183,14 +187,20 @@ public class Game extends ApplicationAdapter {
         {
             Input.frame();
 
-            if (Input.pressed(Input.Key.escape)) Gdx.app.exit();
-            if (Input.pressed(Input.Key.f1)) DebugFlags.draw_entities     = !DebugFlags.draw_entities;
-            if (Input.pressed(Input.Key.f2)) DebugFlags.draw_anim_bounds  = !DebugFlags.draw_anim_bounds;
-            if (Input.pressed(Input.Key.f3)) DebugFlags.draw_world_origin = !DebugFlags.draw_world_origin;
-            if (Input.pressed(Input.Key.f4)) DebugFlags.draw_temp_debug   = !DebugFlags.draw_temp_debug;
+            var speed = 100f;
+            if (Gdx.input.isKeyPressed(a.index) || Gdx.input.isKeyPressed(left.index))  worldCamera.translate(-speed * Time.delta, 0);
+            if (Gdx.input.isKeyPressed(d.index) || Gdx.input.isKeyPressed(right.index)) worldCamera.translate( speed * Time.delta, 0);
+            if (Gdx.input.isKeyPressed(w.index) || Gdx.input.isKeyPressed(up.index))    worldCamera.translate(0, -speed * Time.delta);
+            if (Gdx.input.isKeyPressed(s.index) || Gdx.input.isKeyPressed(down.index))  worldCamera.translate(0,  speed * Time.delta);
 
-            if (Input.pressed(Input.Key.f6)) DebugFlags.frame_stepping_enabled = !DebugFlags.frame_stepping_enabled;
-            if (DebugFlags.frame_stepping_enabled && !Input.pressed(Input.Key.f7)) {
+            if (Input.pressed(escape)) Gdx.app.exit();
+            if (Input.pressed(f1)) DebugFlags.draw_entities     = !DebugFlags.draw_entities;
+            if (Input.pressed(f2)) DebugFlags.draw_anim_bounds  = !DebugFlags.draw_anim_bounds;
+            if (Input.pressed(f3)) DebugFlags.draw_world_origin = !DebugFlags.draw_world_origin;
+            if (Input.pressed(f4)) DebugFlags.draw_temp_debug   = !DebugFlags.draw_temp_debug;
+
+            if (Input.pressed(f6)) DebugFlags.frame_stepping_enabled = !DebugFlags.frame_stepping_enabled;
+            if (DebugFlags.frame_stepping_enabled && !Input.pressed(f7)) {
                 return;
             }
         }
@@ -255,6 +265,7 @@ public class Game extends ApplicationAdapter {
 
 
             // TESTING ------------------------------
+            tiledMapRenderer.setView(worldCamera);
             tiledMapRenderer.render();
             // TESTING ------------------------------
 
