@@ -411,8 +411,8 @@ public class WorldMap implements Disposable {
         } else if (filename.endsWith(".tmx")) {
             Gdx.app.log("WorldMap", "Loading Tiled map: " + filename);
 
-            // TODO: determine how to layout rooms in world,
-            //  rather than just creating one room per map
+// TODO: add support for world definitions that list many levels, their relative positions, and their corresponding tmx files
+//        https://doc.mapeditor.org/en/stable/manual/worlds/
 
             // load the map
             var params = new TmxMapLoader.Parameters();
@@ -879,8 +879,9 @@ public class WorldMap implements Disposable {
             tileset.name = mapTileset.getName();
             tilesets.put(tileset.uid, tileset);
         }
-
-        var numLevels = 1; // TODO: support multiple levels per map, or possibly a world definition file listing levels and their corresponding tmx files
+// TODO: add support for world definitions that list many levels, their relative positions, and their corresponding tmx files
+//        https://doc.mapeditor.org/en/stable/manual/worlds/
+        var numLevels = 1;
         for (int levelNum = 0; levelNum < numLevels; levelNum++) {
             var info = new RoomInfo();
             {
