@@ -28,8 +28,8 @@ import static zendo.games.grotto.input.Input.Key.*;
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Game extends ApplicationAdapter {
 
-//    private static final String level_path = "levels/world-0.ldtk";
-    private static final String level_path = "levels/room-0.tmx";
+//    private static final String world_path = "levels/world-0.ldtk";
+    private static final String world_path = "levels/world-0.world";
 
     private Input input;
     private Assets assets;
@@ -83,7 +83,7 @@ public class Game extends ApplicationAdapter {
         world = new World();
         world.addEntity().add(new GameContainer(this), GameContainer.class);
 
-        worldMap = new WorldMap(world, assets, level_path);
+        worldMap = new WorldMap(world, assets, world_path);
         world.addEntity().add(new WorldMapContainer(worldMap), WorldMapContainer.class);
 
         player = worldMap.spawnPlayer(world);
@@ -125,7 +125,7 @@ public class Game extends ApplicationAdapter {
     public void reload() {
         // clear and reload level
         worldMap.clear();
-        worldMap.load(world, level_path);
+        worldMap.load(world, world_path);
 
         // respawn player
         player = worldMap.spawnPlayer(world);

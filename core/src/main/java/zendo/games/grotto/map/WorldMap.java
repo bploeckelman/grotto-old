@@ -5,7 +5,6 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.MapGroupLayer;
 import com.badlogic.gdx.maps.MapLayer;
-import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.math.MathUtils;
@@ -403,26 +402,19 @@ public class WorldMap implements Disposable {
             json.setIgnoreUnknownFields(true);
             var ldtk = json.fromJson(Ldtk.class, Gdx.files.internal(filename));
 
-            // load room from the ldtk file data
+            // load rooms from the ldtk file data
             var roomInfos = parseLdtkMap(ldtk);
             for (var roomInfo : roomInfos) {
                 rooms.add(createRoomEntity(roomInfo, assets, world));
             }
-        } else if (filename.endsWith(".tmx")) {
-            Gdx.app.log("WorldMap", "Loading Tiled map: " + filename);
+        } else if (filename.endsWith(".world")) {
+            Gdx.app.log("WorldMap", "Loading Tiled world: " + filename);
 
-// TODO: add support for world definitions that list many levels, their relative positions, and their corresponding tmx files
-//        https://doc.mapeditor.org/en/stable/manual/worlds/
+            // load tiled world file
+            var worldDef = json.fromJson(TiledWorldDef.class, Gdx.files.internal(filename));
 
-            // load the map
-            var params = new TmxMapLoader.Parameters();
-            params.textureMinFilter = Texture.TextureFilter.Nearest;
-            params.textureMagFilter = Texture.TextureFilter.Nearest;
-            var loader = new TmxMapLoader();
-            var map = loader.load(filename, params);
-
-            // load a room from the map
-            var roomInfos = parseTmxMap(filename, map);
+            // load rooms from the map
+            var roomInfos = parseTiledWorld(filename, worldDef);
             for (var roomInfo : roomInfos) {
                 rooms.add(createRoomEntity(roomInfo, assets, world));
             }
@@ -848,41 +840,54 @@ public class WorldMap implements Disposable {
                 .findFirst();
     }
 
-    private List<RoomInfo> parseTmxMap(String filename, TiledMap map) {
+    private List<RoomInfo> parseTiledWorld(String filename, TiledWorldDef worldDef) {
         var roomInfos = new ArrayList<RoomInfo>();
 
-        // instantiate tilesets
-        for (var mapTileset : map.getTileSets()) {
-            var props = mapTileset.getProperties();
-            var tileWidth   = (int) props.get("tilewidth", 0, Integer.class);
-            var tileHeight  = (int) props.get("tileheight", 0, Integer.class);
-            var imageWidth  = (int) props.get("imagewidth", 0, Integer.class);
-            var imageHeight = (int) props.get("imageheight", 0, Integer.class);
-            var spacing     = (int) props.get("spacing", 0, Integer.class);
-            var margin      = (int) props.get("margin", 0, Integer.class);
+        var path = filename.substring(0, filename.lastIndexOf('/') + 1);
 
-            if (tileWidth != tileHeight) {
-                throw new GdxRuntimeException("Failed to load Tiled map '" + filename + "': tileset width and height must be equal");
-            }
-            if (spacing != 0) {
-                throw new GdxRuntimeException("Failed to load Tiled map '" + filename + "': tileset spacing not yet supported");
-            }
-            if (margin != 0) {
-                throw new GdxRuntimeException("Failed to load Tiled map '" + filename + "': tileset margin not yet supported");
-            }
+        // setup the map loader
+        var loader = new TmxMapLoader();
+        var params = new TmxMapLoader.Parameters();
+        params.textureMinFilter = Texture.TextureFilter.Nearest;
+        params.textureMagFilter = Texture.TextureFilter.Nearest;
 
-            var tileset = new Tileset();
-            tileset.uid = mapTileset.hashCode();
-            tileset.rows = imageHeight / tileHeight;
-            tileset.cols = imageWidth / tileWidth;
-            tileset.gridSize = tileWidth;
-            tileset.name = mapTileset.getName();
-            tilesets.put(tileset.uid, tileset);
-        }
-// TODO: add support for world definitions that list many levels, their relative positions, and their corresponding tmx files
-//        https://doc.mapeditor.org/en/stable/manual/worlds/
-        var numLevels = 1;
+        var numLevels = worldDef.maps.size();
         for (int levelNum = 0; levelNum < numLevels; levelNum++) {
+            // get the TiledWorldDef.MapDef for this map
+            var mapDef = worldDef.maps.get(levelNum);
+
+            // load the map
+            var map = loader.load(path + mapDef.fileName, params);
+
+            // instantiate tilesets
+            for (var mapTileset : map.getTileSets()) {
+                var props = mapTileset.getProperties();
+                var tileWidth   = (int) props.get("tilewidth", 0, Integer.class);
+                var tileHeight  = (int) props.get("tileheight", 0, Integer.class);
+                var imageWidth  = (int) props.get("imagewidth", 0, Integer.class);
+                var imageHeight = (int) props.get("imageheight", 0, Integer.class);
+                var spacing     = (int) props.get("spacing", 0, Integer.class);
+                var margin      = (int) props.get("margin", 0, Integer.class);
+
+                if (tileWidth != tileHeight) {
+                    throw new GdxRuntimeException("Failed to load Tiled map '" + filename + "': tileset width and height must be equal");
+                }
+                if (spacing != 0) {
+                    throw new GdxRuntimeException("Failed to load Tiled map '" + filename + "': tileset spacing not yet supported");
+                }
+                if (margin != 0) {
+                    throw new GdxRuntimeException("Failed to load Tiled map '" + filename + "': tileset margin not yet supported");
+                }
+
+                var tileset = new Tileset();
+                tileset.uid = mapTileset.hashCode();
+                tileset.rows = imageHeight / tileHeight;
+                tileset.cols = imageWidth / tileWidth;
+                tileset.gridSize = tileWidth;
+                tileset.name = mapTileset.getName();
+                tilesets.put(tileset.uid, tileset);
+            }
+
             var info = new RoomInfo();
             {
                 // TODO: load background image (optional)
@@ -907,14 +912,14 @@ public class WorldMap implements Disposable {
                     switch (group.getName()) {
                         case "background" -> bgGroup = group;
                         case "foreground" -> fgGroup = group;
-                        case "middle" -> midGroup = group;
+                        case "middle"     -> midGroup = group;
                     }
                 }
                 // initialize foreground layers
                 if (fgGroup != null) {
                     for (var layer : fgGroup.getLayers()) {
                         switch (layer.getName()) {
-                            case "near" -> near = (TiledMapTileLayer) layer;
+                            case "near"    -> near = (TiledMapTileLayer) layer;
                             case "nearest" -> nearest = (TiledMapTileLayer) layer;
                         }
                     }
@@ -953,14 +958,14 @@ public class WorldMap implements Disposable {
                 }
 
                 // lookup tileset
-                // TODO: support multiple tilesets per map
+                // TODO: support multiple tilesets per map, or at least get the association between tileset and map
                 var tileset = tilesets.values().toArray().first();
                 if (tileset == null) {
                     throw new GdxRuntimeException("Failed to load Tiled map '" + filename + "': no tileset found for map");
                 }
 
                 // populate RoomInfo
-                info.position = Point.zero();
+                info.position = Point.at(mapDef.x, mapDef.y);
                 info.tilesetUid = tileset.uid;
                 info.tileSize = tileset.gridSize;
                 info.cols = mainLayer.getWidth();
