@@ -965,7 +965,7 @@ public class WorldMap implements Disposable {
                 }
 
                 // populate RoomInfo
-                info.position = Point.at(mapDef.x, mapDef.y);
+                info.position = Point.at(mapDef.x, -mapDef.y); // world file sets y positions inverted?
                 info.tilesetUid = tileset.uid;
                 info.tileSize = tileset.gridSize;
                 info.cols = mainLayer.getWidth();
@@ -999,6 +999,9 @@ public class WorldMap implements Disposable {
 
                     if ("player".equalsIgnoreCase(type)) {
                         spawners.add(new Spawner(type, x, y));
+                    }
+                    else if ("jumpthru".equalsIgnoreCase(type)) {
+                        jumpthrus.add(new Jumpthru(RectI.at(x, y, w, h)));
                     }
                 }
 

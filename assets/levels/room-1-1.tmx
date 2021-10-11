@@ -1,34 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="left-up" width="40" height="24" tilewidth="8" tileheight="8" infinite="0" nextlayerid="11" nextobjectid="1">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="left-up" width="40" height="24" tilewidth="8" tileheight="8" infinite="0" nextlayerid="11" nextobjectid="2">
+ <tileset firstgid="1" name="adve-trans8" tilewidth="8" tileheight="8" tilecount="504" columns="24">
+  <image source="tilesets/adve-trans8.png" width="192" height="168"/>
+ </tileset>
  <group id="2" name="background">
   <layer id="1" name="farthest" width="40" height="24">
    <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAAD8Gw8AAAE=
+   eJztwwEJAAAMBKEL+P3zrMdQcNVUVVX1+QNGZB0Q
   </data>
   </layer>
   <layer id="5" name="far" width="40" height="24">
    <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAAD8Gw8AAAE=
+   eJztzlEJACAQBcFrqinEGMYw5kV4P8Ii7CSYKkmSRJh0INh0IDh0ILh0QNJXBh0IFh14pAEnWgLm
   </data>
   </layer>
  </group>
  <group id="3" name="middle">
   <layer id="7" name="main" width="40" height="24">
    <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAAD8Gw8AAAE=
+   eJxTYGBgqAbiGiCuJZGNTmOTwyeGy3wYrQjEfgyDF3gBcdpAOwIPMAJis4F2BB4ACr/BHL9JDIM7/EDuG8zhB0p/gz1/DObwG+zly2DPH6PxSxkY7PE7FOqPwRy/sPaBMhCrALEqFCPzcbHV6OQ+cuPXjpoOwQEoyb9h1HQIDkBJ/s2jpkNwAEryrwMDcemUkjRL7/IPlGZfAfFrItXTu34DpVkmRgYGZkbi1IPit46WDkIDb9CwExA7A7ELELuisd0YIPELABygLdE=
   </data>
   </layer>
   <layer id="6" name="collision" width="40" height="24" opacity="0.2">
    <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAAD8Gw8AAAE=
+   eJzt1jEKACAMwMD6/w93FHcHS1CKJOAm9AaF5ojI5qdr+lj6WPpY+lj6WPpY+ljd9zIyR9//vttv9vX/rTr17eedzl13JrNee4g=
   </data>
   </layer>
-  <objectgroup id="10" name="entity"/>
+  <objectgroup id="10" name="entity">
+   <object id="1" name="jumpthru" type="jumpthru" x="248" y="184" width="64" height="2"/>
+  </objectgroup>
  </group>
  <group id="4" name="foreground">
   <layer id="8" name="near" width="40" height="24">
    <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAAD8Gw8AAAE=
+   eJzt0jEKACAMBMH06v+/awqL1IJIYAa2v+IiAAB4ZWTztD5vgRv1w35MdxvAcwBt
   </data>
   </layer>
   <layer id="9" name="nearest" width="40" height="24">
