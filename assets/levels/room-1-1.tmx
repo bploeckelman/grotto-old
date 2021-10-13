@@ -18,7 +18,7 @@
  <group id="3" name="middle">
   <layer id="7" name="main" width="40" height="24">
    <data encoding="base64" compression="zlib">
-   eJxTYGBgqAbiGiCuJZGNTmOTwyeGy3wYrQjEfgyDF3gBcdpAOwIPMAJis4F2BB4ACr/BHL9JDIM7/EDuG8zhB0p/gz1/DObwG+zly2DPH6PxSxkY7PE7FOqPwRy/sPaBMhCrALEqFCPzcbHV6OQ+cuPXjpoOwQEoyb9h1HQIDkBJ/s2jpkNwAEryrwMDcemUkjRL7/IPlGZfAfFrItXTu34DpVkmRgYGZkbi1IPit46WDkIDb9CwExA7A7ELELuisd0YIPELABygLdE=
+   eJxTYGBgqAbiGiCuJZGNTmOTwyeGy3wYrQjEfgyDF3gBcdpAOwIPMAJis4F2BB4ACr/BHL9JDIM7/EDuG8zhB0p/gz1/DObwG+zly2DPH6PxSxkY7PE7FOqPwRy/sPaBMhCrALEqFCPzcbHV6OQ+cuPXjpoOwQEoyb9h1HQIDkBJ/s2jpkNwAEryrwMDcemUkjRL7/IPlGZfAfFrItXTu34DpVkmRgYGZkbi1IPit46WDkIDb9DwKqA710DxWjT2OkZI/AIAZPwxGw==
   </data>
   </layer>
   <layer id="6" name="collision" width="40" height="24" opacity="0.2">
@@ -27,7 +27,7 @@
   </data>
   </layer>
   <objectgroup id="10" name="entity">
-   <object id="1" name="jumpthru" type="jumpthru" x="248" y="184" width="64" height="2"/>
+   <object id="1" name="jumpthru" type="jumpthru" x="248" y="190" width="64" height="2"/>
   </objectgroup>
  </group>
  <group id="4" name="foreground">
