@@ -10,7 +10,6 @@ import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.GdxRuntimeException;
-import com.badlogic.gdx.utils.IntMap;
 import com.badlogic.gdx.utils.Json;
 import zendo.games.grotto.Assets;
 import zendo.games.grotto.components.*;
@@ -34,8 +33,11 @@ public class WorldMap implements Disposable {
     // Helper data structures
     // ------------------------------------------
 
-    // TODO: should probably just change the tileset uid or whatever to a string so we can more easily see what's what in the debugger
     static class RoomInfo {
+        public String mapName;
+        public String tilesetName;
+        public String foregroundTilesetName;
+        public String backgroundTilesetName;
         public Point position;
         public int tileSize;
         public int cols;
@@ -145,8 +147,10 @@ public class WorldMap implements Disposable {
     private final List<WaypointInfo> waypointInfos;
 
     private final Assets assets;
-    private final IntMap<Tileset> tilesets;
     private final List<BackgroundInfo> backgrounds;
+
+    // TODO: support multiple tilesets per map
+    private Tileset tileset;
 
     // ------------------------------------------
     // Constructor and interface implementations
@@ -159,7 +163,6 @@ public class WorldMap implements Disposable {
         barriers = new ArrayList<>();
         jumpthrus = new ArrayList<>();
         ladders = new ArrayList<>();
-        tilesets = new IntMap<>();
         backgrounds = new ArrayList<>();
         solidInfos = new ArrayList<>();
         waypointInfos = new ArrayList<>();
@@ -430,7 +433,6 @@ public class WorldMap implements Disposable {
 
     private Entity createRoomEntity(RoomInfo info, Assets assets, World world) {
         // setup tileset
-        var tileset = tilesets.get(info.tilesetUid);
         var tilesetTexture = assets.tilesetAtlas.findRegion(tileset.name);
         var regions = (tilesetTexture == null) ? null : tilesetTexture.split(tileset.gridSize, tileset.gridSize);
 
@@ -450,6 +452,8 @@ public class WorldMap implements Disposable {
         // create the room entity and initialize it
         var entity = world.addEntity();
         {
+//            Gdx.app.log("createRoomEntity", "room: " + info.mapName + ", tilesz: " + info.tileSize + "  collsz: " + info.colliderSize);
+
             // create components
             var tilemap = entity.add(new Tilemap(info.tileSize, info.cols, info.rows), Tilemap.class);
             var collider = entity.add(Collider.makeGrid(info.colliderSize, info.colliderCols, info.colliderRows), Collider.class);
@@ -488,10 +492,9 @@ public class WorldMap implements Disposable {
             }
 
             // add a foreground tile layer if one exists in the info
-            if ((info.foregroundTilemapCellTextures != null && info.foregroundTilesetUid != -1)
+            if ((info.foregroundTilemapCellTextures != null && info.foregroundTilesetName != null)
              || (info.nearTilemapCellTextureRegions != null)) {
                 // setup tileset
-                tileset = tilesets.get(info.foregroundTilesetUid);
                 tilesetTexture = assets.tilesetAtlas.findRegion(tileset.name);
                 regions = (info.nearTilemapCellTextureRegions != null) ? null
                         : tilesetTexture.split(tileset.gridSize, tileset.gridSize);
@@ -541,10 +544,9 @@ public class WorldMap implements Disposable {
             }
 
             // add a background tile layer if one exists in the info
-            if ((info.backgroundTilemapCellTextures != null && info.backgroundTilesetUid != -1)
+            if ((info.backgroundTilemapCellTextures != null && info.backgroundTilesetName != null)
              || (info.farTilemapCellTextureRegions != null)) {
                 // setup tileset
-                tileset = tilesets.get(info.backgroundTilesetUid);
                 tilesetTexture = assets.tilesetAtlas.findRegion(tileset.name);
                 regions = (info.farTilemapCellTextureRegions != null) ? null
                         : tilesetTexture.split(tileset.gridSize, tileset.gridSize);
@@ -602,6 +604,10 @@ public class WorldMap implements Disposable {
             collider.depth = 100;
         }
         entity.position.set(info.position);
+//
+//        var pos_x = info.position.x;
+//        var pos_y = info.position.y + (info.tileSize * info.rows);
+//        entity.position.set(pos_x, pos_y);
 
         return entity;
     }
@@ -613,13 +619,13 @@ public class WorldMap implements Disposable {
         for (var def : ldtk.defs.tilesets) {
             var nameBeginIndex = 0;
             var nameEndIndex = def.relPath.lastIndexOf(".png");
-            var tileset = new Tileset();
+            // TODO: re-add support for multiple tilesets
+            tileset = new Tileset();
             tileset.uid = def.uid;
             tileset.rows = def.__cHei;
             tileset.cols = def.__cWid;
             tileset.gridSize = def.tileGridSize;
             tileset.name = def.relPath.substring(nameBeginIndex, nameEndIndex);
-            tilesets.put(tileset.uid, tileset);
         }
 
         var numLevels = ldtk.levels.size();
@@ -671,14 +677,13 @@ public class WorldMap implements Disposable {
                     throw new GdxRuntimeException("Failed to load ldtk file, no 'Entities' layer found");
                 }
 
-                // lookup tileset
-                var tilesetUid = tileLayer.__tilesetDefUid;
-                var tileset = tilesets.get(tilesetUid, null);
+                // verify tileset
                 if (tileset == null) {
-                    throw new GdxRuntimeException("Failed to load ldtk file, missing tileset with uid " + tilesetUid + " in tile layer");
+                    throw new GdxRuntimeException("Failed to load ldtk file, missing tileset with in tile layer");
                 }
 
                 info.position = Point.at(level.worldX, -(level.worldY + level.pxHei));
+                info.tilesetName = tileset.name;
                 info.tileSize = tileset.gridSize;
                 info.cols = tileLayer.__cWid;
                 info.rows = tileLayer.__cHei;
@@ -777,12 +782,12 @@ public class WorldMap implements Disposable {
 
                 // setup foreground tilemap layer
                 if (foregroundLayer != null) {
-                    var foregroundTilesetUid = foregroundLayer.__tilesetDefUid;
-                    info.foregroundTilesetUid = foregroundTilesetUid;
+                    info.foregroundTilesetUid = foregroundLayer.__tilesetDefUid;
+                    info.foregroundTilesetName = foregroundLayer.__identifier;
 
-                    var foregroundTileset = tilesets.get(foregroundTilesetUid, null);
+                    var foregroundTileset = tileset;
                     if (foregroundTileset == null) {
-                        throw new GdxRuntimeException("Failed to load ldtk file, missing tileset with uid " + foregroundTilesetUid + " in foreground layer");
+                        throw new GdxRuntimeException("Failed to load ldtk file, missing tileset with uid " + info.foregroundTilesetName + " in foreground layer");
                     }
 
                     // setup foreground layer
@@ -802,12 +807,12 @@ public class WorldMap implements Disposable {
 
                 // setup background tilemap layer
                 if (backgroundLayer != null) {
-                    var backgroundTilesetUid = backgroundLayer.__tilesetDefUid;
-                    info.backgroundTilesetUid = backgroundTilesetUid;
+                    info.backgroundTilesetUid = backgroundLayer.__tilesetDefUid;
+                    info.backgroundTilesetName = backgroundLayer.__identifier;
 
-                    var backgroundTileset = tilesets.get(backgroundTilesetUid, null);
+                    var backgroundTileset = tileset;
                     if (backgroundTileset == null) {
-                        throw new GdxRuntimeException("Failed to load ldtk file, missing tileset with uid " + backgroundTilesetUid + " in background layer");
+                        throw new GdxRuntimeException("Failed to load ldtk file, missing tileset with uid " + info.backgroundTilesetName + " in background layer");
                     }
 
                     // setup background layer
@@ -860,6 +865,12 @@ public class WorldMap implements Disposable {
             // load the map
             var map = loader.load(path + mapDef.fileName, params);
 
+            // TODO: support multiple tilesets per map
+            var numTilesets = map.getTileSets().spliterator().getExactSizeIfKnown();
+            if (numTilesets > 1) {
+                Gdx.app.log("WARN", "parseTiledWorld: " + mapDef.fileName + " contains " + numTilesets + " tilesets, only one tileset is supported for now");
+            }
+
             // instantiate tilesets
             for (var mapTileset : map.getTileSets()) {
                 var props = mapTileset.getProperties();
@@ -880,13 +891,12 @@ public class WorldMap implements Disposable {
                     throw new GdxRuntimeException("Failed to load Tiled map '" + filename + "': tileset margin not yet supported");
                 }
 
-                var tileset = new Tileset();
+                tileset = new Tileset();
                 tileset.uid = mapTileset.hashCode();
                 tileset.rows = imageHeight / tileHeight;
                 tileset.cols = imageWidth / tileWidth;
                 tileset.gridSize = tileWidth;
                 tileset.name = mapTileset.getName();
-                tilesets.put(tileset.uid, tileset);
             }
 
             var info = new RoomInfo();
@@ -959,14 +969,16 @@ public class WorldMap implements Disposable {
                 }
 
                 // lookup tileset
-                // TODO: support multiple tilesets per map, or at least get the association between tileset and map
-                var tileset = tilesets.values().toArray().first();
                 if (tileset == null) {
                     throw new GdxRuntimeException("Failed to load Tiled map '" + filename + "': no tileset found for map");
                 }
 
                 // populate RoomInfo
-                info.position = Point.at(mapDef.x, -mapDef.y); // world file sets y positions inverted?
+                info.mapName = filename;
+                info.tilesetName = tileset.name;
+                // tiled world file format is y-down with a top-left origin, adjust to y-up bottom-left origin
+                // ie. make game look like tiled
+                info.position = Point.at(mapDef.x, -mapDef.y - mapDef.height);
                 info.tilesetUid = tileset.uid;
                 info.tileSize = tileset.gridSize;
                 info.cols = mainLayer.getWidth();

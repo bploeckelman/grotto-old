@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="left-up" width="40" height="24" tilewidth="16" tileheight="16" infinite="0" nextlayerid="11" nextobjectid="1">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="40" height="24" tilewidth="16" tileheight="16" infinite="0" nextlayerid="11" nextobjectid="1">
  <tileset firstgid="1" name="retro-lines16" tilewidth="16" tileheight="16" tilecount="840" columns="20">
   <image source="tilesets/retro-lines16.png" width="320" height="672"/>
  </tileset>
@@ -23,7 +23,7 @@
   </layer>
   <layer id="6" name="collision" width="40" height="24" opacity="0.2">
    <data encoding="base64" compression="zlib">
-   eJzt17EJADAIBVHJ/qM4pFW6kOY3h9yB/cNCsE9Vg4ccwUffH8HwS1+Wviyqj3RDXlFdN31Z+rL0ZenL2uLz99ndADGXQ/k=
+   eJxbw8TAsGaQ48EKBoP7Bnv4EbJ/1H2U2T/qPsrsH3UfbnuJKT8G0n3UVEdtMFzcN1Bg1H2UgVH3UQZG3UcZGC7uG+33DG8AAGw2TCE=
   </data>
   </layer>
   <objectgroup id="10" name="entity"/>
