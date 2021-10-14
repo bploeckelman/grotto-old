@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="left-up" width="40" height="24" tilewidth="16" tileheight="16" infinite="0" nextlayerid="11" nextobjectid="1">
+ <tileset firstgid="1" name="retro-lines16" tilewidth="16" tileheight="16" tilecount="840" columns="20">
+  <image source="tilesets/retro-lines16.png" width="320" height="672"/>
+ </tileset>
+ <group id="2" name="background">
+  <layer id="1" name="farthest" width="40" height="24">
+   <data encoding="base64" compression="zlib">
+   eJztwwEJAAAMA6Dx/kmWcj2Ogr2kqqqq+vwArUWFHw==
+  </data>
+  </layer>
+  <layer id="5" name="far" width="40" height="24">
+   <data encoding="base64" compression="zlib">
+   eJztwQENAAAAwqD3T20PBxQAAAD8Gw8AAAE=
+  </data>
+  </layer>
+ </group>
+ <group id="3" name="middle">
+  <layer id="7" name="main" width="40" height="24">
+   <data encoding="base64" compression="zlib">
+   eJxjYBgFQxkwAjETEDMDMQuUjcwfaCA60A4gADQH2gEEgO1AO4AAGI1fysBgjV9YuVI10A7BAUbTHWVgsKY7GBiNX8rAaPxSBgZ7/I6GH2WA2PyB3ramF3uw1rvDDQAAmasEDA==
+  </data>
+  </layer>
+  <layer id="6" name="collision" width="40" height="24" opacity="0.2">
+   <data encoding="base64" compression="zlib">
+   eJzt17EJADAIBVHJ/qM4pFW6kOY3h9yB/cNCsE9Vg4ccwUffH8HwS1+Wviyqj3RDXlFdN31Z+rL0ZenL2uLz99ndADGXQ/k=
+  </data>
+  </layer>
+  <objectgroup id="10" name="entity"/>
+ </group>
+ <group id="4" name="foreground">
+  <layer id="8" name="near" width="40" height="24">
+   <data encoding="base64" compression="zlib">
+   eJztzsENQEAQheFtADWgBBFVoAAnFMAFFYigae/gOolsTEbkfcmfvWwyzzki+pISVai2HiJoUYd66yGCCc1osR4i2NGBTushREQvCVCIoo/ejVGCUvVFfndzlKFCfZH/3UZ5i2RE64N/w/1uilvoPy4mIgm1
+  </data>
+  </layer>
+  <layer id="9" name="nearest" width="40" height="24">
+   <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjIJRMApGwSgYBaNg+AFfRgYGPyD2Zxxol2AHiUB3JQFx8iB1XynQXWVAXE5D92kAzdZkhNDooJkI/RvQ9GlC+Vo4zBwFowAAuzQFqg==
+  </data>
+  </layer>
+ </group>
+</map>

@@ -20,6 +20,13 @@
             "width": 320,
             "x": 320,
             "y": -192
+        },
+        {
+            "fileName": "room-2-1.tmx",
+            "height": 384,
+            "width": 640,
+            "x": 640,
+            "y": -192
         }
     ],
     "onlyShowAdjacentMaps": false,

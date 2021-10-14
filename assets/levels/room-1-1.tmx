@@ -18,12 +18,12 @@
  <group id="3" name="middle">
   <layer id="7" name="main" width="40" height="24">
    <data encoding="base64" compression="zlib">
-   eJxTYGBgqAbiGiCuJZGNTmOTwyeGy3wYrQjEfgyDF3gBcdpAOwIPMAJis4F2BB4ACr/BHL9JDIM7/EDuG8zhB0p/gz1/DObwG+zly2DPH6PxSxkY7PE7FOqPwRy/sPaBMhCrALEqFCPzcbHV6OQ+cuPXjpoOwQEoyb9h1HQIDkBJ/s2jpkNwAEryrwMDcemUkjRL7/IPlGZfAfFrItXTu34DpVkmRgYGZkbi1IPit46WDkIDb9DwKqA710DxWjT2OkZI/AIAZPwxGw==
+   eJxTYGBgqAbiGiCuJZGNTmOTwyeGy3wYrQjEfgyDF1QBcdpAO4IAMBtoBxAAgzl+QWA0/CgDgz1/jIYfZWA0f1AGRuOXMjAav5QBUPwqA7EKEKtCMTIfF1uNTu4jN37tqOoK3IDc+A2jqiuwAykG8vNvHjUdggN4MZAfvw4MxKVTStJsEgN9yz9Qmn0FxK+JVG/EQN/yD5RmmRgZGJgZiVMPit86WjoIDbxBw6uA7lwDxWvR2OsYIfELAKJRLHs=
   </data>
   </layer>
   <layer id="6" name="collision" width="40" height="24" opacity="0.2">
    <data encoding="base64" compression="zlib">
-   eJzt1jEKACAMwMD6/w93FHcHS1CKJOAm9AaF5ojI5qdr+lj6WPpY+lj6WPpY+ljd9zIyR9//vttv9vX/rTr17eedzl13JrNee4g=
+   eJzt1jEKACAMBMH4/w+nlPQW6qFcYBfshAxokRwRaX5cc/dV+LTwaeHTwqeFTwufVgef8152Owef9k4dfK//7O/9/tSJbz1vd27dmR6Ba/g=
   </data>
   </layer>
   <objectgroup id="10" name="entity">
