@@ -34,6 +34,7 @@ public class WorldMap implements Disposable {
     // Helper data structures
     // ------------------------------------------
 
+    // TODO: should probably just change the tileset uid or whatever to a string so we can more easily see what's what in the debugger
     static class RoomInfo {
         public Point position;
         public int tileSize;
@@ -550,16 +551,16 @@ public class WorldMap implements Disposable {
 
                 // initialize a map between texture region array indices and the texture region they point to in the tileset
                 if (regions != null) {
-                                 pointRegionMap.clear();
-                                 for (int x = 0; x < info.cols; x++) {
-                                 for (int y = 0; y < info.rows; y++) {
-                                 var point = info.backgroundTilemapCellTextures[x + y * info.cols];
-                                 if (point != null) {
-                                 pointRegionMap.putIfAbsent(point, regions[point.y][point.x]);
-                                 }
-                                 }
-                                 }
-                                 }
+                    pointRegionMap.clear();
+                    for (int x = 0; x < info.cols; x++) {
+                        for (int y = 0; y < info.rows; y++) {
+                            var point = info.backgroundTilemapCellTextures[x + y * info.cols];
+                            if (point != null) {
+                                pointRegionMap.putIfAbsent(point, regions[point.y][point.x]);
+                            }
+                        }
+                    }
+                }
 
                 // TODO: need to make tilemap layer depths uniform
                 // create background tilemap component and set regions
