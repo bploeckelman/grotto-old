@@ -19,12 +19,12 @@
  <group id="3" name="middle">
   <layer id="7" name="main" width="40" height="24">
    <data encoding="base64" compression="zlib">
-   eJxTYGBgqAbiGiCuJZGNTmOTwyeGy3wYrQjEfgyDF1QBcdpAO4IAMBtoBxAAgzl+QWA0/CgDgz1/jIYfZWA0f1AGRuOXMjAav5QBUPwqA7EKEKtCMTIfF1uNTu4jN37tqOoK3IDc+A2jqiuwAykG8vNvHjUdggN4MZAfvw4MxKVTStJsEgN9yz9Qmn0FxK+JVG/EQN/yD5RmmRgZGJgZiVMPit86WjoIDbxBw6uA7lwDxWvR2OsYIfELAKJRLHs=
+   eJxTYGBgqAbiGiCuJZGNTmOTwyeGy3wYrQjEfgyDF1QBcdpAO4IAMBtoBxAAgzl+QWA0/CgDgz1/jLTw42RiYOCCYnEglmCizDxq5w9JoHt+MkKwOpCtQaH7qB2/IPdJIbmRUvdRO36R3UeN8KN2/GoC3aMFxOZQbDHI4pfaYLCXf6D4VQZiFSBWhWJkPi62Gp3cR2782lHVFbgBufEbRlVXYAdSDOTn3zxqOgQH8GIgP34dGIhLp5Sk2SQG+rb/QGn2FRC/JlK9EQN9yz9QmmUC1ivMjMSpB8VvHS0dhAbeoOFVQHeugeK1aOx1jJD4BQBMkTQP
   </data>
   </layer>
   <layer id="6" name="collision" width="40" height="24" opacity="0.2">
    <data encoding="base64" compression="zlib">
-   eJzt1jEKACAMBMH4/w+nlPQW6qFcYBfshAxokRwRaX5cc/dV+LTwaeHTwqeFTwufVgef8152Owef9k4dfK//7O/9/tSJbz1vd27dmR6Ba/g=
+   eJztlsEKACAIQ+3/f7hjeO9QbcaEPfAW7kEizhExxUsVdb/Efhj2w7AfBtuPvV8r/Jj97cfth6I+f2w6+CnfZa859sP+qYNf9cz+vu9vPe23zzvNzTcLPgh7iA==
   </data>
   </layer>
   <objectgroup id="10" name="entity">
