@@ -42,9 +42,6 @@ public class WorldMap implements Disposable {
         public int tileSize;
         public int cols;
         public int rows;
-        public int tilesetUid;
-        public int foregroundTilesetUid;
-        public int backgroundTilesetUid;
         public int entityGridSize;
         public int colliderSize;
         public int colliderRows;
@@ -613,6 +610,8 @@ public class WorldMap implements Disposable {
     }
 
     private List<RoomInfo> parseLdtkMap(Ldtk ldtk) {
+        if (true) throw new GdxRuntimeException("LDTK map loading currently unsupported");
+
         var roomInfos = new ArrayList<RoomInfo>();
 
         // instantiate tilesets
@@ -687,9 +686,6 @@ public class WorldMap implements Disposable {
                 info.tileSize = tileset.gridSize;
                 info.cols = tileLayer.__cWid;
                 info.rows = tileLayer.__cHei;
-                info.tilesetUid = tileset.uid;
-                info.foregroundTilesetUid = -1;
-                info.backgroundTilesetUid = -1;
                 info.entityGridSize = entityLayer.__gridSize;
                 info.colliderSize = collisionLayer.__gridSize;
                 info.colliderCols = collisionLayer.__cWid;
@@ -782,7 +778,6 @@ public class WorldMap implements Disposable {
 
                 // setup foreground tilemap layer
                 if (foregroundLayer != null) {
-                    info.foregroundTilesetUid = foregroundLayer.__tilesetDefUid;
                     info.foregroundTilesetName = foregroundLayer.__identifier;
 
                     var foregroundTileset = tileset;
@@ -807,7 +802,6 @@ public class WorldMap implements Disposable {
 
                 // setup background tilemap layer
                 if (backgroundLayer != null) {
-                    info.backgroundTilesetUid = backgroundLayer.__tilesetDefUid;
                     info.backgroundTilesetName = backgroundLayer.__identifier;
 
                     var backgroundTileset = tileset;
@@ -979,12 +973,9 @@ public class WorldMap implements Disposable {
                 // tiled world file format is y-down with a top-left origin, adjust to y-up bottom-left origin
                 // ie. make game look like tiled
                 info.position = Point.at(mapDef.x, -mapDef.y - mapDef.height);
-                info.tilesetUid = tileset.uid;
                 info.tileSize = tileset.gridSize;
                 info.cols = mainLayer.getWidth();
                 info.rows = mainLayer.getHeight();
-                info.foregroundTilesetUid = tileset.uid; // all layers in a map share the same tileset (for now)
-                info.backgroundTilesetUid = tileset.uid; // all layers in a map share the same tileset (for now)
                 info.entityGridSize = mainLayer.getWidth(); // entity layer doesn't have it's own grid
                 info.colliderSize = collisionLayer.getTileWidth();
                 info.colliderCols = collisionLayer.getWidth();
