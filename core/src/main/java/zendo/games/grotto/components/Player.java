@@ -247,6 +247,7 @@ public class Player extends Component {
                             getHurt = false;
                         }
                     }
+                    // TODO: end kludge
                     if (getHurt) {
                         changeState(new HurtState());
                     }
