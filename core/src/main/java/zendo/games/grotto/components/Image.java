@@ -17,11 +17,15 @@ public class Image extends Component {
     public Image() {}
 
     public Image(Texture texture) {
-        region = new TextureRegion(texture);
-        xOffset = 0;
-        yOffset = 0;
-        width = region.getRegionWidth();
-        height = region.getRegionHeight();
+        this(new TextureRegion(texture));
+    }
+
+    public Image(TextureRegion region) {
+        this.region = region;
+        this.xOffset = 0;
+        this.yOffset = 0;
+        this.width  = region.getRegionWidth();
+        this.height = region.getRegionHeight();
     }
 
     @Override
