@@ -609,6 +609,7 @@ public class WorldMap implements Disposable {
         return entity;
     }
 
+    @Deprecated
     private List<RoomInfo> parseLdtkMap(Ldtk ldtk) {
         if (true) throw new GdxRuntimeException("LDTK map loading currently unsupported");
 
@@ -1001,11 +1002,14 @@ public class WorldMap implements Disposable {
                     var w = MathUtils.round(props.get("width", 0f, Float.class));
                     var h = MathUtils.round(props.get("height", 0f, Float.class));
 
-                    if ("player".equalsIgnoreCase(type)) {
-                        spawners.add(new Spawner(type, x, y));
-                    }
-                    else if ("jumpthru".equalsIgnoreCase(type)) {
-                        jumpthrus.add(new Jumpthru(RectI.at(x, y, w, h)));
+                    switch (type) {
+                        case "player",
+                                "shroom", "slime", "blob", "goblin", "eye",
+                                "coin", "vase",
+                                "clostridium", "geobacter",
+                                "staphylococcus", "synechococcus"
+                                -> spawners.add(new Spawner(type, x, y));
+                        case "jumpthru" -> jumpthrus.add(new Jumpthru(RectI.at(x, y, w, h)));
                     }
                 }
 

@@ -15,6 +15,8 @@ import zendo.games.grotto.utils.Time;
 
 public class CreatureFactory {
 
+    // TODO: creatures get stuck when reaching the edge of a room that continues into another room
+
     public static Entity player(Assets assets, World world, Point position) {
         var entity = world.addEntity();
         {
