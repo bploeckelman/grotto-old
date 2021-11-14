@@ -67,8 +67,8 @@ public class RectI implements Pool.Poolable {
 
     public int left()   { return x; }
     public int right()  { return x + w; }
-    public int top()    { return y; }
-    public int bottom() { return y + h; }
+    public int top()    { return y + h; }
+    public int bottom() { return y; }
 
     @Override
     public void reset() {
@@ -81,6 +81,17 @@ public class RectI implements Pool.Poolable {
     public boolean contains(int x, int y) {
         return (x >= this.x && x <= this.x + this.w
              && y >= this.y && y <= this.y + this.h);
+    }
+
+    public boolean contains(RectI rect) {
+        return (rect.left()   >= left()
+             && rect.right()  <= right()
+             && rect.bottom() >= bottom()
+             && rect.top()    <= top());
+    }
+
+    public String toString() {
+        return String.format("RectI(%d, %d, %d, %d)", x, y, w, h);
     }
 
 }

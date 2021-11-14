@@ -1,6 +1,5 @@
 package zendo.games.grotto.factories;
 
-import com.badlogic.gdx.math.MathUtils;
 import zendo.games.grotto.Assets;
 import zendo.games.grotto.components.*;
 import zendo.games.grotto.components.creatures.EyeBehavior;
@@ -15,7 +14,7 @@ import zendo.games.grotto.utils.Time;
 
 public class CreatureFactory {
 
-    // TODO: creatures get stuck when reaching the edge of a room that continues into another room
+    // TODO: pause all entities while player transitions between rooms
 
     public static Entity player(Assets assets, World world, Point position) {
         var entity = world.addEntity();
@@ -281,6 +280,11 @@ public class CreatureFactory {
             entity.position.set(position);
             entity.add(new Enemy("shroom"), Enemy.class);
 
+            // get a ref to the room we're in to check whether we're about to go out of bounds
+            var worldMap = world.first(WorldMapContainer.class).get();
+            var currentRoom = worldMap.room(entity.position);
+            var roomBounds = worldMap.getRoomBounds(currentRoom);
+
             var anim = entity.add(new Animator("shroom", "idle"), Animator.class);
 
             var bounds = RectI.at(-6, 0, 12, 12);
@@ -374,9 +378,21 @@ public class CreatureFactory {
                     var fallOffset = Point.pool.obtain().set(feelerDist * dir, -1);
                     var hitOffset = Point.pool.obtain().set(dir, 0);
                     {
+                        // check the room we're in to see if we're about to go oob
+                        // TODO: there should probably be a convenience method for this
+                        var offsetX = feelerDist * dir;
+                        var offsetY = 0;
+                        var colliderRect = RectI.pool.obtain().set(
+                                collider.entity().position.x + collider.origin.x + collider.rect().x + offsetX,
+                                collider.entity().position.y + collider.origin.y + collider.rect().y + offsetY,
+                                collider.rect().w, collider.rect().h
+                        );
+                        var willGoOutOfBounds = !roomBounds.contains(colliderRect);
+                        RectI.pool.free(colliderRect);
+
                         var willFallOff = !collider.check(Collider.Mask.solid, fallOffset);
                         var willHitWall = collider.check(Collider.Mask.solid, hitOffset);
-                        if (willFallOff || willHitWall) {
+                        if (willFallOff || willHitWall || willGoOutOfBounds) {
                             // stop moving
                             mover.stopX();
                             // turn around
