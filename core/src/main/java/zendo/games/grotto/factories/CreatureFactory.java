@@ -35,6 +35,25 @@ public class CreatureFactory {
         return entity;
     }
 
+    public static Entity thwomp(World world, Point position) {
+        var entity = world.addEntity();
+        {
+            entity.position.set(position);
+            entity.add(new Enemy("thwomp"), Enemy.class);
+
+            var anim = entity.add(new Animator("thwomp", "idle"), Animator.class);
+            anim.depth = 10;
+
+            var bounds = RectI.at(-12, 0, 24, 32);
+            var collider = entity.add(Collider.makeRect(bounds), Collider.class);
+            collider.mask = Collider.Mask.enemy;
+
+            // TODO: add behavior (change state based on relative distance from player)
+            // TODO: hook up to a path (linear only or curve?)
+        }
+        return entity;
+    }
+
     public static Entity slider(World world, CubicBezier path) {
         var entity = world.addEntity();
         {

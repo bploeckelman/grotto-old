@@ -321,6 +321,7 @@ public class WorldMap implements Disposable {
                 case "goblin" -> enemy = CreatureFactory.goblin(assets, world, spawner.pos).get(Enemy.class);
                 case "shroom" -> enemy = CreatureFactory.shroom(world, spawner.pos).get(Enemy.class);
                 case "eye"    -> enemy = CreatureFactory.eye(world, spawner.pos).get(Enemy.class);
+                case "thwomp" -> enemy = CreatureFactory.thwomp(world, spawner.pos).get(Enemy.class);
                 // TODO - spawn enemies / items separately?
                 case "coin" -> ItemFactory.coin(world, spawner.pos);
                 case "vase" -> ItemFactory.vase(world, spawner.pos);
@@ -1004,10 +1005,9 @@ public class WorldMap implements Disposable {
 
                     switch (type) {
                         case "player",
-                                "shroom", "slime", "blob", "goblin", "eye",
-                                "coin", "vase",
-                                "clostridium", "geobacter",
-                                "staphylococcus", "synechococcus"
+                                "shroom", "slime", "blob", "goblin", "eye", "thwomp",
+                                "clostridium", "geobacter", "staphylococcus", "synechococcus",
+                                "coin", "vase"
                                 -> spawners.add(new Spawner(type, x, y));
                         case "jumpthru" -> jumpthrus.add(new Jumpthru(RectI.at(x, y, w, h)));
                     }

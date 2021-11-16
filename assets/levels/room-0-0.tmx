@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="40" height="24" tilewidth="8" tileheight="8" infinite="0" nextlayerid="11" nextobjectid="3">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="40" height="24" tilewidth="8" tileheight="8" infinite="0" nextlayerid="11" nextobjectid="4">
  <tileset firstgid="1" source="tilesets/caves-of-gallet-full-8.tsx"/>
  <group id="2" name="background">
   <layer id="1" name="farthest" width="40" height="24">
@@ -34,6 +34,12 @@
    <object id="2" name="shroom" type="spawn" x="231.445" y="173.619">
     <properties>
      <property name="type" value="shroom"/>
+    </properties>
+    <point/>
+   </object>
+   <object id="3" name="thwomp" type="spawn" x="124.954" y="135.443">
+    <properties>
+     <property name="type" value="thwomp"/>
     </properties>
     <point/>
    </object>
