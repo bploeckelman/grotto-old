@@ -49,6 +49,22 @@ public class CreatureFactory {
             collider.mask = Collider.Mask.enemy;
 
             // TODO: add behavior (change state based on relative distance from player)
+            final var player = world.first(Player.class);
+            entity.add(new Timer(2f, (self) -> {
+                if (player != null) {
+                    var horizDist = player.entity().position.x - self.entity().position.x;
+                    var dist = Calc.abs(horizDist);
+
+                    if (dist < bounds.w / 2) {
+                        anim.play("warn");
+                    } else {
+                        anim.play("idle");
+                    }
+
+                    self.start(anim.duration());
+                }
+            }), Timer.class);
+
             // TODO: hook up to a path (linear only or curve?)
         }
         return entity;
