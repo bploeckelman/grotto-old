@@ -31,13 +31,13 @@
     </properties>
     <point/>
    </object>
-   <object id="2" name="shroom" type="spawn" x="231.445" y="173.619">
+   <object id="2" name="shroom" type="spawn" x="280" y="176">
     <properties>
      <property name="type" value="shroom"/>
     </properties>
     <point/>
    </object>
-   <object id="3" name="thwomp" type="spawn" x="124.954" y="135.443">
+   <object id="3" name="thwomp" type="spawn" x="24" y="80">
     <properties>
      <property name="type" value="thwomp"/>
     </properties>

@@ -50,9 +50,13 @@ public class EffectFactory {
     }
 
     public static Entity spriteAnimOneShot(World world, Point position, String sprite, String animation) {
+        return spriteAnimOneShot(world, position.x, position.y, sprite, animation);
+    }
+
+    public static Entity spriteAnimOneShot(World world, int x, int y, String sprite, String animation) {
         var entity = world.addEntity();
         {
-            entity.position.set(position);
+            entity.position.set(x, y);
 
             var anim = entity.add(new Animator(sprite, animation), Animator.class);
             anim.depth = 100;

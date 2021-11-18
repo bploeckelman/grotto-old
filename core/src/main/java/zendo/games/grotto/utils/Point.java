@@ -23,8 +23,16 @@ public class Point implements Pool.Poolable {
         this(0, 0);
     }
 
+    public Point(Point other) {
+        this(other.x, other.y);
+    }
+
     private Point(int x, int y) {
         set(x, y);
+    }
+
+    public Point copy() {
+        return new Point(x, y);
     }
 
     public Point set(int x, int y) {

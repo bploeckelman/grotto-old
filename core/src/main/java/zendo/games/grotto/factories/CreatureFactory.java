@@ -3,6 +3,7 @@ package zendo.games.grotto.factories;
 import zendo.games.grotto.Assets;
 import zendo.games.grotto.components.*;
 import zendo.games.grotto.components.creatures.EyeBehavior;
+import zendo.games.grotto.components.creatures.ThwompBehavior;
 import zendo.games.grotto.curves.CubicBezier;
 import zendo.games.grotto.ecs.Component;
 import zendo.games.grotto.ecs.Entity;
@@ -48,24 +49,10 @@ public class CreatureFactory {
             var collider = entity.add(Collider.makeRect(bounds), Collider.class);
             collider.mask = Collider.Mask.enemy;
 
-            // TODO: add behavior (change state based on relative distance from player)
-            final var player = world.first(Player.class);
-            entity.add(new Timer(2f, (self) -> {
-                if (player != null) {
-                    var horizDist = player.entity().position.x - self.entity().position.x;
-                    var dist = Calc.abs(horizDist);
+            var mover = entity.add(new Mover(), Mover.class);
+            mover.collider = collider;
 
-                    if (dist < bounds.w / 2) {
-                        anim.play("warn");
-                    } else {
-                        anim.play("idle");
-                    }
-
-                    self.start(anim.duration());
-                }
-            }), Timer.class);
-
-            // TODO: hook up to a path (linear only or curve?)
+            entity.add(new ThwompBehavior(position.copy()), ThwompBehavior.class);
         }
         return entity;
     }
