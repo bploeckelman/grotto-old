@@ -12,7 +12,8 @@ import static zendo.games.grotto.components.creatures.ThwompBehavior.State.*;
 
 public class ThwompBehavior extends Component {
 
-    private final float rest_time = 1f;
+    private final float rest_duration = 1f;
+    private final float warn_duration = 0.33f;
     private final float attack_velocity = -150f;
     private final float retreat_velocity = 50f;
 
@@ -55,13 +56,13 @@ public class ThwompBehavior extends Component {
         switch (state) {
             case idle -> {
                 anim.play("idle");
-                if (playerIsClose && stateTime >= rest_time) {
+                if (playerIsClose && stateTime >= rest_duration) {
                     changeState(warn);
                 }
             }
             case warn -> {
                 anim.play("warn");
-                if (stateTime >= anim.duration()) {
+                if (stateTime >= warn_duration) {
                     changeState(attack);
                 }
             }
