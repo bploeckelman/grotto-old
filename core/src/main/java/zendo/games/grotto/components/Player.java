@@ -145,6 +145,7 @@ public class Player extends Component {
         jumpforceAmount = 0;
         variableJumpTimer = 0;
         walljumpFacingChangeTimer = 0;
+        dead = false;
         canJump = false;
         grounded = false;
         ducking = false;
@@ -166,8 +167,14 @@ public class Player extends Component {
         return numCoins;
     }
 
+    public void kill() {
+        dead = true;
+    }
+
     @Override
     public void update(float dt) {
+        if (dead) return;
+
         // get components
         var anim = get(Animator.class);
         var mover = get(Mover.class);

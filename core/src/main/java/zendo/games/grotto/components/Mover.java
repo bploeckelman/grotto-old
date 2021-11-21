@@ -19,6 +19,8 @@ public class Mover extends Component {
     public Collider collider;
     public OnHit onHitX;
     public OnHit onHitY;
+    public OnSquish onSquishX;
+    public OnSquish onSquishY;
     public float gravity;
     public float friction;
 
@@ -37,6 +39,8 @@ public class Mover extends Component {
         collider = null;
         onHitX = null;
         onHitY = null;
+        onSquishX = null;
+        onSquishY = null;
         gravity = 0;
         friction = 0;
         remainder = null;
@@ -78,8 +82,8 @@ public class Mover extends Component {
         remainder.y = totalMoveY - intMoveY;
 
         // move by the integer values
-        moveX(intMoveX, null);
-        moveY(intMoveY, null);
+        moveX(intMoveX, onSquishX);
+        moveY(intMoveY, onSquishY);
     }
 
     public boolean moveX(int amount, OnSquish onSquish) {

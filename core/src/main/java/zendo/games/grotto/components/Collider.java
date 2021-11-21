@@ -189,6 +189,7 @@ public class Collider extends Component {
     }
 
     public boolean check(int mask, Point offset) {
+        if (!active) return false;
         if (world() != null) {
             var other = world().first(Collider.class);
             while (other != null) {

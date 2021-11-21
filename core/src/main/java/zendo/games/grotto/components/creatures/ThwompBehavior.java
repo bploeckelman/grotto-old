@@ -7,10 +7,13 @@ import zendo.games.grotto.ecs.Component;
 import zendo.games.grotto.factories.EffectFactory;
 import zendo.games.grotto.utils.Calc;
 import zendo.games.grotto.utils.Point;
+import zendo.games.grotto.utils.Time;
 
 import static zendo.games.grotto.components.creatures.ThwompBehavior.State.*;
 
 public class ThwompBehavior extends Component {
+
+    private static final Point underneath = Point.at(0, -1);
 
     private final float rest_duration = 1f;
     private final float warn_duration = 0.33f;
@@ -74,6 +77,19 @@ public class ThwompBehavior extends Component {
                     EffectFactory.spriteAnimOneShot(world(), entity.position.x - collider.rect().w / 2 - 2, entity.position.y, "hero", "land");
                     EffectFactory.spriteAnimOneShot(world(), entity.position.x + collider.rect().w / 2 - 3, entity.position.y, "hero", "land");
                     changeState(retreat);
+                } else if (mover.collider.check(Collider.Mask.player, underneath)) {
+                    // TODO: this also triggers if the player jumps and hits the bottom of the thwomp anytime it's moving down
+                    player.get(Collider.class).mask = 0;
+                    player.get(Animator.class).visible = false;
+                    player.get(Mover.class).active = false;
+                    player.kill();
+
+                    Time.pause_for(0.1f);
+                    EffectFactory.squish(world(), player.entity().position);
+                    EffectFactory.spriteAnimOneShot(world(), player.entity().position, "hero", "land");
+
+                    entity.add(new Timer(1.75f, (self) ->
+                            world().first(GameContainer.class).game.reload()), Timer.class);
                 }
             }
             case retreat -> {
