@@ -53,7 +53,7 @@ public class ThwompBehavior extends Component {
 
         var horizDist = player.entity().position.x - entity.position.x;
         var dist = Calc.abs(horizDist);
-        var playerIsClose = (dist < collider.rect().w / 2);
+        var playerIsClose = player.isAlive() && (dist < collider.rect().w / 2);
 
         stateTime += dt;
         switch (state) {
@@ -88,8 +88,10 @@ public class ThwompBehavior extends Component {
                     EffectFactory.squish(world(), player.entity().position);
                     EffectFactory.spriteAnimOneShot(world(), player.entity().position, "hero", "land");
 
-                    entity.add(new Timer(1.75f, (self) ->
-                            world().first(GameContainer.class).game.reload()), Timer.class);
+                    var game = world().first(GameContainer.class).game;
+                    entity.add(new Timer(1f, (self) -> game.showRestartPrompt()), Timer.class);
+
+                    changeState(retreat);
                 }
             }
             case retreat -> {

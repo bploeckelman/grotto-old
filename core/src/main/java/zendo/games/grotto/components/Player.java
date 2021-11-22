@@ -171,6 +171,14 @@ public class Player extends Component {
         dead = true;
     }
 
+    public boolean isDead() {
+        return dead;
+    }
+
+    public boolean isAlive() {
+        return !dead;
+    }
+
     @Override
     public void update(float dt) {
         if (dead) return;

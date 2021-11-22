@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.Align;
 import zendo.games.grotto.components.*;
 import zendo.games.grotto.curves.CubicBezier;
 import zendo.games.grotto.ecs.Entity;
@@ -28,7 +29,6 @@ import static zendo.games.grotto.input.Input.Key.*;
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Game extends ApplicationAdapter {
 
-//    private static final String world_path = "levels/world-0.ldtk";
     private static final String world_path = "levels/world-0.world";
 
     private Input input;
@@ -50,6 +50,8 @@ public class Game extends ApplicationAdapter {
     private WorldMap worldMap;
     private Vector3 worldMouse;
     private InputMultiplexer inputMux;
+
+    private boolean showingRestartPrompt;
 
     @Override
     public void create() {
@@ -122,7 +124,14 @@ public class Game extends ApplicationAdapter {
         updatePlayMode(Time.delta);
     }
 
+    public void showRestartPrompt() {
+        if (showingRestartPrompt) return;
+        showingRestartPrompt = true;
+    }
+
     public void reload() {
+        showingRestartPrompt = false;
+
         // clear and reload level
         worldMap.clear();
         worldMap.load(world, world_path);
@@ -175,6 +184,11 @@ public class Game extends ApplicationAdapter {
             if (Gdx.input.isKeyPressed(s.index) || Gdx.input.isKeyPressed(down.index))  worldCamera.translate(0,  speed * Time.delta);
 
             if (Input.pressed(escape)) Gdx.app.exit();
+            if (showingRestartPrompt && (Gdx.input.justTouched()
+             || Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ANY_KEY))) {
+                reload();
+            }
+
             if (Input.pressed(f1)) DebugFlags.draw_entities     = !DebugFlags.draw_entities;
             if (Input.pressed(f2)) DebugFlags.draw_anim_bounds  = !DebugFlags.draw_anim_bounds;
             if (Input.pressed(f3)) DebugFlags.draw_world_origin = !DebugFlags.draw_world_origin;
@@ -305,7 +319,25 @@ public class Game extends ApplicationAdapter {
         batch.setProjectionMatrix(windowCamera.combined);
         batch.begin();
         {
-            // TODO: add overlay components
+            if (showingRestartPrompt) {
+                batch.setColor(0.1f, 0.1f, 0.1f, 0.5f);
+                batch.draw(assets.pixel, 0, 0, windowCamera.viewportWidth, windowCamera.viewportHeight);
+                batch.setColor(Color.WHITE);
+
+                var w = (1 / 2f) * windowCamera.viewportWidth;
+                var h = (1 / 4f) * windowCamera.viewportHeight;
+                var centerX = windowCamera.viewportWidth / 2f;
+                var centerY = windowCamera.viewportHeight / 2f;
+                var c = Color.NAVY;
+                batch.setColor(c.r, c.g, c.b, 0.5f);
+                batch.draw(assets.pixel, centerX - w / 2f, centerY - h / 2f, w, h);
+                batch.setColor(Color.WHITE);
+
+                var font = assets.font;
+                var layout = assets.layout;
+                layout.setText(font, "FUCK... YOU DIED\n\nCLICK OR PRESS ANY KEY\n\nTO RESTART", Color.WHITE, windowCamera.viewportWidth, Align.center, false);
+                font.draw(batch, layout, 0, windowCamera.viewportHeight / 2f + assets.layout.height / 2f);
+            }
         }
         batch.end();
     }
