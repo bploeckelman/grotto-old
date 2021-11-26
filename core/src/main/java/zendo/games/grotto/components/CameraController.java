@@ -128,6 +128,7 @@ public class CameraController extends Component {
             var room = worldMap.room(targetPoint);
             if (room != null) {
                 // start a transition between rooms if we need to
+                // TODO: pause enemies in source and dest rooms during transition
                 if (lastRoom != null && lastRoom != room) {
                     // find the bounds for both room and lastRoom;
                     //  clamp two sets of coords so they are in bounds for both rooms
