@@ -94,9 +94,6 @@ public class Game extends ApplicationAdapter {
         worldMap.spawnJumpthrus(world);
         worldMap.spawnSolids(world);
 
-        // TEMP
-        CreatureFactory.slider(world, bezier);
-
         var camera = world.addEntity().add(new CameraController(worldCamera, assets.tween), CameraController.class);
         camera.worldMap = worldMap;
         camera.follow(player, Point.zero(), true);
@@ -233,12 +230,6 @@ public class Game extends ApplicationAdapter {
     }
 
     // ------------------------------------------------------------------------
-    /* NOTE: TEMP */
-//    CubicBezier bezier = new CubicBezier(30, 30, 100, 150, 200, 150, 290, 30);
-//    CubicBezier bezier = new CubicBezier(30, 30, 30, 150, 70, -20, 270, 30);
-    CubicBezier bezier = new CubicBezier(30, 30, 160, 180, 70, -20, 270, 30);
-    /* NOTE: TEMP */
-
 
     private void renderWorldIntoFramebuffer() {
         frameBuffer.begin();
@@ -275,10 +266,6 @@ public class Game extends ApplicationAdapter {
                     shapes.setColor(Color.RED);
                     shapes.circle(0, 0, 1);
                     shapes.setColor(Color.WHITE);
-                }
-
-                if (DebugFlags.draw_temp_debug) {
-                    bezier.draw(shapes);
                 }
             }
             shapes.end();
