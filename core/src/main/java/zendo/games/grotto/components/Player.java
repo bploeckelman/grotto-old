@@ -197,17 +197,22 @@ public class Player extends Component {
         }
 
         // determine movement direction based on stick input
-        var moveDir = 0;
+        var moveDirX = 0;
+        var moveDirY = 0;
         {
-            var sign = 0;
+            var xSign = 0;
+            var ySign = 0;
             if (stick.pressed()) {
                 stick.clearPressBuffer();
                 var move = stick.value();
                 var epsilon = 0.33f;
-                if      (move.x < -epsilon) sign = -1;
-                else if (move.x > +epsilon) sign = 1;
+                if      (move.x < -epsilon) xSign = -1;
+                else if (move.x >  epsilon) xSign =  1;
+                if      (move.y < -epsilon) ySign =  1;
+                else if (move.y >  epsilon) ySign = -1;
             }
-            moveDir = sign;
+            moveDirX = xSign;
+            moveDirY = ySign;
         }
 
         // update grounded state
@@ -273,7 +278,7 @@ public class Player extends Component {
         // update state machine
         {
             if (state != null) {
-                state.update(dt, moveDir);
+                state.update(dt, moveDirX, moveDirY);
             }
         }
 
@@ -427,7 +432,7 @@ public class Player extends Component {
 
     interface State {
         default void enter() {}
-        default void update(float dt, int input) {}
+        default void update(float dt, int xInput, int yInput) {}
         default void exit() {}
     }
 
@@ -436,7 +441,7 @@ public class Player extends Component {
     class NormalState implements State {
 
         @Override
-        public void update(float dt, int input) {
+        public void update(float dt, int xInput, int yInput) {
             var mover = get(Mover.class);
             var anim = get(Animator.class);
 
@@ -462,11 +467,11 @@ public class Player extends Component {
                         gravityAmount = gravity_fastfall;
                     }
                     // wall behavior
-                    else if (input != 0 && mover.collider.check(Collider.Mask.solid, Point.at(input, 0))) {
+                    else if (xInput != 0 && mover.collider.check(Collider.Mask.solid, Point.at(xInput, 0))) {
                         // wall sliding
                         if (mover.speed.y < 0) {
                             wallsliding = true;
-                            facing = -input;
+                            facing = -xInput;
                             gravityAmount = gravity_wallsliding;
                         }
                     }
@@ -497,14 +502,14 @@ public class Player extends Component {
                 // invoke a ground jump
                 if (tryJump()) {
                     // cancel backwards horizontal movement
-                    if (Calc.sign(mover.speed.x) == -input) {
+                    if (Calc.sign(mover.speed.x) == -xInput) {
                         mover.speed.x = 0;
                     }
 
                     // push out the way we're inputting for extra oomph in a turn/jump
-                    if (input != 0) {
-                        facing = input;
-                        mover.speed.x += input * 50;
+                    if (xInput != 0) {
+                        facing = xInput;
+                        mover.speed.x += xInput * 50;
                     }
                 }
 
@@ -551,7 +556,7 @@ public class Player extends Component {
             {
                 // acceleration
                 var accel = (grounded) ? acceleration_ground : acceleration_air;
-                mover.speed.x += input * accel * dt;
+                mover.speed.x += xInput * accel * dt;
 
                 // max speed
                 var max = (grounded) ? maxspeed_ground : maxspeed_air;
@@ -564,13 +569,13 @@ public class Player extends Component {
 
                 // friction
                 var friction = (grounded) ? friction_ground : friction_air;
-                if (input == 0) {
+                if (xInput == 0) {
                     mover.speed.x = Calc.approach(mover.speed.x, 0, friction * dt);
                 }
 
                 // facing
-                if (input != 0 && !wallsliding && walljumpFacingChangeTimer <= 0) {
-                    facing = input;
+                if (xInput != 0 && !wallsliding && walljumpFacingChangeTimer <= 0) {
+                    facing = xInput;
                 }
             }
 
@@ -634,7 +639,7 @@ public class Player extends Component {
         }
 
         @Override
-        public void update(float dt, int input) {
+        public void update(float dt, int xInput, int yInput) {
             // change states if attack is complete
             if (cooldownTimer < 0) {
                 cooldownTimer = 0;
@@ -663,11 +668,11 @@ public class Player extends Component {
                         gravityAmount = gravity_fastfall;
                     }
                     // wall behavior
-                    else if (input != 0 && mover.collider.check(Collider.Mask.solid, Point.at(input, 0))) {
+                    else if (xInput != 0 && mover.collider.check(Collider.Mask.solid, Point.at(xInput, 0))) {
                         // wall sliding
                         if (mover.speed.y < 0) {
                             wallsliding = true;
-                            facing = -input;
+                            facing = -xInput;
                             gravityAmount = gravity_wallsliding;
                         }
                     }
@@ -694,7 +699,7 @@ public class Player extends Component {
             }
 
             // apply friction to movement
-            if (input == 0) {
+            if (xInput == 0) {
                 var mover = get(Mover.class);
                 var friction = (grounded) ? friction_ground : friction_air;
                 mover.speed.x = Calc.approach(mover.speed.x, 0, friction * dt);
@@ -719,7 +724,24 @@ public class Player extends Component {
             // update animation and collider position/orientation based on facing direction
             var collider = get(Collider.class);
             if (attackEntity != null) {
-                if (facing >= 0) {
+                if (yInput > 0) {
+                    // update attack effect position
+                    attackEntity.position.x = entity.position.x + collider.rect().w;
+                    attackEntity.position.y = entity.position.y + collider.rect().top() + collider.rect().h / 2;
+                    // orient upwards
+                    attackEffectAnim.rotation = 90;
+                    // orient collider upwards
+                    var rect = attackCollider.rect();
+                    int temp;
+                    temp = rect.w;
+                    rect.w = rect.h;
+                    rect.h = temp;
+                    temp = rect.x;
+                    rect.x = rect.y - 2 * rect.w;
+                    rect.y = temp;
+                    attackCollider.rect(rect);
+                }
+                else if (facing >= 0) {
                     // update attack effect position
                     attackEntity.position.x = entity.position.x + collider.rect().right() + 8;
                     attackEntity.position.y = entity.position.y;
@@ -763,7 +785,7 @@ public class Player extends Component {
         }
 
         @Override
-        public void update(float dt, int input) {
+        public void update(float dt, int xInput, int yInput) {
             // apply gravity
             get(Mover.class).speed.y += gravity * dt;
 
