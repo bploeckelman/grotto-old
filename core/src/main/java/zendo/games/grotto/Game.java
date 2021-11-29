@@ -12,10 +12,8 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Align;
 import zendo.games.grotto.components.*;
-import zendo.games.grotto.curves.CubicBezier;
 import zendo.games.grotto.ecs.Entity;
 import zendo.games.grotto.ecs.World;
-import zendo.games.grotto.factories.CreatureFactory;
 import zendo.games.grotto.input.Input;
 import zendo.games.grotto.map.WorldMap;
 import zendo.games.grotto.sprites.Sprite;
@@ -90,6 +88,7 @@ public class Game extends ApplicationAdapter {
 
         player = worldMap.spawnPlayer(world);
         enemies = worldMap.spawnEnemies(world);
+        worldMap.spawnItems(world);
         worldMap.spawnBarriers(world);
         worldMap.spawnJumpthrus(world);
         worldMap.spawnSolids(world);
@@ -142,15 +141,9 @@ public class Game extends ApplicationAdapter {
         camera.follow(player, Point.zero(), true);
         camera.resetRoom();
 
-        // destroy items (will be respawned by level.spawnEnemies())
-        var item = world.first(Item.class);
-        while (item != null) {
-            var next = (Item) item.next;
-            if (item.entity() != null) {
-                item.entity().destroy();
-            }
-            item = next;
-        }
+        // destroy and respawn items
+        worldMap.destroyItems(world);
+        worldMap.spawnItems(world);
 
         // destroy and respawn enemies
         enemies.forEach(enemy -> {

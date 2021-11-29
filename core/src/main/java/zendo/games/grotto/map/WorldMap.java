@@ -322,11 +322,6 @@ public class WorldMap implements Disposable {
                 case "shroom" -> enemy = CreatureFactory.shroom(world, spawner.pos).get(Enemy.class);
                 case "eye"    -> enemy = CreatureFactory.eye(world, spawner.pos).get(Enemy.class);
                 case "thwomp" -> enemy = CreatureFactory.thwomp(world, spawner.pos).get(Enemy.class);
-                // TODO - spawn enemies / items separately?
-                case "coin" -> ItemFactory.coin(world, spawner.pos);
-                case "vase" -> ItemFactory.vase(world, spawner.pos);
-                case "clostridium", "geobacter", "staphylococcus", "synechococcus"
-                        -> ItemFactory.bacterium(spawner.type, assets, world, spawner.pos);
             }
             if (enemy != null) {
                 var enemyRoom = room(enemy.entity().position);
@@ -337,6 +332,41 @@ public class WorldMap implements Disposable {
             }
         }
         return enemies;
+    }
+
+    public List<Item> spawnItems(World world) {
+        var player = world.first(Player.class);
+        var playerRoom = room(player.entity().position);
+
+        var items = new ArrayList<Item>();
+        for (var spawner : spawners) {
+            Item item = null;
+            switch (spawner.type) {
+                case "coin" -> item = ItemFactory.coin(world, spawner.pos).get(Item.class);
+                case "vase" -> item = ItemFactory.vase(world, spawner.pos).get(Item.class);
+                case "clostridium", "geobacter", "staphylococcus", "synechococcus"
+                        -> item = ItemFactory.bacterium(spawner.type, assets, world, spawner.pos).get(Item.class);
+            }
+            if (item != null) {
+                var itemRoom = room(item.entity().position);
+                if (itemRoom != playerRoom) {
+                    item.entity().active = false;
+                }
+                items.add(item);
+            }
+        }
+        return items;
+    }
+
+    public void destroyItems(World world) {
+        var item = world.first(Item.class);
+        while (item != null) {
+            var next = (Item) item.next;
+            if (item.entity() != null) {
+                item.entity().destroy();
+            }
+            item = next;
+        }
     }
 
     public void spawnBarriers(World world) {
