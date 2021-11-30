@@ -21,7 +21,7 @@
   </layer>
   <layer id="6" name="collision" width="40" height="24" opacity="0.2">
    <data encoding="base64" compression="zlib">
-   eJzt17EJAEAMw0DvP1DmywLfPILgQgfu1XqSTPma2cfYx9jH2MfYx9jH2MfYx9jH2Mf8fKe27/bqu7aYJEcZ
+   eJzt16ENAAAQwkD2H4j5foZPDaKX4Gtpko5vmX2MfYx9jH2MfYx9jH2MfYx9jH3M5zutfbeFr3egq0k7
   </data>
   </layer>
   <objectgroup id="10" name="entity">
