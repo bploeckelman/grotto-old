@@ -23,7 +23,7 @@ public class ItemFactory {
             var anim = entity.add(new Animator("coin", "idle"), Animator.class);
             anim.depth = 10;
 
-            var bounds = RectI.at(-4, -4, 8, 8);
+            var bounds = RectI.at(-4, 0, 8, 8);
             var collider = entity.add(Collider.makeRect(bounds), Collider.class);
             collider.mask = Collider.Mask.item;
 

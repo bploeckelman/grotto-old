@@ -43,19 +43,19 @@
     </properties>
     <point/>
    </object>
-   <object id="4" name="coin" type="spawn" x="192" y="168">
+   <object id="4" name="coin" type="spawn" x="192" y="176">
     <properties>
      <property name="type" value="coin"/>
     </properties>
     <point/>
    </object>
-   <object id="5" name="coin" type="spawn" x="208" y="168">
+   <object id="5" name="coin" type="spawn" x="208" y="176">
     <properties>
      <property name="type" value="coin"/>
     </properties>
     <point/>
    </object>
-   <object id="6" name="coin" type="spawn" x="224" y="168">
+   <object id="6" name="coin" type="spawn" x="224" y="176">
     <properties>
      <property name="type" value="coin"/>
     </properties>
